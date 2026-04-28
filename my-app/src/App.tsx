@@ -20,10 +20,57 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!sessionStorage.getItem('token'));
   //const navigate = useNavigate();
 
+
   const [posts, setPosts] = useState<any[]>([]);
+  const [myPosts, setMyPosts] = useState<any[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [drafts, setDrafts] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+
+
+  const fetchProfile = async () => {
+    const token = sessionStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch("http://localhost:3000/users/profile", { // Proveri putanju u NestJS
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data); // Ovde dobijaš { userId, email, role } iz validate() metode
+      } else if (response.status === 401) {
+        handleLogout();
+      }
+    } catch (err) {
+      console.error("Greška pri dovlačenju profila:", err);
+    }
+  };
+  const fetchMyPosts = async () => {
+    const token = sessionStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch("http://localhost:3000/post/my-posts", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMyPosts(data);
+      }
+    } catch (err) {
+      console.error("Greška:", err);
+    }
+  };
 
 
   const handleCreatePost = async (e: React.SyntheticEvent) => {
@@ -40,7 +87,7 @@ function App() {
     };
 
     try {
-      const response = await fetch("http://localhost:3000/post", {
+      const response = await fetch("http://localhost:3000/post/post", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -73,7 +120,7 @@ function App() {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
     try {
-      const response = await fetch(`http://localhost:3000/publish/${id}`, {
+      const response = await fetch(`http://localhost:3000/post/publish/${id}`, {
         method: "PUT", // Tvoj backend koristi @Put za ovo
         headers: {
           "Authorization": `Bearer ${token}`
@@ -82,7 +129,8 @@ function App() {
 
       if (response.ok) {
         alert("Post je sada javan!");
-        fetchPosts(); // Ponovo povuci postove da osvežiš listu
+        fetchPosts();
+        fetchDrafts(); // Ponovo povuci postove da osvežiš listu
       }
     } catch (err) {
       console.error("Greška pri objavljivanju:", err);
@@ -96,7 +144,7 @@ function App() {
     if (!token) return;
 
     try {
-      const response = await fetch("http://localhost:3000/feed", {
+      const response = await fetch("http://localhost:3000/post/feed", {
         method: "GET", 
         headers: {
           "Authorization": `Bearer ${token}`, 
@@ -118,25 +166,31 @@ function App() {
  
 
   const fetchDrafts = async () => {
-    const email = sessionStorage.getItem('userEmail');
-    if (!email) return;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/drafts/${email}`);
+      const response = await fetch("http://localhost:3000/post/drafts", {
+        method: "GET", 
+        headers: {
+          "Authorization": `Bearer ${token}` 
+        }
+      });
+
       if (response.ok) {
         const data = await response.json();
         setDrafts(data);
       }
     } catch (err) {
-      console.error("Greška pri dovlačenju skica:", err);
+      console.error("Greška:", err);
     }
   };
 
 
+
+
   const fetchUsers = async () => {
     const token = sessionStorage.getItem('token');
-
-    // Ako nemamo token, ne želimo ni da pokušavamo (opciono)
     if (!token) {
       console.log("Nema tokena, preskačem fetch.");
       setUsers([]);
@@ -144,7 +198,7 @@ function App() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/users", {
+      const response = await fetch("http://localhost:3000/users/allusers", {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -165,11 +219,15 @@ function App() {
       setUsers([]);
     }
   };
+
+
   useEffect(() => {
     if(isLoggedIn){
+    fetchProfile();
     fetchUsers();
-    fetchPosts();
     fetchDrafts();
+    fetchPosts();
+    
     }
   }, [isLoggedIn]);
  
@@ -180,11 +238,11 @@ function App() {
     setMessage('Slanje...');
 
     try {
-      const response = await fetch("http://localhost:3000/login", {
+      const response = await fetch("http://localhost:3000/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      });
+      })
 
       const data = await response.json();
 
@@ -194,6 +252,7 @@ function App() {
         sessionStorage.setItem('token', data.accessToken)
         setIsLoggedIn(true);
         fetchUsers();
+        
       } else {
         setMessage(data.message || "Greška pri prijavi");
       }
@@ -205,11 +264,13 @@ function App() {
 
   const handleLogout = () => {
   sessionStorage.removeItem('token');
-  //localStorage.removeItem('token'); // Brišemo ključ
+  sessionStorage.clear();
+
   setIsLoggedIn(false)
-  setUsers([]); // Praznimo listu korisnika
-  setMessage('Odjavljeni ste.'); // Resetujemo poruku
-  setEmail(''); // Opciono: brišemo polja forme
+  setUsers([]);
+ // setDrafts([]); 
+  setMessage('Odjavljeni ste.'); 
+  setEmail(''); 
   setPassword('');
 };
 
@@ -219,7 +280,7 @@ function App() {
     setRegMessage('Registracija u toku...');
 
     try {
-      const response = await fetch("http://localhost:3000/user", {
+      const response = await fetch("http://localhost:3000/users/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -331,6 +392,13 @@ function App() {
               <div className="hero">
                 <img src={heroImg} className="base" width="170" height="179" alt="" />
                 <h1>Dashboard</h1>
+                {profile && (
+                  <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '8px', marginTop: '10px' }}>
+                    <p>Ulogovan kao: <strong>{profile.email}</strong></p>
+                    <p>Uloga: <span style={{ color: '#ffa500', fontWeight: 'bold' }}>{profile.role}</span></p>
+                  </div>
+                )}
+                
               </div>
               
               <div className="dashboard-view">
@@ -371,7 +439,7 @@ function App() {
                   </form>
                 </div>
                 <div className="card">
-                <h2>Tvoji Postovi</h2>
+                <h2> Objavljeni Postovi</h2>
                 {posts.map((post) => (
                   <div key={post.id} style={{ borderBottom: '1px solid #444', padding: '10px 0' }}>
                     <h3>{post.title}</h3>
@@ -403,7 +471,7 @@ function App() {
                           className="btn-auth" 
                           style={{ background: '#4CAF50' }}
                         >
-                          🚀 Obavi sada
+                          🚀 Objavi sada
                         </button>
                       </div>
                     ))}
