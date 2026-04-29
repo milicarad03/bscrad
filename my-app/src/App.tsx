@@ -4,11 +4,16 @@ import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
 import { BrowserRouter, Routes, Route, Navigate ,useNavigate} from 'react-router-dom';
+import { Dashboard } from './pages/Dashboard'
+import {AuthPage} from './pages/AuthPage'
+import {usePosts} from './hooks/usePosts'
+
+
 
 function App() {
   const [users, setUsers] = useState<any[]>([]);
   const [count, setCount] = useState(0)
-  // State za login formu
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -16,10 +21,7 @@ function App() {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regMessage, setRegMessage] = useState('');
-  // Proveravamo da li već imamo token u sesiji (da ostane ulogovan na F5)
   const [isLoggedIn, setIsLoggedIn] = useState(!!sessionStorage.getItem('token'));
-  //const navigate = useNavigate();
-
 
   const [posts, setPosts] = useState<any[]>([]);
   const [myPosts, setMyPosts] = useState<any[]>([]);
@@ -27,6 +29,9 @@ function App() {
   const [newPostContent, setNewPostContent] = useState('');
   const [drafts, setDrafts] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const token = sessionStorage.getItem('token');
+
+  
 
 
   const fetchProfile = async () => {
@@ -76,14 +81,14 @@ function App() {
   const handleCreatePost = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     
-    // Uzimamo token (iz bilo kog storage-a)
+    
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const storedEmail = sessionStorage.getItem('userEmail')
-    // Ovde bi trebala da imaš state-ove za title i content (vidi korak 2)
+    
     const postData = {
       title: newPostTitle,
       content: newPostContent,
-      authorEmail: storedEmail // Email ulogovanog korisnika (već ga imaš u state-u)
+     // authorEmail: storedEmail 
     };
 
     try {
@@ -91,8 +96,6 @@ function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Iako tvoj trenutni @Post("post") nema @UseGuards, 
-          // dobra je praksa slati ga ako planiraš da zaključaš tu rutu
           "Authorization": `Bearer ${token}` 
         },
         body: JSON.stringify(postData),
@@ -103,7 +106,7 @@ function App() {
         fetchDrafts();
         setNewPostTitle(''); // Resetuj polja
         setNewPostContent('');
-        // Možeš pozvati fetch da osvežiš listu postova ako je imaš
+        
       }else if (response.status === 401){
           // Ako dobijemo 401 Unauthorized, praznimo listu
           console.warn("Sesija je istekla.");
@@ -121,7 +124,7 @@ function App() {
 
     try {
       const response = await fetch(`http://localhost:3000/post/publish/${id}`, {
-        method: "PUT", // Tvoj backend koristi @Put za ovo
+        method: "PUT", 
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -130,7 +133,7 @@ function App() {
       if (response.ok) {
         alert("Post je sada javan!");
         fetchPosts();
-        fetchDrafts(); // Ponovo povuci postove da osvežiš listu
+        fetchDrafts(); 
       }
     } catch (err) {
       console.error("Greška pri objavljivanju:", err);
@@ -315,68 +318,16 @@ function App() {
         path="/" 
         element={
           !isLoggedIn ? (
-            <section id="center">
-              <div className="hero">
-                <img src={heroImg} className="base" width="170" height="179" alt="" />
-                <h1>Get started</h1>
-              </div>
-              <div className="auth-wrapper">
-                {/* Ovde ubaci ceo svoj div sa Register i Login karticama */}
-                <div className="auth-card">
-                  <h2>Register</h2>
-                  <form onSubmit={handleRegister} className="auth-form">
-                    <input 
-                    className="custom-input"
-                    placeholder="Ime" 
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                  />
-                  <input 
-                    className="custom-input"
-                    type="email" 
-                    placeholder="Email" 
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    required 
-                  />
-                  <input 
-                    className="custom-input"
-                    type="password" 
-                    placeholder="Šifra" 
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    required 
-                  />
-                    <button type="submit" className="btn-auth btn-register">Napravi nalog</button>
-                    {regMessage && <p className="status-message success">{regMessage}</p>}
-                  </form>
-                </div>
-
-                <div className="auth-card">
-                  <h2>Login</h2>
-                  <form onSubmit={handleLogin} className="auth-form">
-                   <input 
-                    className="custom-input"
-                    type="email" 
-                    placeholder="Email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required 
-                  />
-                  <input 
-                    className="custom-input"
-                    type="password" 
-                    placeholder="Šifra" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required 
-                  />
-                    <button type="submit" className="btn-auth btn-login">Prijavi se</button>
-                    {message && <p className="status-message warning">{message}</p>}
-                  </form>
-                </div>
-              </div>
-            </section>
+            <AuthPage 
+                // Prosleđujemo sve što AuthPage traži
+                email={email} setEmail={setEmail}
+                password={password} setPassword={setPassword}
+                handleLogin={handleLogin} message={message}
+                regName={regName} setRegName={setRegName}
+                regEmail={regEmail} setRegEmail={setRegEmail}
+                regPassword={regPassword} setRegPassword={setRegPassword}
+                handleRegister={handleRegister} regMessage={regMessage}
+              />
           ) : (
             <Navigate to="/dashboard" />
           )
@@ -388,96 +339,25 @@ function App() {
         path="/dashboard" 
         element={
           isLoggedIn ? (
-            <section id="center">
-              <div className="hero">
-                <img src={heroImg} className="base" width="170" height="179" alt="" />
-                <h1>Dashboard</h1>
-                {profile && (
-                  <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '8px', marginTop: '10px' }}>
-                    <p>Ulogovan kao: <strong>{profile.email}</strong></p>
-                    <p>Uloga: <span style={{ color: '#ffa500', fontWeight: 'bold' }}>{profile.role}</span></p>
-                  </div>
-                )}
-                
-              </div>
-              
-              <div className="dashboard-view">
-                {message && <p className="status-message success">{message}</p>}
-                <button onClick={handleLogout} className="btn-auth" style={{backgroundColor: '#ff4444', marginBottom: '20px'}}>
-                  Odjavi se
-                </button>
-
-                <div className="card">
-                  <h2>Users from backend:</h2>
-                  <div style={{ textAlign: 'left' }}>
-                    {users.map((user) => (
-                      <p key={user.id} style={{ borderBottom: '1px solid #333', paddingBottom: '8px' }}>
-                        <strong>{user.name}</strong> <br />
-                        <span style={{ opacity: 0.7 }}>{user.email}</span>
-                      </p>
-                    ))}
-                  </div>
-                </div>
-                <div className="card">
-                  <h2>Novi Post</h2>
-                  <form onSubmit={handleCreatePost} className="auth-form">
-                    <input 
-                      className="custom-input"
-                      placeholder="Naslov posta" 
-                      value={newPostTitle}
-                      onChange={(e) => setNewPostTitle(e.target.value)}
-                      required
-                    />
-                    <textarea 
-                      className="custom-input"
-                      placeholder="Sadržaj posta..." 
-                      value={newPostContent}
-                      onChange={(e) => setNewPostContent(e.target.value)}
-                      style={{ minHeight: '100px' }}
-                    />
-                    <button type="submit" className="btn-auth">Objavi post</button>
-                  </form>
-                </div>
-                <div className="card">
-                <h2> Objavljeni Postovi</h2>
-                {posts.map((post) => (
-                  <div key={post.id} style={{ borderBottom: '1px solid #444', padding: '10px 0' }}>
-                    <h3>{post.title}</h3>
-                    <p>{post.content}</p>
-                    
-                    {/* Ako post nije objavljen, prikaži dugme za objavu */}
-                    {!post.published && (
-                      <button 
-                        onClick={() => publishPost(post.id)} 
-                        className="btn-auth" 
-                        style={{ padding: '5px 10px', fontSize: '12px', background: '#4CAF50' }}
-                      >
-                        Objavi (Publish)
-                      </button>
-                    )}
-                    
-                    
-                  </div>
-              ))}
-            </div>
-                <div className="card" style={{ borderLeft: '5px solid #ffa500' }}>
-                    <h2>Moje skice (Drafts)</h2>
-                    {drafts.length === 0 && <p>Nemaš sačuvanih skica.</p>}
-                    {drafts.map((draft) => (
-                      <div key={draft.id} className="draft-item">
-                        <h3>{draft.title}</h3>
-                        <button 
-                          onClick={() => publishPost(draft.id)} 
-                          className="btn-auth" 
-                          style={{ background: '#4CAF50' }}
-                        >
-                          🚀 Objavi sada
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-              </div>
-            </section>
+            <Dashboard 
+          // Podaci (State)
+          profile={profile}
+          users={users}
+          posts={posts}
+          drafts={drafts}
+          message={message}
+          newPostTitle={newPostTitle}
+          newPostContent={newPostContent}
+          
+          // Funkcije za promenu state-a
+          setNewPostTitle={setNewPostTitle}
+          setNewPostContent={setNewPostContent}
+          
+          // Akcije (Handleri)
+          handleLogout={handleLogout}
+          handleCreatePost={handleCreatePost}
+          publishPost={publishPost}
+        />
           ) : (
             <Navigate to="/" />
           )
