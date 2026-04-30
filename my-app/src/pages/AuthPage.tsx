@@ -2,31 +2,13 @@ import heroImg from '../assets/hero.png';
 import { Card } from '../components/UI/Card';
 import { Input } from '../components/UI/Input';
 import { Button } from '../components/UI/Button';
+import {useAuth} from '../hooks/useAuth'
 
 interface AuthPageProps {
-  // Login props
-  email: string;
-  setEmail: (val: string) => void;
-  password: string;
-  setPassword: (val: string) => void;
-  handleLogin: (e: React.SyntheticEvent) => void;
-  message: string;
-  
-  // Register props
-  regName: string;
-  setRegName: (val: string) => void;
-  regEmail: string;
-  setRegEmail: (val: string) => void;
-  regPassword: string;
-  setRegPassword: (val: string) => void;
-  handleRegister: (e: React.SyntheticEvent) => void;
-  regMessage: string;
+  auth: ReturnType<typeof useAuth>;
 }
 
-export const AuthPage = ({
-  email, setEmail, password, setPassword, handleLogin, message,
-  regName, setRegName, regEmail, setRegEmail, regPassword, setRegPassword, handleRegister, regMessage
-}: AuthPageProps) => {
+export const AuthPage = ({auth}: AuthPageProps) => {
   return (
     <section id="center">
       <div className="hero">
@@ -37,50 +19,50 @@ export const AuthPage = ({
       <div className="auth-wrapper">
         {/* REGISTRACIJA */}
         <Card title="Register">
-          <form onSubmit={handleRegister} className="auth-form">
+          <form onSubmit={auth.handleRegister} className="auth-form">
             <Input 
               placeholder="Ime" 
-              value={regName}
-              onChange={setRegName}
+              value={auth.regName}
+              onChange={auth.setRegName}
             />
             <Input 
               type="email" 
               placeholder="Email" 
-              value={regEmail}
-              onChange={setRegEmail}
+              value={auth.regEmail}
+              onChange={auth.setRegEmail}
               required 
             />
             <Input 
               type="password" 
               placeholder="Šifra" 
-              value={regPassword}
-              onChange={setRegPassword}
+              value={auth.regPassword}
+              onChange={auth.setRegPassword}
               required 
             />
             <Button type="submit">Napravi nalog</Button>
-            {regMessage && <p className="status-message success">{regMessage}</p>}
+            {auth.regMessage && <p className="status-message success">{auth.regMessage}</p>}
           </form>
         </Card>
 
         {/* LOGIN */}
         <Card title="Login">
-          <form onSubmit={handleLogin} className="auth-form">
+          <form onSubmit={auth.handleLogin} className="auth-form">
             <Input 
               type="email" 
               placeholder="Email" 
-              value={email}
-              onChange={setEmail}
+              value={auth.email}
+              onChange={auth.setEmail}
               required 
             />
             <Input 
               type="password" 
               placeholder="Šifra" 
-              value={password}
-              onChange={setPassword}
+              value={auth.password}
+              onChange={auth.setPassword}
               required 
             />
             <Button type="submit">Prijavi se</Button>
-            {message && <p className="status-message warning">{message}</p>}
+            {auth.message && <p className="status-message warning">{auth.message}</p>}
           </form>
         </Card>
       </div>

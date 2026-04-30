@@ -1,0 +1,12 @@
+export interface UserDTO{
+    id:string;
+    email:string;
+    name?:string;
+    role:string;
+}
+
+export interface LoginDTO{
+    accessToken:string;
+    user:UserDTO;
+    message?:string
+}
