@@ -60,13 +60,14 @@
   display: flex;
   flex-direction: column;
   gap: 25px;
-  place-content: center;
-  place-items: center;
+  min-height: 100vh;
   flex-grow: 1;
+  width: 100%;
 
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
+  /* Ovo centriranje će raditi samo na Login/Register stranicama */
+  &:not(:has(.dashboard-layout)) {
+    place-content: center;
+    place-items: center;
   }
 }
 
@@ -222,6 +223,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 320px;
 }
 
 .custom-input {
@@ -258,10 +260,22 @@
 .btn-login { background: var(--accent); color: #fff; }
 
 .status-message {
-  font-size: 13px;
+ font-size: 13px;
   margin-top: 8px;
+  min-height: 18px; /* Rezerviše prostor za jedan red teksta */
+  visibility: hidden; /* Nevidljiva, ali zauzima prostor */
+  opacity: 0;
+  transition: opacity 0.3s ease; /* Lep prelaz kad se pojavi */
+
   &.success { color: #42b883; }
   &.warning { color: var(--accent); }
+
+ 
+  &:not(:empty) {
+    visibility: visible;
+    opacity: 1;
+  }
+ 
 }
 
 /* Stil za listu korisnika da liči na tvoj #docs */
@@ -280,5 +294,120 @@
     &:last-child { border-bottom: none; }
     
     span { display: block; font-size: 12px; opacity: 0.6; }
+  }
+}
+/* --- DASHBOARD SIDEBAR LAYOUT --- */
+
+/* Kontejner koji drži Sidebar i Main Content */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--bg); /* koristi tvoju postojeću var */
+}
+
+/* Stil za Sidebar */
+.sidebar {
+  width: 260px;
+  background: var(--social-bg); /* tamnija pozadina koju već imaš */
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 20px;
+  position: fixed; /* Da sidebar stoji dok skroluješ */
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.sidebar-logo {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 40px;
+  letter-spacing: 1px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover, .nav-item.active {
+  background: var(--social-bg);
+  box-shadow: var(--shadow);
+  color: var(--accent);
+}
+
+.admin-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 24px 0 8px 16px;
+  letter-spacing: 1px;
+  opacity: 0.5;
+}
+
+/* Glavni deo gde je sadržaj */
+.main-content {
+  margin-left: 260px; /* Širina sidebara */
+  flex-grow: 1;
+  padding: 40px;
+  width: calc(100% - 260px);
+  box-sizing: border-box;
+}
+
+/* Grid za Dashboard kartice (Devices, Stats, itd) */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+/* Logout dugme na dnu sidebara */
+.btn-logout {
+  margin-top: auto;
+  color: #ef4444;
+  opacity: 0.8;
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  opacity: 1;
+}
+
+/* Responzivnost za manje ekrane */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 80px;
+    padding: 20px 10px;
+  }
+  .sidebar span, .sidebar .admin-label, .sidebar h2 {
+    display: none; /* Sakrij tekst, ostavi samo ikonice */
+  }
+  .main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    padding: 20px;
   }
 }

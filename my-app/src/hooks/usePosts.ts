@@ -3,7 +3,7 @@ import type {PostDTO} from '../models/post.dto'
 import type {CreatePostDTO} from '../models/post.dto'
 import {ENDPOINTS} from '../api/config.ts'
 import {apiClient} from '../api/client.ts'
-
+import { toast } from 'react-hot-toast';
 export const usePosts = (token: string | null) => {
   // 1. STANJA (State)
   const [posts, setPosts] = useState<PostDTO[]>([]);
@@ -14,79 +14,83 @@ export const usePosts = (token: string | null) => {
   const [myPosts, setMyPosts] = useState<PostDTO[]>([]);
   const [message, setMessage] = useState('');
 
-  // 2. FUNKCIJA ZA ČITANJE (GET)
+
   const fetchPosts = async () => {
    if (!token) return;
-    try {
-      const data= await apiClient<PostDTO[]>(ENDPOINTS.POSTS.FEED, 'GET', null, token);
-      setPosts(data);
-    } catch (err:any) { 
+   apiClient<PostDTO[]>(ENDPOINTS.POSTS.FEED, 'GET', null, token)
+     .then((data) =>{
+      setPosts(data.slice().reverse());
+    })
+     .catch ((err:any) => { 
       console.error(err); 
-      setMessage(err.message);
-    }
+      toast.error(err);
+     // setMessage(err.message);
+    })
   };
 
   const fetchDrafts = async () => {
     if (!token) return;
-    try {
-      const data = await apiClient<PostDTO[]>(ENDPOINTS.POSTS.DRAFTS, 'GET',  null, token);
+    apiClient<PostDTO[]>(ENDPOINTS.POSTS.DRAFTS, 'GET',  null, token)
+    .then((data) => {
       setDrafts(data);
-    } catch (err:any) {
+    })
+     .catch ((err:any) => {
       console.error(err); 
-      setMessage(err.message);
-    }
+      toast.error(err);
+    })
   };
 
-  // 3. FUNKCIJA ZA KREIRANJE (POST)
-  const handleCreatePost = async (e: React.SyntheticEvent) => {
-    if (!token) return;
-    e.preventDefault();
+ 
+ const handleCreatePost = (e: React.SyntheticEvent) => {
+  if (!token) return;
+  e.preventDefault();
 
-    const dataCreatePost : CreatePostDTO = {
-      title:newPostTitle,
-      content:newPostContent
-    };
-    try {
-      const data = await apiClient<PostDTO>(ENDPOINTS.POSTS.CREATE, 'POST', dataCreatePost, token);
-     
-      setMessage(`Post je uspesno kreiran!`);
+  const dataCreatePost: CreatePostDTO = {
+    title: newPostTitle,
+    content: newPostContent
+  };
+
+  apiClient<PostDTO>(ENDPOINTS.POSTS.CREATE, 'POST', dataCreatePost, token)
+    .then((newPostFromServer) => {
+   
+      setDrafts((prevPosts) => [newPostFromServer, ...prevPosts]);
+    
+      setMessage(`Post "${newPostFromServer.title}" je uspešno kreiran!`);
       setNewPostTitle('');
       setNewPostContent('');
-      fetchPosts(); 
-      fetchDrafts();
-      
-    } catch (err:any) { 
-      console.error(err); 
-      setMessage(err.message);
-    }
-  };
-
-  // 4. FUNKCIJA ZA PUBLIKOVANJE (PUT)
+    })
+    .catch((err: any) => {
+      console.error(err);
+      toast.error(err.message || "Greška pri kreiranju posta");
+    });
+};
+  
   const publishPost = async (id: number) => {
     if (!token) return;
-    try {
-      const res = await apiClient<PostDTO>(ENDPOINTS.POSTS.PUBLISH(id), 'PUT', null,token);
-      alert("Post je sada javan!");
-      fetchPosts();
-      fetchDrafts();
-      
-    } catch (err:any) { 
+    apiClient<PostDTO>(ENDPOINTS.POSTS.PUBLISH(id), 'PUT', null,token)
+    .then((data) => {
+      setPosts((prevPosts) => [data, ...prevPosts]);
+      toast.success("Post je sada javan!");
+      //fetchPosts();
+      //fetchDrafts();
+      setDrafts((prevDrafts) => prevDrafts.filter(draft => draft.id !== id));
+    }) 
+    .catch ((err:any) => { 
       console.error(err); 
-      setMessage(err.message);
-    }
+      toast.error(err);
+    })
   };
 
   const fetchMyPosts = async () => {
     if (!token) return;
-
-    try {
-      const data= await apiClient<PostDTO[]>(ENDPOINTS.POSTS.MYPOSTS, 'GET', null, token);
+    apiClient<PostDTO[]>(ENDPOINTS.POSTS.MYPOSTS, 'GET', null, token)
+    .then((data) => {
       setMyPosts(data);
-
-    } catch (err:any) {
+    })
+    .catch ((err:any) => {
       console.error("Greška:", err);
-      setMessage(err.message);
-    }
+      toast.error(err);
+    })
   };
 
   

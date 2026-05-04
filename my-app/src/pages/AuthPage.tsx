@@ -24,6 +24,7 @@ export const AuthPage = ({auth}: AuthPageProps) => {
               placeholder="Ime" 
               value={auth.regName}
               onChange={auth.setRegName}
+              required 
             />
             <Input 
               type="email" 
@@ -39,8 +40,8 @@ export const AuthPage = ({auth}: AuthPageProps) => {
               onChange={auth.setRegPassword}
               required 
             />
-            <Button type="submit">Napravi nalog</Button>
-            {auth.regMessage && <p className="status-message success">{auth.regMessage}</p>}
+            <Button type="submit" className disabled={auth.loading}>{auth.loading ? "Učitavanje..." : "Napravi nalog"}</Button>
+            {auth.regMessage && <p className={`status-message ${auth.regMessage.includes('Uspešan') ? 'success' : 'warning'}`}>{auth.regMessage}</p>}
           </form>
         </Card>
 
@@ -61,8 +62,8 @@ export const AuthPage = ({auth}: AuthPageProps) => {
               onChange={auth.setPassword}
               required 
             />
-            <Button type="submit">Prijavi se</Button>
-            {auth.message && <p className="status-message warning">{auth.message}</p>}
+            <Button type="submit" className disabled={auth.loading}>{auth.loading ? "Učitavanje..." : "Prijavi se"}</Button>
+            {auth.message && <p className={`status-message ${auth.message.includes('Uspešan') ? 'success' : 'warning'}`}>{auth.message}</p>}
           </form>
         </Card>
       </div>

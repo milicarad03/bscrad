@@ -9,9 +9,10 @@ interface PostFormProps {
   setTitle: (val: string) => void;
   content: string;
   setContent: (val: string) => void;
+  message:string;
 }
 
-export const PostForm = ({ onSubmit, title, setTitle, content, setContent }: PostFormProps) => (
+export const PostForm = ({ onSubmit, title, setTitle, content, setContent, message }: PostFormProps) => (
   <Card title="Novi Post">
     <form onSubmit={onSubmit} className="auth-form">
       <Input 
@@ -25,8 +26,10 @@ export const PostForm = ({ onSubmit, title, setTitle, content, setContent }: Pos
         value={content}
         onChange={setContent}
         isTextArea
+        required
       />
       <Button type="submit">Objavi post</Button>
+      {message && <p className={`status-message ${message.includes('Uspešan') ? 'success' : 'warning'}`}>{message}</p>}
     </form>
   </Card>
 );

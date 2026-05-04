@@ -8,7 +8,7 @@ import { Dashboard } from './pages/Dashboard'
 import {AuthPage} from './pages/AuthPage'
 import {usePosts} from './hooks/usePosts'
 import {useAuth} from './hooks/useAuth'
-
+import { Toaster } from 'react-hot-toast';
 
 function App() {
 
@@ -18,7 +18,7 @@ function App() {
   useEffect(() => {
     if(auth.isLoggedIn && auth.token){
     auth.fetchProfile();
-    auth.fetchUsers();
+    //auth.fetchUsers();
     post.fetchDrafts();
     post.fetchPosts();
     }
@@ -26,6 +26,16 @@ function App() {
 
   return (
   <BrowserRouter>
+  <Toaster 
+      position="top-center" 
+      toastOptions={{
+        duration: 3000,
+        style: {
+          background: '#333',
+          color: '#fff',
+        },
+      }} 
+    />
     <Routes>
       {/* RUTA 1: LOGIN I REGISTRACIJA */}
       <Route 

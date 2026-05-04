@@ -16,7 +16,7 @@ export const Dashboard = ({auth,post}: DashboardProps) => {
   return (
     <section id="center">
       {/* HERO SEKCIJA */}
-      <div className="hero">
+      <div className="dashboard">
         <h1>Dashboard</h1>
         {auth.profile && (
           <Card style={{ background: 'rgba(255,255,255,0.1)', marginTop: '10px', border: '1px solid rgba(255,255,255,0.2)' }}>
@@ -34,8 +34,9 @@ export const Dashboard = ({auth,post}: DashboardProps) => {
         </Button>
 
         {/* LISTA KORISNIKA */}
-       <UsersList users={auth.users}/>
-
+        {auth.profile?.role=='ADMIN'&&(
+       <UsersList users={auth.users} onDelete={auth.handleDeleteUser} onUsers={auth.fetchUsers}/>
+        )}
         {/* FORMA ZA NOVI POST */}
        <PostForm 
         onSubmit={post.handleCreatePost}
@@ -43,6 +44,7 @@ export const Dashboard = ({auth,post}: DashboardProps) => {
         setTitle={post.setNewPostTitle}
         content={post.newPostContent}
         setContent={post.setNewPostContent}
+        message={post.message}
         />
         <PostList posts={post.posts}/>
         <DraftList drafts={post.drafts} onPublish={post.publishPost}/>

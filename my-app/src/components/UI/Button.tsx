@@ -1,9 +1,17 @@
-export const Button = ({ onClick, children, className = "", type = "button", style = {} }: any) => (
+export const Button = ({ 
+  onClick, 
+  children, 
+  className = "btn-primary",
+  type = "button", 
+  style = {}, 
+  disabled = false 
+}: any) => (
   <button 
     type={type} 
     onClick={onClick} 
-    className={`btn-auth ${className}`} 
+    className={`btn ${className}`} 
     style={style}
+    disabled={disabled}
   >
     {children}
   </button>

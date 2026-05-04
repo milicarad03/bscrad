@@ -7,6 +7,7 @@ export const ENDPOINTS = {
     REGISTER: `${API_BASE_URL}/users/user`,
     PROFILE: `${API_BASE_URL}/users/profile`,
     ALL_USERS: `${API_BASE_URL}/users/allusers`,
+    DELETE_USER: (id: number) => `${API_BASE_URL}/users/user/${id}`,
   },
   POSTS: {
     FEED: `${API_BASE_URL}/post/feed`,
