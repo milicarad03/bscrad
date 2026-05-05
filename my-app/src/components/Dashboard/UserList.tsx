@@ -1,6 +1,6 @@
 import { Card } from '../../components/UI/Card';
 import type {UserDTO} from '../../models/auth.dto'
-
+import { RotateCw } from 'lucide-react';
 import { Button } from '../UI/Button';
 interface UserListProps{
     users: UserDTO[];
@@ -12,11 +12,8 @@ export const UsersList=({users, onDelete, onUsers}:UserListProps)=>{
     return (
     <Card title="Users from backend:">
       <div style={{ marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
-                <Button 
-                    onClick={onUsers} 
-                    style={{ fontSize: '0.8rem', backgroundColor: '#1bb48b' }}
-                >
-                    Osveži listu korisnika
+                <Button onClick={onUsers} className="btn-refresh" title="Osveži listu">
+                    <RotateCw size={18} />
                 </Button>
             </div>
       <div style={{ textAlign: 'left' }}>
@@ -28,17 +25,17 @@ export const UsersList=({users, onDelete, onUsers}:UserListProps)=>{
             <div 
               key={user.id} 
               style={{ 
-                borderBottom: '1px solid #1bb48b', 
+                borderBottom: '1px solid #8bbdb0', 
                 padding: '10px 0',
                 display: 'flex',
                 flexDirection: 'column'
               }}
             >
              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <strong style={{ color: '#1169bc', fontSize: '1rem' }}>
+                <strong style={{ color: '#81a4e4', fontSize: '1rem' }}>
                   {user.name}
                 </strong>
-                <span style={{ opacity: 0.7, fontSize: '0.85rem', color: '#646cff' }}>
+                <span style={{ opacity: 0.7, fontSize: '0.85rem', color: '#e0e867' }}>
                   {user.email}
                 </span>
               </div>
@@ -49,7 +46,7 @@ export const UsersList=({users, onDelete, onUsers}:UserListProps)=>{
                   }
                 }}
                 style={{ 
-                  backgroundColor: '#e74c3c', 
+                  backgroundColor: '#81a4e4', 
                   padding: '5px 12px', 
                   fontSize: '0.8rem',
                   minWidth: 'auto',

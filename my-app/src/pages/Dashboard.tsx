@@ -7,50 +7,74 @@ import {UsersList} from '../components/Dashboard/UserList'
 import {PostForm} from '../components/Dashboard/PostForm'
 import {PostList} from '../components/Dashboard/PostList'
 import {DraftList} from '../components/Dashboard/DraftList'
+import { useState } from 'react';
+import { Sidebar } from '../components/Dashboard/Sidebar';
+
 interface DashboardProps {
   post:ReturnType<typeof usePosts>
   auth:ReturnType<typeof useAuth>
 }
 
-export const Dashboard = ({auth,post}: DashboardProps) => {
+
+
+export const Dashboard = ({ auth, post }: DashboardProps) => {
+  const [activeTab, setActiveTab] = useState('profile'); // Default strana
+
   return (
-    <section id="center">
-      {/* HERO SEKCIJA */}
-      <div className="dashboard">
-        <h1>Dashboard</h1>
-        {auth.profile && (
-          <Card style={{ background: 'rgba(255,255,255,0.1)', marginTop: '10px', border: '1px solid rgba(255,255,255,0.2)' }}>
-            <p style={{ margin: 0 }}>Ulogovan kao: <strong>{auth.profile.email}</strong></p>
-            <p style={{ margin: 0 }}>Uloga: <span style={{ color: '#ffa500', fontWeight: 'bold' }}>{auth.profile.role}</span></p>
-          </Card>
-        )}
-      </div>
+    <div className="dashboard-layout">
+      <Sidebar 
+        profile={auth.profile} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onLogout={auth.handleLogout}
+      />
 
-      <div className="dashboard-view">
-        {auth.message && <p className="status-message success">{auth.message}</p>}
+      <main className="dashboard-content">
+        {/* DINAMIČKI PRIKAZ SEKCIJA */}
         
-        <Button variant="danger" onClick={auth.handleLogout} style={{ marginBottom: '20px' }}>
-          Odjavi se
-        </Button>
-
-        {/* LISTA KORISNIKA */}
-        {auth.profile?.role=='ADMIN'&&(
-       <UsersList users={auth.users} onDelete={auth.handleDeleteUser} onUsers={auth.fetchUsers}/>
+        {activeTab === 'profile' &&  auth.profile  &&(
+          <div className="view-section">
+            <h2>Korisnički Profil</h2>
+            <Card>
+              <p>Email: {auth.profile?.email}</p>
+              <p>Role: {auth.profile?.role}</p>
+              <p>ID: {auth.profile?.id}</p>
+            </Card>
+          </div>
         )}
-        {/* FORMA ZA NOVI POST */}
-       <PostForm 
-        onSubmit={post.handleCreatePost}
-        title={post.newPostTitle}
-        setTitle={post.setNewPostTitle}
-        content={post.newPostContent}
-        setContent={post.setNewPostContent}
-        message={post.message}
-        />
-        <PostList posts={post.posts}/>
-        <DraftList drafts={post.drafts} onPublish={post.publishPost}/>
 
-       
-      </div>
-    </section>
+        {activeTab === 'overview' && (
+          <div className="view-section">
+            <h2>Overview</h2>
+            <p>Ovde će biti statistika...</p>
+          </div>
+        )}
+
+        {activeTab === 'devices' && (
+          <div className="view-section">
+            <h2>Device Management</h2>
+            <p>Prazna strana za uređaje.</p>
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="view-section">
+            <h2>Obaveštenja</h2>
+            <p>Trenutno nema novih obaveštenja.</p>
+          </div>
+        )}
+
+        {activeTab === 'users' && auth.profile?.role === 'ADMIN' && (
+          <div className="view-section">
+            <h2>Upravljanje korisnicima</h2>
+            <UsersList 
+              users={auth.users} 
+              onDelete={auth.handleDeleteUser} 
+              onUsers={auth.fetchUsers}
+            />
+          </div>
+        )}
+      </main>
+    </div>
   );
 };
