@@ -3,6 +3,7 @@ interface InputProps {
   onChange: (val: string) => void;
   placeholder?: string;
   type?: string;
+  label?:string
   isTextArea?: boolean;
   required?: boolean;
 }

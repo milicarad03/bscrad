@@ -1,0 +1,23 @@
+body {
+  margin: 0;
+  background: radial-gradient(circle at 50% -20%, #1a1a1e, #020203);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-weight: 400;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Centriranje Login/Register stranice */
+#center:not(:has(.dashboard-layout)) {
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at center, rgba(0, 242, 255, 0.04) 0%, transparent 70%);
+}

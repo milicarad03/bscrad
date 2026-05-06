@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate ,useNavigate} from 'react-router
 import { Dashboard } from './pages/Dashboard'
 import {AuthPage} from './pages/AuthPage'
 import {usePosts} from './hooks/usePosts'
+import {useDevice} from './hooks/useDevice'
 import {useAuth} from './hooks/useAuth'
 import { Toaster } from 'react-hot-toast';
 
@@ -14,6 +15,7 @@ function App() {
 
   const auth= useAuth();
   const post=usePosts(auth.token);
+  const device=useDevice(auth.token);
 
   useEffect(() => {
     if(auth.isLoggedIn && auth.token){
@@ -32,6 +34,7 @@ function App() {
         duration: 3000,
         style: {
           background: '#333',
+          fontFamily: 'Raleway, sans-serif',
           color: '#fff',
         },
       }} 
@@ -48,7 +51,7 @@ function App() {
       <Route 
         path="/dashboard" 
         element={
-          auth.isLoggedIn ? ( <Dashboard auth={auth} post={post}/>) : (<Navigate to="/" />)
+          auth.isLoggedIn ? ( <Dashboard auth={auth} post={post} device={device}/>) : (<Navigate to="/" />)
         } 
       />
 

@@ -15,5 +15,13 @@ export const ENDPOINTS = {
     DRAFTS: `${API_BASE_URL}/post/drafts`,
     MYPOSTS:`${API_BASE_URL}/post/myposts`,
     PUBLISH: (id: number) => `${API_BASE_URL}/post/publish/${id}`,
+  },
+  DEVICE: {
+    CREATE: `${API_BASE_URL}/device`,
+    MY_DEVICES: `${API_BASE_URL}/device/my-devices`,
+    FEED: `${API_BASE_URL}/device/feed`,
+    GET_ONE: (id: number) => `${API_BASE_URL}/device/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/device/${id}`,
+    TOGGLE: (id: string) => `${API_BASE_URL}/device/${id}/toggle`,
   }
 };

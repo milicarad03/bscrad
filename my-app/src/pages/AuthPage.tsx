@@ -10,7 +10,7 @@ interface AuthPageProps {
 }
 
 export const AuthPage = ({ auth }: AuthPageProps) => {
-  // Stanje koje prati koja je forma aktivna
+
   const [isLogin, setIsLogin] = useState(true);
 
   return (
@@ -34,13 +34,13 @@ export const AuthPage = ({ auth }: AuthPageProps) => {
               />
               <Input 
                 type="password" 
-                placeholder="Šifra" 
+                placeholder="Password" 
                 value={auth.password}
                 onChange={auth.setPassword}
                 required 
               />
               <Button type="submit" className="btn-login" disabled={auth.loading}>
-                {auth.loading ? "Učitavanje..." : "Prijavi se"}
+                {auth.loading ? "Loading. .." : "Login"}
               </Button>
               {auth.message && <p className={`status-message ${auth.message.includes('Uspešan') ? 'success' : 'warning'}`}>{auth.message}</p>}
             </form>
@@ -48,7 +48,7 @@ export const AuthPage = ({ auth }: AuthPageProps) => {
             /* --- REGISTRACIJA FORMA --- */
             <form onSubmit={auth.handleRegister} className="auth-form">
               <Input 
-                placeholder="Ime" 
+                placeholder="Name" 
                 value={auth.regName}
                 onChange={auth.setRegName}
                 required 
@@ -62,13 +62,13 @@ export const AuthPage = ({ auth }: AuthPageProps) => {
               />
               <Input 
                 type="password" 
-                placeholder="Šifra" 
+                placeholder="Password" 
                 value={auth.regPassword}
                 onChange={auth.setRegPassword}
                 required 
               />
               <Button type="submit" className="btn-register" disabled={auth.loading}>
-                {auth.loading ? "Učitavanje..." : "Napravi nalog"}
+                {auth.loading ? "Loading..." : "Create account"}
               </Button>
               {auth.regMessage && <p className={`status-message ${auth.regMessage.includes('Uspešan') ? 'success' : 'warning'}`}>{auth.regMessage}</p>}
             </form>
@@ -77,9 +77,9 @@ export const AuthPage = ({ auth }: AuthPageProps) => {
           {/* Switcher dugme */}
           <div className="auth-switch">
             <p>
-              {isLogin ? "Nemate nalog?" : "Već imate nalog?"}
+              {isLogin ? "Sign in" : "Do you already have an account?"}
               <button onClick={() => setIsLogin(!isLogin)}>
-                {isLogin ? "Registrujte se" : "Prijavite se"}
+                {isLogin ? "Register" : "Login"}
               </button>
             </p>
           </div>

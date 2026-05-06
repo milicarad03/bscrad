@@ -1,0 +1,16 @@
+:root {
+  --font-header: 'Orbitron', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+  --font-main: 'Raleway', sans-serif; 
+  
+  --bg-dark: #384271;
+  --bg-card: #090911;
+  --accent-neon: #00f2ff;
+  --accent-danger: #a45d75;
+  --text-main: #b9c6da;
+  --text-dim: #acacc7;
+  --border-color: rgba(0, 242, 255, 0.1); 
+  --sidebar-bg: #0a133c;
+  --glass: rgba(255, 255, 255, 0.03);
+  --input-bg: rgba(0, 0, 0, 0.4);
+}

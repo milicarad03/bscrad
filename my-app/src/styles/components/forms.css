@@ -1,0 +1,17 @@
+.form-actions {
+  display: flex;
+  gap: 12px;
+  marginTop: 25px;
+}
+/* --- STATUS MESSAGES --- */
+.status-message {
+  font-size: 12px;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 10px;
+  text-align: center;
+  font-family: var(--font-main);
+}
+
+.status-message.success { color: #42b883; background: rgba(66, 184, 131, 0.1); border: 1px solid rgba(66, 184, 131, 0.2); }
+.status-message.warning { color: var(--accent-danger); background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.2); }

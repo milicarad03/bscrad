@@ -18,7 +18,7 @@ interface SidebarProps {
 export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarProps) => {
   // Definišemo stavke sa pripadajućim ikonicama
   const menuItems = [
-    { id: 'profile', label: 'Moj Profil', icon: <User size={18} /> },
+    { id: 'profile', label: 'My Account', icon: <User size={18} /> },
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
     { id: 'devices', label: 'Device Management', icon: <Cpu size={18} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
@@ -50,7 +50,7 @@ export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarP
 
       <Button variant="danger" onClick={onLogout} className="logout-btn">
         <LogOut size={18} style={{ marginRight: '8px' }} />
-        Odjavi se
+        Logout
       </Button>
     </aside>
   );
