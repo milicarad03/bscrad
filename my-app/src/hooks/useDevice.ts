@@ -17,30 +17,37 @@ export const useDevice = (token: string | null) => {
   const [myDevices, setMyDevices] = useState<DeviceDTO[]>([]);
   const [devices, setDevices] = useState<DeviceDTO[]>([]);
   const [message, setMessage] = useState('');
+  const [selectedTargetUser, setSelectedTargetUser] = useState<string | number>('');
 
 
 const handleCreateDevice = (e: React.SyntheticEvent) => {
   if (!token) return;
   e.preventDefault();
+  setLoading(true);
 
   const dataCreateDevice: CreateDeviceDTO = {
     serialNumber: newSerialNumber,
     name: newDeviceName,
-    type:newDeviceType
+    type:newDeviceType,
+    targetUserId: selectedTargetUser ? Number(selectedTargetUser) : undefined
   };
 
   apiClient<DeviceDTO>(ENDPOINTS.DEVICE.CREATE, 'POST', dataCreateDevice, token)
     .then((newDeviceFromServer) => {
-      setMessage(`Device "${newDeviceFromServer.name}" je uspešno kreiran!`);
+      setMessage(`Device "${newDeviceFromServer.name}" created successfully!`);
       setNewDeviceName('');
       setNewSerialNumber('');
       setNewDeviceType('');
+      setSelectedTargetUser('');
       
     })
     .catch((err: any) => {
       console.error(err);
-      toast.error(err.message || "Greška pri kreiranju posta");
-    });
+      toast.error(err.message || "Error creating device");
+    })
+     .finally(() => {
+        setLoading(false);
+      });
 };
 
 
@@ -52,11 +59,22 @@ const fetchDevices = async () => {
     })
      .catch ((err:any) => { 
       console.error(err); 
-      toast.error(err);
+      toast.error(err || "Failed to fetch devices");
      // setMessage(err.message);
     })
   };
-
+const fetchMyDevices = async () => {
+   if (!token) return;
+   apiClient<DeviceDTO[]>(ENDPOINTS.DEVICE.MY_DEVICES, 'GET', null, token)
+     .then((data) =>{
+      setMyDevices(data);
+    })
+     .catch ((err:any) => { 
+      console.error(err); 
+      toast.error(err || "Failed to fetch devices");
+     // setMessage(err.message);
+    })
+  };
 const resetForm = () => {
   setMessage('');
   setNewDeviceName('');
@@ -66,7 +84,7 @@ const resetForm = () => {
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, fetchMyDevices, selectedTargetUser, setSelectedTargetUser
 };
 
 };

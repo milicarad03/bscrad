@@ -4,7 +4,7 @@ import { Card } from '../components/UI/Card';
 import { Input } from '../components/UI/Input';
 import { Button } from '../components/UI/Button';
 import { useAuth } from '../hooks/useAuth';
-
+import { Form } from '../components/UI/Form';
 interface AuthPageProps {
   auth: ReturnType<typeof useAuth>;
 }
@@ -12,6 +12,20 @@ interface AuthPageProps {
 export const AuthPage = ({ auth }: AuthPageProps) => {
 
   const [isLogin, setIsLogin] = useState(true);
+
+  const loginFileds=[
+    {type :"email", label: "Email", placeholder :"Email", value : auth.email,  onChange :auth.setEmail, required : true},
+    {type :"password", label : "Password", placeholder :"Password", value : auth.password,  onChange :auth.setPassword, required : true}
+
+  ];
+
+  const registerFileds=[
+    {type :"name", label : "Name", placeholder :"Name", value : auth.regName,  onChange :auth.setRegName, required : true},
+    {type :"email", label :" Email" , placeholder :"Email", value : auth.regEmail,  onChange :auth.setRegEmail, required : true},
+    {type :"password",label: "Password" ,placeholder :"Password", value : auth.regPassword,  onChange :auth.setRegPassword, required : true}
+
+  ];
+
 
   return (
     <section id="center">
@@ -21,69 +35,27 @@ export const AuthPage = ({ auth }: AuthPageProps) => {
       </div>
 
       <div className="auth-container">
-        <Card title={isLogin ? "Login" : "Register"}>
-          {isLogin ? (
-            /* --- LOGIN FORMA --- */
-            <form onSubmit={auth.handleLogin} className="auth-form">
-              <Input 
-                type="email" 
-                placeholder="Email" 
-                value={auth.email}
-                onChange={auth.setEmail}
-                required 
-              />
-              <Input 
-                type="password" 
-                placeholder="Password" 
-                value={auth.password}
-                onChange={auth.setPassword}
-                required 
-              />
-              <Button type="submit" className="btn-login" disabled={auth.loading}>
-                {auth.loading ? "Loading. .." : "Login"}
-              </Button>
-              {auth.message && <p className={`status-message ${auth.message.includes('Uspešan') ? 'success' : 'warning'}`}>{auth.message}</p>}
-            </form>
-          ) : (
-            /* --- REGISTRACIJA FORMA --- */
-            <form onSubmit={auth.handleRegister} className="auth-form">
-              <Input 
-                placeholder="Name" 
-                value={auth.regName}
-                onChange={auth.setRegName}
-                required 
-              />
-              <Input 
-                type="email" 
-                placeholder="Email" 
-                value={auth.regEmail}
-                onChange={auth.setRegEmail}
-                required 
-              />
-              <Input 
-                type="password" 
-                placeholder="Password" 
-                value={auth.regPassword}
-                onChange={auth.setRegPassword}
-                required 
-              />
-              <Button type="submit" className="btn-register" disabled={auth.loading}>
-                {auth.loading ? "Loading..." : "Create account"}
-              </Button>
-              {auth.regMessage && <p className={`status-message ${auth.regMessage.includes('Uspešan') ? 'success' : 'warning'}`}>{auth.regMessage}</p>}
-            </form>
-          )}
+        <Form
+          title={isLogin ? "Login" : "Register"}
+          submitLabel ={isLogin ? "Login" : "Create an account"}
+          onSubmit={isLogin ? auth.handleLogin :auth.handleRegister}
+          loading={auth.loading}
+          message={isLogin? auth.message  : auth. regMessage}
+          fields={isLogin? loginFileds : registerFileds}
 
+        />
           {/* Switcher dugme */}
           <div className="auth-switch">
             <p>
               {isLogin ? "Sign in" : "Do you already have an account?"}
-              <button onClick={() => setIsLogin(!isLogin)}>
+              <button onClick={() => {
+                auth.setMessage(''); 
+                auth.setRegMessage('');
+                setIsLogin(!isLogin)}}>
                 {isLogin ? "Register" : "Login"}
               </button>
             </p>
           </div>
-        </Card>
       </div>
     </section>
   );

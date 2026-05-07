@@ -12,4 +12,5 @@ export interface CreateDeviceDTO {
   serialNumber: string;
   name?: string;
   type?: string;
+  targetUserId?: number;
 }

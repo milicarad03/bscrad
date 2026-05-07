@@ -10,3 +10,5 @@
 /* 3. LAYOUTS (Specifični ekrani i struktura) */
 @import './styles/layouts/auth.css';
 @import './styles/layouts/dashboard.css';
+@import './styles/layouts/modal.css';
+@import './styles/layouts/DeviceDetails.css';

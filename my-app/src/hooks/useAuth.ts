@@ -29,13 +29,13 @@ export const useAuth = () => {
      .catch ((err:any) => {
       if(err.message.includes('401')) handleLogout();
       toast.error(err.message);
-      console.error("Greška pri dovlačenju profila:", err);
+      console.error("Error fetching profile", err);
     })
   };
 
   const fetchUsers = async () => {
     if (!token) {
-      console.log("Nema tokena, preskačem fetch.");
+      console.log("No token , skipping fetch");
       setUsers([]);
       return;
     }
@@ -54,16 +54,16 @@ export const useAuth = () => {
   const handleLogin = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!email || !password) {
-    setMessage("Sva polja su obavezna!"); 
+    setMessage("Email and password are required!"); 
     return;
   }
 
-    setMessage('Slanje...');
+    setMessage('Sending login request..');
     setLoading(true);
 
     apiClient<LoginDTO>(ENDPOINTS.AUTH.LOGIN, 'POST', { email, password })
       .then((data) => {
-        setMessage(`Uspešan login! Dobrodošli, ${data.user.name || data.user.email}`);
+        setMessage(`Login successful, welcome ${data.user.name || data.user.email}`);
       
         sessionStorage.setItem('userEmail', data.user.email);
         sessionStorage.setItem('token', data.accessToken);
@@ -73,8 +73,8 @@ export const useAuth = () => {
         setProfile(data.user);
       })
       .catch((err: any) => {
-        console.error("Login greška:", err);
-        setMessage(err.message || 'Neispravni podaci.');
+        console.error("Login error:", err);
+        setMessage(err.message || 'Invalid data.');
       })
       
       .finally(() => {
@@ -85,19 +85,19 @@ export const useAuth = () => {
   
   const handleRegister = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    setRegMessage('Registracija u toku...');
-     setLoading(true);
+    setRegMessage('Sending registration request..');
+    setLoading(true);
 
    apiClient<UserDTO>(ENDPOINTS.AUTH.REGISTER, 'POST', { name:regName, email:regEmail, password:regPassword})
     .then((data)=>{
-      setRegMessage(`Uspešno ste se registrovali, ${data.name}! Sada se možete prijaviti.`);
+      setRegMessage(`Registration successful, ${data.name}! You can now login.`);
       setRegName('');
       setRegEmail('');
       setRegPassword('');
     })
     .catch ((err:any) =>{
-     console.error("Login greška:", err);
-        setRegMessage(err.message || 'Neispravni podaci.');
+     console.error("Registration error:", err);
+        setRegMessage(err.message || 'Invalid data');
       })
     .finally(() => {
         setLoading(false);
@@ -109,7 +109,7 @@ export const useAuth = () => {
     sessionStorage.clear();
     setIsLoggedIn(false)
     setUsers([]);
-    setMessage('Odjavljeni ste.'); 
+    setMessage('Logged out successfully'); 
     setEmail(''); 
     setPassword('');
     setToken(null);
@@ -119,7 +119,7 @@ export const useAuth = () => {
   const handleDeleteUser = (id: number | string) => {
     apiClient(ENDPOINTS.AUTH.DELETE_USER(Number(id)), 'DELETE', null, token)
         .then(() => {
-            toast.success("Korisnik obrisan");
+            toast.success("User deleted");
             setUsers(prev => prev.filter(u => u.id !== id));
         })
         .catch(err => toast.error(err.message));
@@ -130,7 +130,7 @@ export const useAuth = () => {
     token, isLoggedIn, profile, users,
     email, setEmail, password, setPassword, message,
     regName, setRegName, regEmail, setRegEmail, regPassword, setRegPassword, regMessage,
-    handleLogin, handleRegister, handleLogout, fetchProfile, fetchUsers, loading, handleDeleteUser
+    handleLogin, handleRegister, handleLogout, fetchProfile, fetchUsers, loading, handleDeleteUser, setMessage, setRegMessage
   };
 
   

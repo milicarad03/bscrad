@@ -2,7 +2,8 @@
 /* --- SIDEBAR --- */
 .dashboard-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -12,6 +13,7 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
+  flex-shrink: 0; /* Ne dozvoljava Sidebaru da se skupi */
 }
 
 .sidebar-user-info {
@@ -31,7 +33,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex-grow: 1;
+  flex-grow: 1; /* Zauzima sav prostor do dna */
 }
 
 .nav-item {
@@ -128,15 +130,19 @@
 }
 
 .view-header h2 {
-  margin: 0; /* Resetujemo marginu da bi bili u ravni */
-  border-bottom: none; /* Skidamo stari border sa h2 */
+  margin: 0; 
+  border-bottom: none; 
   padding-bottom: 0;
 }
 /* --- DASHBOARD CONTENT --- */
+/* --- IZMENA: Nezavisni scroll --- */
 .dashboard-content {
   flex-grow: 1;
   padding: 60px;
   background: radial-gradient(circle at top left, rgba(0, 242, 255, 0.015), transparent 40%);
+  
+  overflow-y: auto; /* Ovo dodaje scroll samo na desnu stranu */
+  height: 100%;
 }
 
 .view-section h2 {

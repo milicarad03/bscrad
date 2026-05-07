@@ -8,9 +8,11 @@ interface DeviceListProps {
   device: DeviceDTO[];
   onDelete: (id: number) => void;
   onDevice: (e: React.SyntheticEvent) => void;
+  onDeviceClick: (dev: DeviceDTO) => void;
+  isAdmin :boolean
 }
 
-export const DeviceList = ({ device, onDelete, onDevice }: DeviceListProps) => {
+export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin}: DeviceListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Logika za filtriranje po imenu ili tipu
@@ -58,17 +60,22 @@ export const DeviceList = ({ device, onDelete, onDevice }: DeviceListProps) => {
               </tr>
             ) : (
               filteredDevices.map((dev) => (
-                <tr key={dev.id}>
+                <tr key={dev.id}
+                onClick={() => onDeviceClick(dev)} 
+                style={{ cursor: 'pointer' }} 
+                className="table-row-hover">
                   <td style={{ color: '#81a4e4', fontWeight: 'bold' }}>{dev.name}</td>
                   <td>
                     <span style={{ color: '#e0e867', fontSize: '0.8rem' }}>{dev.type}</span>
                   </td>
                   <td style={{ opacity: 0.8 }}>{dev.serialNumber}</td>
                   <td style={{ textAlign: 'right' }}>
+                  {isAdmin &&(
                     <button 
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (window.confirm(`DELETE DEVICE: ${dev.serialNumber}?`)) {
-                          onDelete(Number(dev.id)); // Koristi dev.id, ne serialNumber
+                          onDelete(Number(dev.id)); 
                         }
                       }}
                       style={{ 
@@ -80,6 +87,7 @@ export const DeviceList = ({ device, onDelete, onDevice }: DeviceListProps) => {
                     >
                       <Trash2 size={16} />
                     </button>
+                    )}
                   </td>
                 </tr>
               ))

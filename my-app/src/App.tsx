@@ -6,6 +6,7 @@ import './App.css'
 import { BrowserRouter, Routes, Route, Navigate ,useNavigate} from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard'
 import {AuthPage} from './pages/AuthPage'
+import {DeviceDetailsPage} from './pages/DeviceDetailsPage'
 import {usePosts} from './hooks/usePosts'
 import {useDevice} from './hooks/useDevice'
 import {useAuth} from './hooks/useAuth'
@@ -20,9 +21,12 @@ function App() {
   useEffect(() => {
     if(auth.isLoggedIn && auth.token){
     auth.fetchProfile();
-    //auth.fetchUsers();
+   
     post.fetchDrafts();
     post.fetchPosts();
+    }
+    if(auth.profile?.role =="ADMIN"){
+      auth.fetchUsers();
     }
   }, [auth.isLoggedIn,auth.token]);
 
@@ -54,6 +58,16 @@ function App() {
           auth.isLoggedIn ? ( <Dashboard auth={auth} post={post} device={device}/>) : (<Navigate to="/" />)
         } 
       />
+      <Route 
+  path="/device/:id" 
+  element={
+    auth.isLoggedIn ? (
+      <DeviceDetailsPage auth={auth} />
+    ) : (
+      <Navigate to="/" />
+    )
+  } 
+/>
 
     </Routes>
   </BrowserRouter>

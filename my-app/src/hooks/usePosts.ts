@@ -55,13 +55,13 @@ export const usePosts = (token: string | null) => {
    
       setDrafts((prevPosts) => [newPostFromServer, ...prevPosts]);
     
-      setMessage(`Post "${newPostFromServer.title}" je uspešno kreiran!`);
+      setMessage(`Post "${newPostFromServer.title}" created successfully!`);
       setNewPostTitle('');
       setNewPostContent('');
     })
     .catch((err: any) => {
       console.error(err);
-      toast.error(err.message || "Greška pri kreiranju posta");
+      toast.error(err.message || "Error creating post");
     });
 };
   
@@ -70,9 +70,7 @@ export const usePosts = (token: string | null) => {
     apiClient<PostDTO>(ENDPOINTS.POSTS.PUBLISH(id), 'PUT', null,token)
     .then((data) => {
       setPosts((prevPosts) => [data, ...prevPosts]);
-      toast.success("Post je sada javan!");
-      //fetchPosts();
-      //fetchDrafts();
+      toast.success("Post published!");
       setDrafts((prevDrafts) => prevDrafts.filter(draft => draft.id !== id));
     }) 
     .catch ((err:any) => { 
@@ -88,7 +86,7 @@ export const usePosts = (token: string | null) => {
       setMyPosts(data);
     })
     .catch ((err:any) => {
-      console.error("Greška:", err);
+      console.error("Error:", err);
       toast.error(err);
     })
   };
