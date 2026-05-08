@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 
 export const useDevice = (token: string | null) => {
   // 1. STANJA (State)
-  const [device, setDevice] = useState<DeviceDTO[]>([]);
+  
 
   const [newSerialNumber, setNewSerialNumber] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
@@ -32,9 +32,10 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
     targetUserId: selectedTargetUser ? Number(selectedTargetUser) : undefined
   };
 
-  apiClient<DeviceDTO>(ENDPOINTS.DEVICE.CREATE, 'POST', dataCreateDevice, token)
+  apiClient<DeviceDTO>(ENDPOINTS.DEVICE.BASE, 'POST', dataCreateDevice, token)
     .then((newDeviceFromServer) => {
       setMessage(`Device "${newDeviceFromServer.name}" created successfully!`);
+      setDevices(prev => [newDeviceFromServer, ...prev]);
       setNewDeviceName('');
       setNewSerialNumber('');
       setNewDeviceType('');
@@ -51,30 +52,30 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
 };
 
 
-const fetchDevices = async () => {
-   if (!token) return;
-   apiClient<DeviceDTO[]>(ENDPOINTS.DEVICE.FEED, 'GET', null, token)
-     .then((data) =>{
-      setDevices(data);
-    })
-     .catch ((err:any) => { 
-      console.error(err); 
-      toast.error(err || "Failed to fetch devices");
-     // setMessage(err.message);
-    })
+  const fetchDevices = async (filters?: { status?: string; type?: string; own?: boolean }) => {
+    if (!token) return;
+    setLoading(true);
+
+    
+    apiClient<DeviceDTO[]>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
+      .then((data) => {
+        setDevices(data);
+      })
+      .catch((err: any) => {
+        toast.error(err.message || "Failed to fetch devices");
+      })
+      .finally(() => setLoading(false));
   };
-const fetchMyDevices = async () => {
-   if (!token) return;
-   apiClient<DeviceDTO[]>(ENDPOINTS.DEVICE.MY_DEVICES, 'GET', null, token)
-     .then((data) =>{
-      setMyDevices(data);
-    })
-     .catch ((err:any) => { 
-      console.error(err); 
-      toast.error(err || "Failed to fetch devices");
-     // setMessage(err.message);
-    })
-  };
+
+
+  const handleDeleteDevice = (id:  string) => {
+    apiClient(ENDPOINTS.DEVICE.DELETE(id), 'DELETE', null, token)
+        .then(() => {
+            toast.success("Device deleted");
+            setDevices(prev => prev.filter(u => u.id !== id));
+        })
+        .catch(err => toast.error(err.message));
+};
 const resetForm = () => {
   setMessage('');
   setNewDeviceName('');
@@ -84,7 +85,7 @@ const resetForm = () => {
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, fetchMyDevices, selectedTargetUser, setSelectedTargetUser
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUser, setSelectedTargetUser, handleDeleteDevice
 };
 
 };

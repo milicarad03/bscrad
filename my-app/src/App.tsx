@@ -18,17 +18,24 @@ function App() {
   const post=usePosts(auth.token);
   const device=useDevice(auth.token);
 
-  useEffect(() => {
-    if(auth.isLoggedIn && auth.token){
+ useEffect(() => {
+  if (auth.isLoggedIn && auth.token) {
     auth.fetchProfile();
-   
     post.fetchDrafts();
     post.fetchPosts();
-    }
-    if(auth.profile?.role =="ADMIN"){
+  }
+}, [auth.isLoggedIn, auth.token]);
+
+// Ovaj ostaviš za stvari koje BAŠ zavise od profila (kao što je role check)
+useEffect(() => {
+  if (auth.profile) {
+    device.fetchDevices(); // Jedna funkcija za sve
+    
+    if (auth.profile.role === "ADMIN") {
       auth.fetchUsers();
     }
-  }, [auth.isLoggedIn,auth.token]);
+  }
+}, [auth.profile]);
 
   return (
   <BrowserRouter>
@@ -59,13 +66,7 @@ function App() {
         } 
       />
       <Route 
-  path="/device/:id" 
-  element={
-    auth.isLoggedIn ? (
-      <DeviceDetailsPage auth={auth} />
-    ) : (
-      <Navigate to="/" />
-    )
+  path="/device/:id"  element={ auth.isLoggedIn ? ( <DeviceDetailsPage auth={auth} /> ) : ( <Navigate to="/" /> )
   } 
 />
 

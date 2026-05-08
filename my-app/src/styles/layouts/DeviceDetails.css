@@ -1,0 +1,54 @@
+.device-page-container {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.device-header {
+  margin-bottom: 30px;
+}
+
+.highlight {
+  color: #81a4e4;
+  text-transform: uppercase;
+}
+
+.device-content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Leva strana šira, desna uža */
+  gap: 25px;
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.spec-label {
+  color: #666;
+  font-family: 'Courier New', monospace;
+}
+
+.spec-value {
+  color: #fff;
+  font-weight: bold;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.btn-action {
+  width: 100%;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.status-active {
+  color: #4caf50;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}

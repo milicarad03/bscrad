@@ -8,6 +8,7 @@ export const ENDPOINTS = {
     PROFILE: `${API_BASE_URL}/users/profile`,
     ALL_USERS: `${API_BASE_URL}/users/allusers`,
     DELETE_USER: (id: number) => `${API_BASE_URL}/users/user/${id}`,
+    APPROVE_USER: (id: number) => `${API_BASE_URL}/users/approval/${id}`,
   },
   POSTS: {
     FEED: `${API_BASE_URL}/post/feed`,
@@ -17,9 +18,7 @@ export const ENDPOINTS = {
     PUBLISH: (id: number) => `${API_BASE_URL}/post/publish/${id}`,
   },
   DEVICE: {
-    CREATE: `${API_BASE_URL}/device`,
-    MY_DEVICES: `${API_BASE_URL}/device/my-devices`,
-    FEED: `${API_BASE_URL}/device/feed`,
+    BASE: `${API_BASE_URL}/device`,
     GET_ONE: (id: number) => `${API_BASE_URL}/device/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/device/${id}`,
     TOGGLE: (id: string) => `${API_BASE_URL}/device/${id}/toggle`,

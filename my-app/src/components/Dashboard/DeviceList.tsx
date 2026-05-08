@@ -6,21 +6,27 @@ import { useState } from 'react';
 
 interface DeviceListProps {
   device: DeviceDTO[];
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   onDevice: (e: React.SyntheticEvent) => void;
   onDeviceClick: (dev: DeviceDTO) => void;
-  isAdmin :boolean
+  isAdmin :boolean;
+  currentUserId: string | number | undefined;
 }
 
-export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin}: DeviceListProps) => {
+export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin, currentUserId}: DeviceListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showOnlyMine, setShowOnlyMine]=useState(false);
 
   // Logika za filtriranje po imenu ili tipu
-  const filteredDevices = device.filter(dev => 
-    dev.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dev.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dev.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDevices = device.filter(dev => {
+  
+    return (
+      dev.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dev.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dev.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dev.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+});
 
   return (
     <Card title=" SYSTEM DEVICE FEED">
@@ -35,6 +41,7 @@ export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
 
         <Button onClick={onDevice} className="btn-refresh" title="SYNC_DATABASE">
           <RotateCw size={18} />
@@ -48,13 +55,14 @@ export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin}
               <th>Name</th>
               <th>Type</th>
               <th>Serial Number</th>
+              <th>Owner ID</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredDevices.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', opacity: 0.5, padding: '40px' }}>
+                <td colSpan={5} style={{ textAlign: 'center', opacity: 0.5, padding: '40px' }}>
                   NO_DEVICES_MATCH_SEARCH_CRITERIA
                 </td>
               </tr>
@@ -69,13 +77,18 @@ export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin}
                     <span style={{ color: '#e0e867', fontSize: '0.8rem' }}>{dev.type}</span>
                   </td>
                   <td style={{ opacity: 0.8 }}>{dev.serialNumber}</td>
+                  <td>
+                    <span style={{ color: '#aaa', fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                      {dev.user? `USER_${dev.user.email}` : 'UNASSIGNED'}
+                    </span>
+                  </td>
                   <td style={{ textAlign: 'right' }}>
                   {isAdmin &&(
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         if (window.confirm(`DELETE DEVICE: ${dev.serialNumber}?`)) {
-                          onDelete(Number(dev.id)); 
+                          onDelete(dev.id); 
                         }
                       }}
                       style={{ 

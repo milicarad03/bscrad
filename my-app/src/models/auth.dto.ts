@@ -1,8 +1,9 @@
 export interface UserDTO{
-    id:string;
+    id:number | string;
     email:string;
     name?:string;
     role:string;
+    status:string;
 }
 
 export interface LoginDTO{

@@ -16,6 +16,7 @@ import { Sidebar } from '../components/Dashboard/Sidebar';
 import { DeviceDetailsModal} from '../components/Dashboard/DeviceDetailsModal';
 import {useNavigate,useLocation} from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
+
 interface DashboardProps {
   post:ReturnType<typeof usePosts>
   auth:ReturnType<typeof useAuth>
@@ -30,15 +31,13 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
   const [selectedDevice, setSelectedDevice] = useState<any>(null); 
   const [showModal, setShowModal] = useState(false); 
 
-  const openDetails = (dev: any) => {
-    setSelectedDevice(dev);
-    setShowModal(true);
-  };
+
   const navigate=useNavigate();
-  const location=useLocation();
-  //const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'profile');
+ 
+
   const [searchParams, setSearchParams]=useSearchParams();
   const activeTab=searchParams.get('tab') || 'profile' ;
+
   const setActiveTab = (tabName: string) => {
     setSearchParams({ tab: tabName });
   };
@@ -74,36 +73,56 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
           </div>
         )}
 
-        {activeTab === 'devices' && (
-          <div className="view-section">
-            <h2>Device Management</h2>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-         
-              {/* Dugme koje vodi na formu za registraciju */}
-              {auth.profile?.role === 'ADMIN' && (
+      
+
+       {activeTab === 'devices' && (
+        <div className="view-section">
+          {/* 1. Ovu celu kontrolnu tablu prikazujemo SAMO adminima */}
+          {auth.profile?.role === 'ADMIN' && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}>
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
                 <button 
                   className="btn-primary-neon" 
-                  onClick={() => setActiveTab('register-device')}
+                  onClick={() => device.fetchDevices()} 
                 >
-                  + INITIALIZE_REGISTRATION
+                  SHOW_ALL_DATABASE
                 </button>
-              )}
+
+                <button 
+                  className="btn-primary-neon" 
+                  onClick={() => device.fetchDevices({ own: true })}
+                >
+                  VIEW_MY_HARDWARE
+                </button>
+              </div>
+
+              <button 
+                className="btn-primary-neon"
+                onClick={() => setActiveTab('register-device')}
+                style={{ backgroundColor: 'var(--accent-success)', borderColor: 'var(--accent-success)' }}
+              >
+                + REGISTER_NEW_UNIT
+              </button>
             </div>
-            <div className="view-section">
-        
-            <DeviceList 
-              device={auth.profile?.role=="ADMIN" ? device.devices : device.myDevices} 
-              onDelete={auth.handleDeleteUser} 
-              onDevice={auth.profile?.role=="ADMIN" ? device.fetchDevices : device.fetchMyDevices}
-              isAdmin={auth.profile?.role === "ADMIN"} 
-              onDeviceClick={(dev) => {
-              navigate(`/device/${dev.serialNumber}`); 
-            }}
-            />
-          
-          </div>
-          </div>
-         
+          )}
+
+          {/* 2. Ako korisnik NIJE admin, možemo mu ostaviti samo naslov ili prazan prostor */}
+          {auth.profile?.role !== 'ADMIN' && (
+            <div style={{ marginBottom: '15px' }}>
+              <h2 style={{ color: 'var(--accent-neon)' }}>MY_ASSIGNED_DEVICES</h2>
+            </div>
+          )}
+
+          <DeviceList 
+            device={device.devices}
+            onDelete={device.handleDeleteDevice} 
+            onDevice={() => device.fetchDevices()}
+            isAdmin={auth.profile?.role === "ADMIN"}
+            onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
+            currentUserId={auth.profile?.id}
+          />
+        </div>
         )}
 
         {activeTab === 'register-device' && (
@@ -158,6 +177,7 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
             <UsersList 
               users={auth.users} 
               onDelete={auth.handleDeleteUser} 
+              onApprove={auth.handleApproveUser}
               onUsers={auth.fetchUsers}
             />
           </div>

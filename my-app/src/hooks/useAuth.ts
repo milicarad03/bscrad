@@ -41,7 +41,7 @@ export const useAuth = () => {
     }
     apiClient<UserDTO[]>(ENDPOINTS.AUTH.ALL_USERS,'GET', null, token)
      .then((data) => {
-       setUsers(data);
+       setUsers(data.slice().reverse());
       })
      .catch ((err:any) =>{
       if(err.message.includes('401')) handleLogout();
@@ -90,7 +90,7 @@ export const useAuth = () => {
 
    apiClient<UserDTO>(ENDPOINTS.AUTH.REGISTER, 'POST', { name:regName, email:regEmail, password:regPassword})
     .then((data)=>{
-      setRegMessage(`Registration successful, ${data.name}! You can now login.`);
+      setRegMessage(`Registration successful, ${data.name}! You will be able to login once an administrator approves your account.`);
       setRegName('');
       setRegEmail('');
       setRegPassword('');
@@ -123,14 +123,29 @@ export const useAuth = () => {
             setUsers(prev => prev.filter(u => u.id !== id));
         })
         .catch(err => toast.error(err.message));
-};
+  };
+
+  const handleApproveUser = (id: number | string, status : 'APPROVED' | 'REJECTED') => {
+    apiClient(ENDPOINTS.AUTH.APPROVE_USER(+id), 'PATCH', {status}, token)
+        .then(() => {
+          const action = status === 'APPROVED'? 'approved': 'rejected';
+            toast.success(`User ${ action }`);
+            if(status === 'REJECTED'){
+              setUsers(prev => prev.filter(u => u.id !== id));
+              handleDeleteUser(id)
+            }
+            setUsers((prevUsers) => prevUsers.map((user) => user.id === id ? { ...user, status: status } : user));
+        })
+        .catch(err => toast.error(err.message));
+  };
+  
  
 
   return {
     token, isLoggedIn, profile, users,
     email, setEmail, password, setPassword, message,
     regName, setRegName, regEmail, setRegEmail, regPassword, setRegPassword, regMessage,
-    handleLogin, handleRegister, handleLogout, fetchProfile, fetchUsers, loading, handleDeleteUser, setMessage, setRegMessage
+    handleLogin, handleRegister, handleLogout, fetchProfile, fetchUsers, loading, handleDeleteUser, setMessage, setRegMessage, handleApproveUser
   };
 
   

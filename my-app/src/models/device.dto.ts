@@ -1,3 +1,6 @@
+import type {UserDTO} from './auth.dto'
+
+
 export interface DeviceDTO {
   id: string;            // UUID iz baze
   serialNumber: string;  // npr. "SN-100234"
@@ -5,7 +8,9 @@ export interface DeviceDTO {
   type: string;          // npr. "TEMP_SENSOR"
   apiKey?: string;       // Opciono (vidi napomenu ispod)
   isActive: boolean;
-  createdAt: string;     // ISO datum string
+  createdAt: string; 
+  userId:number;   
+  user?: UserDTO
 }
 
 export interface CreateDeviceDTO {
