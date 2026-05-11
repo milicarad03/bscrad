@@ -9,8 +9,10 @@ export interface DeviceDTO {
   apiKey?: string;       // Opciono (vidi napomenu ispod)
   isActive: boolean;
   createdAt: string; 
+ 
   userId:number;   
   user?: UserDTO
+  
 }
 
 export interface CreateDeviceDTO {

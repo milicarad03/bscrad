@@ -29,7 +29,6 @@ export const Form = ({title, fields, onSubmit, submitLabel, loading, message, on
         <form onSubmit={onSubmit} className="auth-form">
 
             {fields.map((f, index)=>(
-
                 <Input
                 key={index}
                 label={f.label}

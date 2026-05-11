@@ -77,50 +77,26 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
 
        {activeTab === 'devices' && (
         <div className="view-section">
-          {/* 1. Ovu celu kontrolnu tablu prikazujemo SAMO adminima */}
-          {auth.profile?.role === 'ADMIN' && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}>
-              
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  className="btn-primary-neon" 
-                  onClick={() => device.fetchDevices()} 
-                >
-                  SHOW_ALL_DATABASE
-                </button>
-
-                <button 
-                  className="btn-primary-neon" 
-                  onClick={() => device.fetchDevices({ own: true })}
-                >
-                  VIEW_MY_HARDWARE
-                </button>
-              </div>
-
-              <button 
-                className="btn-primary-neon"
-                onClick={() => setActiveTab('register-device')}
-                style={{ backgroundColor: 'var(--accent-success)', borderColor: 'var(--accent-success)' }}
-              >
-                + REGISTER_NEW_UNIT
-              </button>
-            </div>
-          )}
-
-          {/* 2. Ako korisnik NIJE admin, možemo mu ostaviti samo naslov ili prazan prostor */}
-          {auth.profile?.role !== 'ADMIN' && (
-            <div style={{ marginBottom: '15px' }}>
-              <h2 style={{ color: 'var(--accent-neon)' }}>MY_ASSIGNED_DEVICES</h2>
-            </div>
-          )}
+         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <h2>Device Management</h2>
+           
+          </div>
 
           <DeviceList 
-            device={device.devices}
+            device={Array.isArray(device.devices) ? device.devices : []}
+            users={auth.users || []}
             onDelete={device.handleDeleteDevice} 
-            onDevice={() => device.fetchDevices()}
+            onDevice={() => device.fetchDevices()} 
             isAdmin={auth.profile?.role === "ADMIN"}
             onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
             currentUserId={auth.profile?.id}
+            onRegister={()=> setActiveTab('register-device')}
+            onFilterChange={(ids) => {
+              device.fetchDevices({userId: ids})
+              device.setSelectedTargetUsers(ids || []);
+            }}
+            targetUserIds={device.selectedTargetUsers || []}
+            
           />
         </div>
         )}
@@ -157,8 +133,8 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
                
                 isAdmin={auth.profile?.role === "ADMIN"}
                 users={auth.users} 
-                selectedTargetUser={device.selectedTargetUser}
-                setSelectedTargetUser={device.setSelectedTargetUser}
+                selectedTargetUser={device.selectedTargetUsers[0] || ''}
+                setSelectedTargetUser={(id) => device.setSelectedTargetUsers([Number(id)])}
             />
             
           </div>

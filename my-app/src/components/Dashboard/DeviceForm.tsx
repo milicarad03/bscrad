@@ -37,7 +37,7 @@ export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setN
             onChange={(e) => setSelectedTargetUser(e.target.value)}
             style={{ width: '100%', padding: '10px', borderRadius: '4px' }}
           >
-            <option value="">-- Me (Default) --</option>
+            <option value=""> Me </option>
             {users.map(u => (
               <option key={u.id} value={u.id}>
                 {u.firstName} {u.lastName} ({u.email})

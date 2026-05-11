@@ -17,7 +17,7 @@ export const useDevice = (token: string | null) => {
   const [myDevices, setMyDevices] = useState<DeviceDTO[]>([]);
   const [devices, setDevices] = useState<DeviceDTO[]>([]);
   const [message, setMessage] = useState('');
-  const [selectedTargetUser, setSelectedTargetUser] = useState<string | number>('');
+  const [selectedTargetUsers, setSelectedTargetUsers] = useState<number[]>([]);
 
 
 const handleCreateDevice = (e: React.SyntheticEvent) => {
@@ -29,17 +29,18 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
     serialNumber: newSerialNumber,
     name: newDeviceName,
     type:newDeviceType,
-    targetUserId: selectedTargetUser ? Number(selectedTargetUser) : undefined
+    targetUserId: selectedTargetUsers.length > 0 ? selectedTargetUsers[0] : undefined
   };
 
   apiClient<DeviceDTO>(ENDPOINTS.DEVICE.BASE, 'POST', dataCreateDevice, token)
     .then((newDeviceFromServer) => {
       setMessage(`Device "${newDeviceFromServer.name}" created successfully!`);
       setDevices(prev => [newDeviceFromServer, ...prev]);
+      fetchDevices();
       setNewDeviceName('');
       setNewSerialNumber('');
       setNewDeviceType('');
-      setSelectedTargetUser('');
+      setSelectedTargetUsers([]);
       
     })
     .catch((err: any) => {
@@ -52,14 +53,13 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
 };
 
 
-  const fetchDevices = async (filters?: { status?: string; type?: string; own?: boolean }) => {
+  const fetchDevices = async (filters?: { status?: string; type?: string; userId?: number[]}) => {
     if (!token) return;
     setLoading(true);
-
     
-    apiClient<DeviceDTO[]>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
-      .then((data) => {
-        setDevices(data);
+    apiClient<{data: DeviceDTO[]; meta : any }>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
+      .then((res) => {
+        setDevices(res.data);
       })
       .catch((err: any) => {
         toast.error(err.message || "Failed to fetch devices");
@@ -85,7 +85,7 @@ const resetForm = () => {
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUser, setSelectedTargetUser, handleDeleteDevice
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice
 };
 
 };

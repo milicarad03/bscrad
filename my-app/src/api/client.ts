@@ -3,16 +3,23 @@ export const apiClient = async <T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
   body?: any,
   token?: string | null,
-  params?: Record<string, string | number | boolean | undefined>
+  params?: Record<string, any>
 ): Promise<T> => {
 
-  let url = endpoint; // Ovde kreiraš URL sa parametrima
+  let url = endpoint;
   if (params) {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        searchParams.append(key, value.toString());
-      }
+        if (Array.isArray(value)) {
+            value.forEach(v => {
+              searchParams.append(key, v.toString());
+            });
+          } else {
+          
+            searchParams.append(key, value.toString());
+          }
+        }
     });
     const queryString = searchParams.toString();
     if (queryString) {
@@ -28,7 +35,7 @@ export const apiClient = async <T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // POPRAVKA: Ovde mora da stoji 'url', ne 'endpoint'
+
   const response = await fetch(url, { 
     method,
     headers,

@@ -192,3 +192,26 @@
   color: var(--accent-neon);
   font-weight: bold;
 }
+/* Stilizacija dugmeta */
+.btn-register-cyber {
+  background: transparent;
+  color: #81a4e4;
+  border: 1px solid #81a4e4;
+  padding: 10px 20px;
+  font-family: 'monospace';
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 5px rgba(129, 164, 228, 0.2);
+}
+
+.btn-register-cyber:hover {
+  background: #81a4e4;
+  color: #000;
+  box-shadow: 0 0 20px rgba(129, 164, 228, 0.6);
+  transform: translateY(-2px);
+}

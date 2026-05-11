@@ -6,16 +6,22 @@ import { useState } from 'react';
 
 interface DeviceListProps {
   device: DeviceDTO[];
+  users: any[];
   onDelete: (id: string) => void;
   onDevice: (e: React.SyntheticEvent) => void;
   onDeviceClick: (dev: DeviceDTO) => void;
   isAdmin :boolean;
   currentUserId: string | number | undefined;
+  onRegister?:() => void;
+
+  onFilterChange:(userIds?: number[] ) => void;
+  targetUserIds: number[];
+  totalCount? : number;
+
 }
 
-export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin, currentUserId}: DeviceListProps) => {
+export const DeviceList = ({ device = [], users = [], onDelete, onDevice, onDeviceClick, isAdmin, currentUserId, onRegister, onFilterChange, targetUserIds=[]}: DeviceListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [showOnlyMine, setShowOnlyMine]=useState(false);
 
   // Logika za filtriranje po imenu ili tipu
   const filteredDevices = device.filter(dev => {
@@ -27,25 +33,120 @@ export const DeviceList = ({ device, onDelete, onDevice, onDeviceClick, isAdmin,
       dev.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 });
-
+const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   return (
-    <Card title=" SYSTEM DEVICE FEED">
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-        {/* Search Polje */}
-        <div className="search-container" style={{ margin: 0 }}>
+   
+    <Card title={isAdmin? " SYSTEM DEVICE FEED" : "MY_ASSIGNED_DEVICES"}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
+        <div className="search-container" style={{ margin: 0, flex: 1 }}>
           <input 
             type="text" 
-            placeholder="FILTER_BY_NAME_OR_TYPE..." 
+            placeholder="SEARCH_BY_NAME_OR_TYPE..." 
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        {isAdmin && (
+          <Button 
+            className="btn-register-cyber" 
+            onClick={onRegister}
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            + REGISTER_DEVICE
+          </Button>
+        )}
+  
+         {isAdmin && (
+          
+          
+          
+            <div className="custom-dropdown-container" style={{ position: 'relative', width: '250px' }}>
+              <p style={{ fontSize: '0.7rem', color: '#888', marginBottom: '5px' }}>FILTER_BY_USERS:</p>
+              
+              {/* Glavni Dropdown "Okidač" */}
+              <div 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                style={{
+                  background: 'rgba(0,0,0,0.4)',
+                  border: '1px solid #444',
+                  padding: '10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  color: '#fff'
+                }}
+              >
+                <span style={{ fontSize: '0.8rem' }}>
+                  {targetUserIds.length > 0 ? `SELECTED (${targetUserIds.length})` : 'SELECT_USERS'}
+                </span>
+                <span>{isDropdownOpen ? '▲' : '▼'}</span>
+              </div>
+
+              {/* Lista koja se pojavljuje */}
+              {isDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#1a1a1a',
+                  border: '1px solid #81a4e4',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                  marginTop: '5px',
+                  borderRadius: '4px'
+                }}>
+                  {users.map(u => (
+                    <label 
+                      key={u.id} 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        padding: '10px', 
+                        gap: '10px', 
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #222',
+                        fontSize: '0.8rem',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(129, 164, 228, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <input 
+                        type="checkbox"
+                        checked={targetUserIds.includes(u.id)}
+                        onChange={(e) => {
+                          const newIds = e.target.checked 
+                            ? [...targetUserIds, u.id] 
+                            : targetUserIds.filter(id => id !== u.id);
+                          onFilterChange(newIds);
+                        }}
+                        style={{ accentColor: '#81a4e4' }}
+                      />
+                      {u.email}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          </div>
+        
+        {/* Search Polje */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+       
         
 
         <Button onClick={onDevice} className="btn-refresh" title="SYNC_DATABASE">
           <RotateCw size={18} />
         </Button>
+      </div>
       </div>
 
       <div style={{ overflowX: 'auto' }}>
