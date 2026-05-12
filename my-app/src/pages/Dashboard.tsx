@@ -91,11 +91,13 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
             onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
             currentUserId={auth.profile?.id}
             onRegister={()=> setActiveTab('register-device')}
-            onFilterChange={(ids) => {
-              device.fetchDevices({userId: ids})
+            onFilterChange={(ids,types) => {
+              device.fetchDevices({userId: ids, type:types})
               device.setSelectedTargetUsers(ids || []);
+              device.setSelectedTypes(types || []);
             }}
             targetUserIds={device.selectedTargetUsers || []}
+            selectedTypes={device.selectedTypes || []}
             
           />
         </div>

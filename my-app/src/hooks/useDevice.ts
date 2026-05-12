@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import type {DeviceDTO} from '../models/device.dto'
 import type {CreateDeviceDTO} from '../models/device.dto'
 import {ENDPOINTS} from '../api/config.ts'
@@ -9,7 +9,6 @@ import { toast } from 'react-hot-toast';
 export const useDevice = (token: string | null) => {
   // 1. STANJA (State)
   
-
   const [newSerialNumber, setNewSerialNumber] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
   const [newDeviceType, setNewDeviceType] = useState('');
@@ -19,6 +18,14 @@ export const useDevice = (token: string | null) => {
   const [message, setMessage] = useState('');
   const [selectedTargetUsers, setSelectedTargetUsers] = useState<number[]>([]);
 
+
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]); 
+  useEffect(() => {
+    
+    setSelectedTypes([]);
+    setSelectedTargetUsers([]);
+  
+  }, [token]); 
 
 const handleCreateDevice = (e: React.SyntheticEvent) => {
   if (!token) return;
@@ -41,6 +48,7 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
       setNewSerialNumber('');
       setNewDeviceType('');
       setSelectedTargetUsers([]);
+      setSelectedTypes([]);
       
     })
     .catch((err: any) => {
@@ -53,7 +61,7 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
 };
 
 
-  const fetchDevices = async (filters?: { status?: string; type?: string; userId?: number[]}) => {
+  const fetchDevices = async (filters?: { status?: string; type?: string[]; userId?: number[]}) => {
     if (!token) return;
     setLoading(true);
     
@@ -75,17 +83,17 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
             setDevices(prev => prev.filter(u => u.id !== id));
         })
         .catch(err => toast.error(err.message));
-};
-const resetForm = () => {
-  setMessage('');
-  setNewDeviceName('');
-  setNewSerialNumber('');
-  setNewDeviceType('');
-};
+  };
+  const resetForm = () => {
+    setMessage('');
+    setNewDeviceName('');
+    setNewSerialNumber('');
+    setNewDeviceType('');
+  };
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes
 };
 
 };

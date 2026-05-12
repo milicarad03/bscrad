@@ -36,7 +36,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                 border: '1px solid rgba(139, 189, 176, 0.2)'
               }}
             >
-              {/* Leva strana: Info o korisniku */}
+             
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ color: '#81a4e4', fontWeight: 'bold', fontSize: '0.95rem' }}>
                   {user.name || 'Nema imena'}
@@ -49,7 +49,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                 </span>
               </div>
 
-              {/* Desna strana: Akcije (Kockice i Kanta) */}
+             
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 
                 {user.status === 'PENDING' && (
@@ -94,7 +94,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                   </>
                 )}
 
-                {/* Kanta za brisanje - uvek vidljiva */}
+                
                 <button 
                   onClick={() => {
                     if (window.confirm(`Obrisati korisnika ${user.name}?`)) {
