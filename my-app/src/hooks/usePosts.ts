@@ -24,7 +24,7 @@ export const usePosts = (token: string | null) => {
      .catch ((err:any) => { 
       console.error(err); 
       toast.error(err);
-     // setMessage(err.message);
+     
     })
   };
 

@@ -9,7 +9,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="dashboard-layout"> {/* ISTI WRAPPER KAO DASHBOARD */}
+    <div className="dashboard-layout"> 
       <Sidebar 
         profile={auth.profile} 
         activeTab="devices"

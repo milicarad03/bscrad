@@ -3,8 +3,8 @@ import type { DeviceDTO } from '../../models/device.dto';
 import { RotateCw } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { useState, useEffect } from 'react';
-import { DeviceTable } from './DeviceTable'; // Tvoja nova komponenta
-import { FilterDropdown } from '../UI/FilterDropdown'; // Tvoja nova komponenta
+import { DeviceTable } from './DeviceTable'; 
+import { FilterDropdown } from '../UI/FilterDropdown'; 
 
 interface DeviceListProps {
   device: DeviceDTO[];

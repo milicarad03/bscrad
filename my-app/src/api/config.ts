@@ -22,5 +22,6 @@ export const ENDPOINTS = {
     GET_ONE: (id: number) => `${API_BASE_URL}/device/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/device/${id}`,
     TOGGLE: (id: string) => `${API_BASE_URL}/device/${id}/toggle`,
+    DEVICE_DASHBOARD :`${API_BASE_URL}/device-dashboard/devices`,
   }
 };

@@ -55,7 +55,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                 {user.status === 'PENDING' && (
                   <>
                     <button 
-                      onClick={() => onApprove(user.id, 'APPROVED')}
+                      onClick={() => {if (window.confirm(`Approve user ${user.name}?`)) {onApprove(user.id, 'APPROVED')}}}
                       title="Odobri"
                       style={{ 
                         backgroundColor: '#2e7d32', 
@@ -74,7 +74,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                     </button>
                     
                     <button 
-                      onClick={() => onApprove(user.id, 'REJECTED')}
+                      onClick={() =>  {if (window.confirm(`Decline user ${user.name}?`)) {onApprove(user.id, 'REJECTED')}}}
                       title="Odbij"
                       style={{ 
                         backgroundColor: '#d32f2f', 
@@ -97,7 +97,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                 
                 <button 
                   onClick={() => {
-                    if (window.confirm(`Obrisati korisnika ${user.name}?`)) {
+                    if (window.confirm(`Delete user ${user.name}?`)) {
                       onDelete(Number(user.id));
                     }
                   }}

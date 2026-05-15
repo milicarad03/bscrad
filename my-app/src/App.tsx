@@ -26,10 +26,10 @@ function App() {
   }
 }, [auth.isLoggedIn, auth.token]);
 
-// Ovaj ostaviš za stvari koje BAŠ zavise od profila (kao što je role check)
+
 useEffect(() => {
   if (auth.profile) {
-    device.fetchDevices(); // Jedna funkcija za sve
+    device.fetchDevices(); 
     
     if (auth.profile.role === "ADMIN") {
       auth.fetchUsers();

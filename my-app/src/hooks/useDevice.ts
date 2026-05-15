@@ -21,7 +21,6 @@ export const useDevice = (token: string | null) => {
 
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]); 
   useEffect(() => {
-    
     setSelectedTypes([]);
     setSelectedTargetUsers([]);
   
@@ -84,6 +83,11 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
         })
         .catch(err => toast.error(err.message));
   };
+
+    
+  
+
+
   const resetForm = () => {
     setMessage('');
     setNewDeviceName('');

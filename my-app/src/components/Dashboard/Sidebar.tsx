@@ -16,7 +16,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarProps) => {
-  // Definišemo stavke sa pripadajućim ikonicama
+
   const menuItems = [
     { id: 'profile', label: 'My Account', icon: <User size={18} /> },
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
