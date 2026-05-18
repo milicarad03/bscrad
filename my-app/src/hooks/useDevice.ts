@@ -7,7 +7,6 @@ import { toast } from 'react-hot-toast';
 
 
 export const useDevice = (token: string | null) => {
-  // 1. STANJA (State)
   
   const [newSerialNumber, setNewSerialNumber] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
@@ -83,9 +82,6 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
         })
         .catch(err => toast.error(err.message));
   };
-
-    
-  
 
 
   const resetForm = () => {
