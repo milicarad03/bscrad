@@ -61,9 +61,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
               )}
             </Card>
             <Card title="TELEMETRY_HISTORY">
-              {loading ? (
-                <p>Loading history...</p>
-              ) : telemetryHistory.length > 0 ? (
+              {loading ? ( <p>Loading history...</p> ) : telemetryHistory.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {telemetryHistory.map((item, index) => (
                     <div

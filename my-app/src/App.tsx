@@ -66,7 +66,7 @@ useEffect(() => {
         } 
       />
       <Route 
-  path="/device/:id"  element={ auth.isLoggedIn ? ( <DeviceDetailsPage auth={auth} /> ) : ( <Navigate to="/" /> )
+            path="/device/:id"  element={ auth.isLoggedIn ? ( <DeviceDetailsPage auth={auth} /> ) : ( <Navigate to="/" /> )
   } 
 />
 
