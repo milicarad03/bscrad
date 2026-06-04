@@ -58,7 +58,7 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
 
       setTelemetryHistory((previous) => {
         const updated = [telemetry, ...previous];
-        return updated.slice(0, 20);
+        return updated.slice(0, 5);
       });
     });
 
