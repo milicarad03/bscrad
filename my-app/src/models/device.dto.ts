@@ -20,4 +20,5 @@ export interface CreateDeviceDTO {
   name?: string;
   type?: string;
   targetUserId?: number;
+  modelVersionId? : string;
 }

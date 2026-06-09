@@ -18,6 +18,7 @@ import {useNavigate,useLocation} from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 
 interface DashboardProps {
+
   post:ReturnType<typeof usePosts>
   auth:ReturnType<typeof useAuth>
   device:ReturnType<typeof useDevice>
@@ -137,6 +138,11 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
                 users={auth.users} 
                 selectedTargetUser={device.selectedTargetUsers[0] || ''}
                 setSelectedTargetUser={(id) => device.setSelectedTargetUsers([Number(id)])}
+
+                selectedModelVersion={device.selectedDeviceModel[0] || ''}
+                setSelectedModelVersion={(id) => device.setSelectedDeviceModel([id])}
+              
+                modelVersions={device.models || []}
             />
             
           </div>

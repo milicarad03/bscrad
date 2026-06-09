@@ -17,13 +17,18 @@ interface DeviceFormProps {
   setSelectedTargetUser: (val: string) => void;
   users: any[];
   isAdmin: boolean;
+
+  selectedModelVersion: string | number;
+  setSelectedModelVersion: (val: string) => void;
+  modelVersions: any[];
+
   message:string;
   onCancel:() => void;
   loading:boolean;
   
 }
 
-export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setName, type, setType, selectedTargetUser,setSelectedTargetUser, users, isAdmin, message , onCancel,loading}: DeviceFormProps) => (
+export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setName, type, setType, selectedTargetUser,setSelectedTargetUser, users, isAdmin, selectedModelVersion, setSelectedModelVersion, modelVersions = [], message , onCancel,loading}: DeviceFormProps) => (
   <Card title="Register new device">
     <form onSubmit={onSubmit} className="auth-form">
       {isAdmin && (
@@ -46,6 +51,25 @@ export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setN
           </select>
         </div>
       )}
+     <div className="input-group" style={{ marginBottom: '15px' }}>
+        <label className="input-label" style={{ display: 'block', marginBottom: '5px' }}>
+          Device Model
+        </label>
+        <select 
+          className="btn-save" 
+          value={selectedModelVersion || ''}
+          onChange={(e) => setSelectedModelVersion(e.target.value)}
+          style={{ width: '100%', padding: '10px', borderRadius: '4px' }}
+        >
+          <option value="">-- Select Model --</option>
+          {modelVersions.map(m => (
+            <option key={m.id} value={m.id}>
+              {m.modelId} - {m.version} 
+            </option>
+          ))}
+        </select>
+      </div>
+
       <Input 
         label="Serial Number"
         placeholder="npr. SN-100"
