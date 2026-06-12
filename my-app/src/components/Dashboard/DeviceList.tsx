@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { DeviceTable } from './DeviceTable'; 
 import { FilterDropdown } from '../UI/FilterDropdown'; 
 
+
 interface DeviceListProps {
   device: DeviceDTO[];
   users: any[];
@@ -37,9 +38,15 @@ export const DeviceList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [openDropdown, setOpenDropdown] = useState<'user' | 'type' | null>(null);
   const [allPossibleTypes, setAllPossibleTypes] = useState<string[]>([]);
+  const [localDevices, setLocalDevices] = useState<DeviceDTO[]>(device);
+
+
+  useEffect(() => {
+    setLocalDevices(device);
+  }, [device]);
 
   // search
-  const filteredDevices = device.filter(dev => {
+  const filteredDevices = localDevices.filter(dev => {
     const term = searchTerm.toLowerCase();
     return (
       dev.name?.toLowerCase().includes(term) ||
@@ -51,11 +58,13 @@ export const DeviceList = ({
 
   
   useEffect(() => {
-    if (device.length > 0) {
-      const currentTypes = device.map(d => d.type);
+    if (localDevices.length > 0) {
+      const currentTypes =localDevices.map(d => d.type);
       setAllPossibleTypes(prev => Array.from(new Set([...prev, ...currentTypes])));
     }
-  }, [device]);
+  }, [localDevices]);
+
+
 
   return (
     <Card title={isAdmin ? "SYSTEM DEVICE FEED" : "MY_ASSIGNED_DEVICES"}>

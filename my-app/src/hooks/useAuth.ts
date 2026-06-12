@@ -3,6 +3,13 @@ import type {UserDTO,LoginDTO} from '../models/auth.dto'
 import {ENDPOINTS} from '../api/config'
 import { apiClient } from '../api/client';
 import { toast } from 'react-hot-toast';
+import log from 'loglevel';
+const logger = log.getLogger('useAuth');
+if (import.meta.env.DEV) {
+  logger.setLevel('debug');
+} else {
+  logger.setLevel('warn');
+}
 export const useAuth = () => {
 
   const [token, setToken] = useState<string | null>(sessionStorage.getItem('token'));
@@ -27,15 +34,18 @@ export const useAuth = () => {
       setProfile(data); 
     })
      .catch ((err:any) => {
-      if(err.message.includes('401')) handleLogout();
-      toast.error(err.message);
-      console.error("Error fetching profile", err);
+      logger.error("[AUTH] Failed to fetch user profile matrix:", err.message);
+      if (err.message.includes('401')) {
+          logger.warn("[AUTH] Token expired or invalid. Triggering automatic session destruction.");
+          handleLogout();
+        }
+        toast.error(err.message);
     })
   };
 
   const fetchUsers = async () => {
     if (!token) {
-      console.log("No token , skipping fetch");
+      logger.warn("[AUTH] Execution dropped for fetchUsers. Token missing from sessionStorage.");
       setUsers([]);
       return;
     }
@@ -44,9 +54,14 @@ export const useAuth = () => {
        setUsers(data.slice().reverse());
       })
      .catch ((err:any) =>{
-      if(err.message.includes('401')) handleLogout();
+      logger.error("[AUTH] Error building administrative user registry array:", err.message);
+      if (err.message.includes('401')) {
+          logger.warn("[AUTH] Unauthorized registry request. Dropping session context.");
+          handleLogout();
+        }
       toast.error(err.message);
       setUsers([]);
+     
     })
   };
 
@@ -63,6 +78,7 @@ export const useAuth = () => {
 
     apiClient<LoginDTO>(ENDPOINTS.AUTH.LOGIN, 'POST', { email, password })
       .then((data) => {
+        logger.info(`[AUTH] Client successfully authenticated. Identity payload bound to: ${data.user.email}`);
         setMessage(`Login successful, welcome ${data.user.name || data.user.email}`);
       
         sessionStorage.setItem('userEmail', data.user.email);
@@ -73,7 +89,7 @@ export const useAuth = () => {
         setProfile(data.user);
       })
       .catch((err: any) => {
-        console.error("Login error:", err);
+        logger.error("[AUTH] Authentication handshake failed:", err.message);
         setMessage(err.message || 'Invalid data.');
       })
       
@@ -90,13 +106,14 @@ export const useAuth = () => {
 
    apiClient<UserDTO>(ENDPOINTS.AUTH.REGISTER, 'POST', { name:regName, email:regEmail, password:regPassword})
     .then((data)=>{
+      logger.info(`[AUTH] Account creation pipeline finished for email signature: ${data.email}`);
       setRegMessage(`Registration successful, ${data.name}! You will be able to login once an administrator approves your account.`);
       setRegName('');
       setRegEmail('');
       setRegPassword('');
     })
     .catch ((err:any) =>{
-     console.error("Registration error:", err);
+     logger.error("[AUTH] Registration dispatch rejected:", err.message);
         setRegMessage(err.message || 'Invalid data');
       })
     .finally(() => {
@@ -106,6 +123,7 @@ export const useAuth = () => {
 
 
   const handleLogout = () => {
+    logger.info("[AUTH] Clearing application security state and local storage frames.");
     sessionStorage.clear();
     setIsLoggedIn(false)
     setUsers([]);
@@ -117,18 +135,25 @@ export const useAuth = () => {
   };
   
   const handleDeleteUser = (id: number | string) => {
+    logger.warn(`[AUTH] Dispatched network command to purge user record identifier: ${id}`);
     apiClient(ENDPOINTS.AUTH.DELETE_USER(Number(id)), 'DELETE', null, token)
         .then(() => {
+          logger.info(`[AUTH] Successfully deleted user record identity [${id}] from central system.`);
             toast.success("User deleted");
             setUsers(prev => prev.filter(u => u.id !== id));
         })
-        .catch(err => toast.error(err.message));
+        .catch((err) => {
+        logger.error(`[AUTH] Data table optimization failed for user deletion [${id}]:`, err.message);
+        toast.error(err.message);
+      });
   };
 
   const handleApproveUser = (id: number | string, status : 'APPROVED' | 'REJECTED') => {
+    logger.info(`[AUTH] Dispatching administrative decision update for identity: ${id}. Intended action: ${status}`);
     apiClient(ENDPOINTS.AUTH.APPROVE_USER(+id), 'PATCH', {status}, token)
         .then(() => {
           const action = status === 'APPROVED'? 'approved': 'rejected';
+          logger.info(`[AUTH] User record identity [${id}] status set to: ${status}`);
             toast.success(`User ${ action }`);
             if(status === 'REJECTED'){
               setUsers(prev => prev.filter(u => u.id !== id));
@@ -136,7 +161,10 @@ export const useAuth = () => {
             }
             setUsers((prevUsers) => prevUsers.map((user) => user.id === id ? { ...user, status: status } : user));
         })
-        .catch(err => toast.error(err.message));
+        .catch((err) => {
+        logger.error(`[AUTH] Administrative review transaction failed for user payload [${id}]:`, err.message);
+        toast.error(err.message);
+      });
   };
   
  

@@ -4,6 +4,13 @@ import type {CreateDeviceDTO} from '../models/device.dto'
 import {ENDPOINTS} from '../api/config.ts'
 import {apiClient} from '../api/client.ts'
 import { toast } from 'react-hot-toast';
+import log from 'loglevel';
+const logger = log.getLogger('useDevice');
+if (import.meta.env.DEV) {
+  logger.setLevel('debug');
+} else {
+  logger.setLevel('warn');
+}
 
 
 export const useDevice = (token: string | null) => {
@@ -28,11 +35,12 @@ export const useDevice = (token: string | null) => {
     apiClient<any[]>(ENDPOINTS.MODEL_VERSIONS.BASE, 'GET', null, token)
       .then((res: any) => {
         const modelsArray = Array.isArray(res) ? res : res.data || [];
-        console.log("Stigli modeli sa backenda:", res);
+        logger.info(`[DEVICE] Successfully loaded ${modelsArray.length} schema models from configuration tables.`);
         setModels(modelsArray);
       })
       .catch((err: any) => {
-        console.error("Failed to fetch models:", err);
+        
+        logger.error("[DEVICE] Failed to populate schema model blueprints from backend:", err.message);
       });
   };
 
@@ -48,7 +56,10 @@ export const useDevice = (token: string | null) => {
   }, [token]); 
 
 const handleCreateDevice = (e: React.SyntheticEvent) => {
-  if (!token) return;
+  if (!token) {
+      logger.warn("[DEVICE] Provisioning pipeline aborted. Session token missing.");
+      return;
+    }
   e.preventDefault();
   setLoading(true);
 
@@ -59,9 +70,10 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
     targetUserId: selectedTargetUsers.length > 0 ? selectedTargetUsers[0] : undefined,
     modelVersionId: selectedDeviceModel.length > 0 ? selectedDeviceModel[0]: undefined
   };
-
+ logger.info(`[DEVICE] Attempting to provision new hardware node. SN: ${dataCreateDevice.serialNumber}`);
   apiClient<DeviceDTO>(ENDPOINTS.DEVICE.BASE, 'POST', dataCreateDevice, token)
     .then((newDeviceFromServer) => {
+      logger.info(`[DEVICE] Hardware node provisioned successfully. ID assigned: ${newDeviceFromServer.id}`);
       setMessage(`Device "${newDeviceFromServer.name}" created successfully!`);
       setDevices(prev => [newDeviceFromServer, ...prev]);
       fetchDevices();
@@ -75,7 +87,7 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
       
     })
     .catch((err: any) => {
-      console.error(err);
+      logger.error(`[DEVICE] Node provisioning transaction rejected for SN [${dataCreateDevice.serialNumber}]:`, err.message);
       toast.error(err.message || "Error creating device");
     })
      .finally(() => {
@@ -85,14 +97,20 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
 
 
   const fetchDevices = async (filters?: { status?: string; type?: string[]; userId?: number[]}) => {
-    if (!token) return;
+    if (!token) {
+      logger.warn("[DEVICE] Drop query execution for fetchDevices. Unauthenticated state.");
+      return;
+    }
     setLoading(true);
+    logger.debug(`[DEVICE] Fetching active devices registry index. Query Filters: ${JSON.stringify(filters || {})}`);
     
     apiClient<{data: DeviceDTO[]; meta : any }>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
       .then((res) => {
+        logger.info(`[DEVICE] Registry index pulled successfully. Records bound: ${res.data.length}`);
         setDevices(res.data);
       })
       .catch((err: any) => {
+        logger.error("[DEVICE] Failed to synchronous parse server inventory states:", err.message);
         toast.error(err.message || "Failed to fetch devices");
       })
       .finally(() => setLoading(false));
@@ -100,25 +118,47 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
 
 
   const handleDeleteDevice = (id:  string) => {
+    logger.warn(`[DEVICE] Dispatched hard destruction payload command for target node ID: ${id}`);
     apiClient(ENDPOINTS.DEVICE.DELETE(id), 'DELETE', null, token)
         .then(() => {
+          logger.info(`[DEVICE] Node identifier [${id}] successfully expunged from system layout database.`);
             toast.success("Device deleted");
             setDevices(prev => prev.filter(u => u.id !== id));
         })
-        .catch(err => toast.error(err.message));
+        .catch((err) => {
+        logger.error(`[DEVICE] Data table purge sequence failed for targeted node allocation key [${id}]:`, err.message);
+        toast.error(err.message);
+      });
   };
+  const handleReassignDevice = (deviceId: string, targetUserId: number) => {
+  logger.info(`[DEVICE] Initiating transfer for device [${deviceId}] to user ID: ${targetUserId}`);
+  
+  apiClient(ENDPOINTS.DEVICE.REASSIGN(deviceId), 'PATCH', { targetUserId }, token)
+    .then(() => {
+      logger.info(`[DEVICE] Transfer successful for device ${deviceId}`);
+      toast.success("Device successfully reassigned!");
+      fetchDevices(); 
+    })
+    .catch((err) => {
+      logger.error(`[DEVICE] Transfer failed for device ${deviceId}:`, err.message);
+      toast.error(err.message || "Failed to reassign device");
+    });
+};
+
+
  
   const resetForm = () => {
+    logger.debug("[DEVICE] Resetting state bounds on hardware creation form UI inputs.");
     setMessage('');
     setNewDeviceName('');
     setNewSerialNumber('');
     setNewDeviceType('');
   };
 
+
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels
-};
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice};
 
 };
   

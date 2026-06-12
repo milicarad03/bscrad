@@ -25,6 +25,8 @@ export const ENDPOINTS = {
     DEVICE_DASHBOARD :`${API_BASE_URL}/device-dashboard/devices`,
     TELEMETRY: (id: string) => `${API_BASE_URL}/device/${id}/telemetry`,
     TELEMETRY_LATEST: (id: string) => `${API_BASE_URL}/device/${id}/telemetry/latest`,
+    REASSIGN: (id: string) => `${API_BASE_URL}/device/${id}/reassign`,
+
   
   },
   MODEL_VERSIONS:{

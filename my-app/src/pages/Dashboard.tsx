@@ -42,6 +42,13 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
   const setActiveTab = (tabName: string) => {
     setSearchParams({ tab: tabName });
   };
+  useEffect(() => {
+    if (activeTab === 'devices' && auth.profile) {
+      
+      device.fetchDevices(); 
+    }
+  }, [activeTab, auth.profile]);
+  
 
 
   return (

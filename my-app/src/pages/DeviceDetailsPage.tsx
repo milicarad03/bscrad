@@ -1,15 +1,45 @@
 // DeviceDetailsPage.tsx
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Sidebar } from '../components/Dashboard/Sidebar';
 import { useDeviceTelemetry} from '../hooks/useDeviceTelemetry';
+import { useAuth } from '../hooks/useAuth';
+import { useDevice } from '../hooks/useDevice';
 
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {latestTelemetry, telemetryHistory, loading}= useDeviceTelemetry({deviceId:id, token:auth?.token})
+  const { handleReassignDevice, fetchDevices } = useDevice(auth?.token);
+  const { users, fetchUsers } = useAuth();
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
 
+  const isAdmin = auth?.profile?.role === 'ADMIN';
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchUsers();
+    }
+  }, [isAdmin]);
+
+  const onTransferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !selectedUserId) return;
+    
+    if (window.confirm(`TRANSFER OWNERSHIP OF NODE ${id}?`)) {
+      try {
+      
+      await handleReassignDevice(id, Number(selectedUserId));
+      
+   
+      setSelectedUserId('');
+   
+    } catch (err) {
+    }
+  }
+  };
   return (
     <div className="dashboard-layout"> 
       <Sidebar 
@@ -37,9 +67,48 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             </Card>
 
             <Card title="ADMIN_ACTIONS">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <Button>REBOOT</Button>
-                <Button variant="secondary">DIAGNOSTICS</Button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <Button style={{ flex: 1 }}>REBOOT</Button>
+                  <Button variant="secondary" style={{ flex: 1 }}>DIAGNOSTICS</Button>
+                </div>
+
+                {isAdmin && (
+                  <form onSubmit={onTransferSubmit} style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '15px', marginTop: '5px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: '#aaa' }}>
+                      TRANSFER_NODE_OWNERSHIP
+                    </label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <select
+                        value={selectedUserId}
+                        onChange={(e) => setSelectedUserId(e.target.value)}
+                        className="techno-input"
+                        style={{
+                          flex: 1,
+                          background: '#0d1117',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem'
+                        }}
+                        required
+                      >
+                        <option value="">SELECT_TARGET_USER</option>
+                        {users
+                          .filter(u => u.status === 'APPROVED')
+                          .map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.name} ({u.email})
+                            </option>
+                          ))}
+                      </select>
+                      <Button type="submit" variant="secondary" style={{ padding: '8px 15px', fontSize: '0.85rem' }}>
+                        TRANSFER
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </div>
             </Card>
             <Card title="LATEST_TELEMETRY">
