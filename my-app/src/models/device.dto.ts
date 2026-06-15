@@ -1,4 +1,5 @@
 import type {UserDTO} from './auth.dto'
+import type { DeviceTelemetryDTO } from './device-telemetry.dto';
 
 
 export interface DeviceDTO {
@@ -11,7 +12,11 @@ export interface DeviceDTO {
   createdAt: string; 
  
   userId:number;   
-  user?: UserDTO
+  user?: UserDTO;
+
+  lastseen: string; 
+  status: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED';
+  latestTelemetry?: DeviceTelemetryDTO | null;
   
 }
 

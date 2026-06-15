@@ -1,5 +1,6 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Circle, Radio } from 'lucide-react';
 import type { DeviceDTO } from '../../models/device.dto';
+import { useDevicesStatuses } from '../../hooks/useDeviceStatus';
 
 interface DeviceTableProps {
   devices: DeviceDTO[];
@@ -9,6 +10,18 @@ interface DeviceTableProps {
 }
 
 export const DeviceTable = ({ devices, isAdmin, onDelete, onDeviceClick }: DeviceTableProps) => {
+  const statusPriority: Record<'ONLINE' | 'OFFLINE' | 'UNINITIALIZED', number> = {
+    ONLINE: 1,
+    OFFLINE: 2,
+    UNINITIALIZED: 3,
+  };
+
+ 
+  const sortedDevices = [...devices].sort((a, b) => {
+    const priorityA = statusPriority[a.status as 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED'] || 99;
+    const priorityB = statusPriority[b.status as 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED'] || 99;
+    return priorityA - priorityB;
+  });
   return (
     <div style={{ overflowX: 'auto', marginTop: '20px' }}>
       <table className="techno-table">
@@ -18,18 +31,19 @@ export const DeviceTable = ({ devices, isAdmin, onDelete, onDeviceClick }: Devic
             <th>Type</th>
             <th>Serial Number</th>
             <th>Owner</th>
+            <th>Status</th>
             {isAdmin && <th style={{ textAlign: 'right' }}>Actions</th>}
           </tr>
         </thead>
         <tbody>
-          {devices.length === 0 ? (
+          {sortedDevices.length === 0 ? (
             <tr>
-              <td colSpan={isAdmin ? 5 : 4} style={{ textAlign: 'center', opacity: 0.5, padding: '40px' }}>
+              <td colSpan={isAdmin ? 6 : 5} style={{ textAlign: 'center', opacity: 0.5, padding: '40px' }}>
                 NO_DEVICES_MATCH_SEARCH_CRITERIA
               </td>
             </tr>
           ) : (
-            devices.map((dev) => (
+            sortedDevices.map((dev) => (
               <tr 
                 key={dev.id}
                 onClick={() => onDeviceClick(dev)} 
@@ -45,6 +59,26 @@ export const DeviceTable = ({ devices, isAdmin, onDelete, onDeviceClick }: Devic
                   <span style={{ color: '#aaa', fontSize: '0.8rem', fontFamily: 'monospace' }}>
                     {dev.user ? `USER_${dev.user.email}` : 'UNASSIGNED'}
                   </span>
+                </td>
+               <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {dev.status === 'UNINITIALIZED' ? (
+                      <>
+                        <Radio size={14} style={{ color: '#7f8c8d' }} />
+                        <span style={{ color: '#7f8c8d', fontSize: '0.75rem' }}>UNINITIALIZED</span>
+                      </>
+                    ) : dev.status === 'ONLINE' ? (
+                      <>
+                        <Circle size={12} fill="#2ecc71" style={{ color: '#2ecc71' }} />
+                        <span style={{ color: '#2ecc71', fontSize: '0.75rem' }}>ONLINE</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle size={12} fill="#e74c3c" style={{ color: '#e74c3c' }} />
+                        <span style={{ color: '#e74c3c', fontSize: '0.75rem' }}>OFFLINE</span>
+                      </>
+                    )}
+                  </div>
                 </td>
                 
                 {isAdmin && (

@@ -5,7 +5,7 @@ import { Button } from '../UI/Button';
 import { useState, useEffect } from 'react';
 import { DeviceTable } from './DeviceTable'; 
 import { FilterDropdown } from '../UI/FilterDropdown'; 
-
+import { useDevicesStatuses } from '../../hooks/useDeviceStatus';
 
 interface DeviceListProps {
   device: DeviceDTO[];
@@ -44,6 +44,16 @@ export const DeviceList = ({
   useEffect(() => {
     setLocalDevices(device);
   }, [device]);
+  
+  useDevicesStatuses({
+    onStatusUpdate: (deviceId, newStatus) => {
+      setLocalDevices((prevDevices) =>
+        prevDevices.map((dev) =>
+          dev.serialNumber === deviceId ? { ...dev, status: newStatus } : dev
+        )
+      );
+    }
+  });
 
   // search
   const filteredDevices = localDevices.filter(dev => {
