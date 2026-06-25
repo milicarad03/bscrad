@@ -1,6 +1,6 @@
 import { Trash2, Circle, Radio } from 'lucide-react';
 import type { DeviceDTO } from '../../models/device.dto';
-import { useDevicesStatuses } from '../../hooks/useDeviceStatus';
+
 
 interface DeviceTableProps {
   devices: DeviceDTO[];
