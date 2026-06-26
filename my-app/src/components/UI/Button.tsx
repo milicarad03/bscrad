@@ -4,9 +4,11 @@ export const Button = ({
   className = "btn-primary",
   type = "button", 
   style = {}, 
-  disabled = false 
+  disabled = false,
+  ...rest
 }: any) => (
   <button 
+  {...rest}
     type={type} 
     onClick={onClick} 
     className={`btn ${className}`} 

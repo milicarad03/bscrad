@@ -82,7 +82,7 @@ export const DeviceList = ({
         
       
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {isAdmin && <Button className="btn-register-cyber" onClick={onRegister}>+ REGISTER_DEVICE</Button>}
+          {isAdmin && <Button className="btn-register-cyber" onClick={onRegister} data-cy="add-device-btn">+ REGISTER_DEVICE</Button>}
           <Button onClick={onDevice} className="btn-refresh" title="SYNC_DATABASE">
             <RotateCw size={18} />
           </Button>
@@ -139,6 +139,7 @@ export const DeviceList = ({
           )}
 
           <FilterDropdown 
+            data-cy="filter-type"
             label="FILTER_BY_TYPE"
             placeholder='SELECT_TYPE'
             selectedCount={selectedTypes.length}
@@ -146,7 +147,7 @@ export const DeviceList = ({
             onToggle={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
           >
             {allPossibleTypes.map(typeName => (
-              <label key={typeName} 
+              <label key={typeName}  data-cy={`filter-option-${typeName}`}
               style={{ 
               display: 'flex', 
               alignItems: 'center', 

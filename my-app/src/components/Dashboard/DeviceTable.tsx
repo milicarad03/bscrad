@@ -24,7 +24,7 @@ export const DeviceTable = ({ devices, isAdmin, onDelete, onDeviceClick }: Devic
   });
   return (
     <div style={{ overflowX: 'auto', marginTop: '20px' }}>
-      <table className="techno-table">
+      <table className="techno-table" data-cy="device-table">
         <thead>
           <tr>
             <th>Name</th>
@@ -61,7 +61,9 @@ export const DeviceTable = ({ devices, isAdmin, onDelete, onDeviceClick }: Devic
                   </span>
                 </td>
                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div 
+                  data-cy={`device-status-${dev.id}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {dev.status === 'UNINITIALIZED' ? (
                       <>
                         <Radio size={14} style={{ color: '#7f8c8d' }} />

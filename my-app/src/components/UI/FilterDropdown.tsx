@@ -8,10 +8,11 @@ interface FilterDropdownProps {
   isOpen: boolean;
   onToggle: () => void;
   children: React.ReactNode;
+  'data-cy'?: string;
 }
 
-export const FilterDropdown = ({ label, selectedCount, placeholder, isOpen, onToggle, children }: FilterDropdownProps) => (
-  <div className="custom-dropdown-container" style={{ position: 'relative', width: '250px' }}>
+export const FilterDropdown = ({ label, selectedCount, placeholder, isOpen, onToggle, children, 'data-cy': dataCy}: FilterDropdownProps) => (
+  <div className="custom-dropdown-container" data-cy={dataCy} style={{ position: 'relative', width: '250px' }}>
     <p style={{ fontSize: '0.7rem', color: '#888', marginBottom: '5px' }}>{label}:</p>
     <div 
       onClick={onToggle}

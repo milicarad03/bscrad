@@ -6,14 +6,16 @@ interface InputProps {
   label?:string
   isTextArea?: boolean;
   required?: boolean;
+  [key: string]: any;
 }
 
-export const Input = ({ value, onChange, placeholder, type = "text", isTextArea = false, required = false }: InputProps) => {
+export const Input = ({ value, onChange, placeholder, type = "text", isTextArea = false, required = false, ...rest}: InputProps) => {
   const className = "custom-input";
   
   if (isTextArea) {
     return (
       <textarea
+      {...rest}
         className={className}
         placeholder={placeholder}
         value={value}
@@ -26,6 +28,7 @@ export const Input = ({ value, onChange, placeholder, type = "text", isTextArea 
 
   return (
     <input
+    {...rest}
       className={className}
       type={type}
       placeholder={placeholder}

@@ -71,6 +71,7 @@ export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setN
       </div>
 
       <Input 
+        data-cy="device-serial"
         label="Serial Number"
         placeholder="npr. SN-100"
         value={serialNumber}
@@ -78,6 +79,7 @@ export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setN
         required
       />
       <Input 
+        data-cy="device-name"
         label="Name"
         placeholder="npr. sensor 1"
         value={name}
@@ -85,6 +87,7 @@ export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setN
         required
       />
       <Input 
+        data-cy="device-type"
         label="Type"
         placeholder="npr. TEMP_SENSOR"
         value={type}
@@ -93,7 +96,7 @@ export const DeviceForm = ({ onSubmit, serialNumber, setSerialNumber, name, setN
       />
       
     <div className="form-actions">
-        <Button type="submit" className="btn-save" disabled={loading} > {loading ? 'Sending..': 'Save'}</Button>
+        <Button  data-cy="submit-device" type="submit" className="btn-save" disabled={loading} > {loading ? 'Sending..': 'Save'}</Button>
         <Button type="button" className="btn-cancel" disabled={loading} variant="secondary" onClick={onCancel}>Cancel</Button>
          
       </div>
