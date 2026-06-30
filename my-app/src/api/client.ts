@@ -46,6 +46,16 @@ export const apiClient = async <T>(
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || 'Došlo je do greške na serveru');
   }
+  const text = await response.text();
+  if (!text) {
+    return null as T;
+  }
 
-  return response.json();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null as T;
+  }
+
+ // return response.json();
 };

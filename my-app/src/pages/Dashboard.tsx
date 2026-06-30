@@ -11,7 +11,7 @@ import {DeviceForm} from '../components/Dashboard/DeviceForm'
 import {PostList} from '../components/Dashboard/PostList'
 import {DraftList} from '../components/Dashboard/DraftList'
 import {DeviceList} from '../components/Dashboard/DeviceList'
-import { useState,useEffect } from 'react';
+import { useState,useEffect, useCallback } from 'react';
 import { Sidebar } from '../components/Dashboard/Sidebar';
 import { DeviceDetailsModal} from '../components/Dashboard/DeviceDetailsModal';
 import {useNavigate,useLocation} from 'react-router-dom';
@@ -42,12 +42,19 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
   const setActiveTab = (tabName: string) => {
     setSearchParams({ tab: tabName });
   };
-  useEffect(() => {
-    if (activeTab === 'devices' && auth.profile) {
+  //added device.devices.length===0
+ /* useEffect(() => {
+    if (activeTab === 'devices' && auth.profile && device.devices.length === 0 && !device.hasError) {
       
       device.fetchDevices(); 
     }
-  }, [activeTab, auth.profile]);
+  }, [activeTab, auth.profile, device.hasError]);*/
+
+useEffect(() => {
+  if (activeTab === 'devices' && auth.profile &&  !device.hasError) {
+     device.fetchDevices();
+  }
+}, [activeTab, auth.profile, device.hasError]);
   
 
 
@@ -94,7 +101,8 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
             device={Array.isArray(device.devices) ? device.devices : []}
             users={auth.users || []}
             onDelete={device.handleDeleteDevice} 
-            onDevice={() => device.fetchDevices()} 
+           onDevice={() => device.fetchDevices()} 
+            //onDevice={device.fetchDevices}
             isAdmin={auth.profile?.role === "ADMIN"}
             onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
             currentUserId={auth.profile?.id}

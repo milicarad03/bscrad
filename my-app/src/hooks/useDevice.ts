@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import { useState,useEffect , useCallback, useRef} from 'react';
 import type {DeviceDTO} from '../models/device.dto'
 import type {CreateDeviceDTO} from '../models/device.dto'
 import {ENDPOINTS} from '../api/config.ts'
@@ -13,7 +13,9 @@ if (import.meta.env.DEV) {
 }
 
 
-export const useDevice = (token: string | null) => {
+export const useDevice = (token: string | null) => { 
+  //dodato useRef
+  const isSubmittingRef = useRef(false);
   
   const [newSerialNumber, setNewSerialNumber] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
@@ -28,6 +30,8 @@ export const useDevice = (token: string | null) => {
 
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]); 
   const [models, setModels] = useState<any[]>([]);
+
+  const [hasError, setHasError] = useState(false);
 
   const fetchModels = async () => {
     if (!token) return;
@@ -61,6 +65,12 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
       return;
     }
   e.preventDefault();
+
+ if (isSubmittingRef.current) return;
+
+  isSubmittingRef.current = true;
+
+  if(loading) return;
   setLoading(true);
 
   const dataCreateDevice: CreateDeviceDTO = {
@@ -92,29 +102,55 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
     })
      .finally(() => {
         setLoading(false);
+        isSubmittingRef.current = false;
       });
 };
 
 
-  const fetchDevices = async (filters?: { status?: string; type?: string[]; userId?: number[]}) => {
+  /*const fetchDevices = async (filters?: { status?: string; type?: string[]; userId?: number[]}) => {
     if (!token) {
       logger.warn("[DEVICE] Drop query execution for fetchDevices. Unauthenticated state.");
       return;
     }
+    if (loading || hasError) {
+    logger.warn("[DEVICE] Fetch aborted: Already loading or in error state.");
+    return;
+  }
     setLoading(true);
+
+    setHasError(false);
+
     logger.debug(`[DEVICE] Fetching active devices registry index. Query Filters: ${JSON.stringify(filters || {})}`);
     
     apiClient<{data: DeviceDTO[]; meta : any }>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
       .then((res) => {
+        
         logger.info(`[DEVICE] Registry index pulled successfully. Records bound: ${res.data.length}`);
         setDevices(res.data);
       })
       .catch((err: any) => {
+        setHasError(true);
         logger.error("[DEVICE] Failed to synchronous parse server inventory states:", err.message);
         toast.error(err.message || "Failed to fetch devices");
       })
       .finally(() => setLoading(false));
-  };
+  };*/
+  // U useDevice.ts
+const fetchDevices = useCallback(async (filters?: any) => {
+  if (loading || hasError) return;
+  setLoading(true);
+  setHasError(false);
+
+  apiClient<{data: DeviceDTO[]; meta: any }>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
+    .then((res) => {
+      setDevices(res.data);
+    })
+    .catch((err: any) => {
+      setHasError(true);
+      toast.error(err.message || "Failed to fetch devices");
+    })
+    .finally(() => setLoading(false));
+}, [token, loading, hasError]); 
 
 
   const handleDeleteDevice = (id:  string) => {
@@ -158,7 +194,7 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice};
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError};
 
 };
   

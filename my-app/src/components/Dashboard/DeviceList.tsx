@@ -56,7 +56,23 @@ export const DeviceList = ({
   });
 
   // search
-  const filteredDevices = localDevices.filter(dev => {
+ const filteredDevices = localDevices.filter(dev => {
+  const term = searchTerm.toLowerCase();
+
+  const matchesSearch =
+    (dev.name || '').toLowerCase().includes(term) ||
+    (dev.type || '').toLowerCase().includes(term) ||
+    (dev.serialNumber || '').toLowerCase().includes(term) ||
+    (dev.user?.email || '').toLowerCase().includes(term);
+
+  const matchesType =
+    selectedTypes.length === 0 ||
+    selectedTypes.includes(dev.type || '');
+
+  return matchesSearch && matchesType;
+});
+
+/*const filteredDevices = localDevices.filter(dev => {
     const term = searchTerm.toLowerCase();
     return (
       dev.name?.toLowerCase().includes(term) ||
@@ -64,7 +80,7 @@ export const DeviceList = ({
       dev.serialNumber.toLowerCase().includes(term) ||
       dev.user?.email?.toLowerCase().includes(term)
     );
-  });
+  });*/
 
   
   useEffect(() => {
@@ -106,6 +122,7 @@ export const DeviceList = ({
           
           {isAdmin && (
             <FilterDropdown 
+              data-cy="filter-user"
               label="FILTER_BY_USERS"
               placeholder='SELECT_USERS'
               selectedCount={targetUserIds.length}
