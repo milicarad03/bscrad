@@ -1,3 +1,10 @@
+let onUnauthorized: (() => void) | null = null;
+
+export const setUnauthorizedHandler = (handler: () => void) => {
+  onUnauthorized = handler;
+};
+
+
 export const apiClient = async <T>(
   endpoint: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
@@ -41,6 +48,25 @@ export const apiClient = async <T>(
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  /*if (response.status === 401) {
+   
+    if (onUnauthorized) {
+      onUnauthorized();
+    }
+    return Promise.reject(new Error('Unauthorized'));
+  }*/
+  if (response.status === 401) {
+  const errorData = await response.json().catch(() => ({}));
+
+  if (endpoint.includes('/users/login')) {
+    return Promise.reject(new Error(errorData.message || 'Invalid credentials'));
+  }
+
+  if (onUnauthorized) onUnauthorized();
+  return Promise.reject(new Error(errorData.message || 'Unauthorized'));
+}
+
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));

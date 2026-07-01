@@ -80,6 +80,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                     </label>
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <select
+                        data-cy="reassign-select"
                         value={selectedUserId}
                         onChange={(e) => setSelectedUserId(e.target.value)}
                         className="techno-input"
@@ -103,7 +104,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                             </option>
                           ))}
                       </select>
-                      <Button type="submit" variant="secondary" style={{ padding: '8px 15px', fontSize: '0.85rem' }}>
+                      <Button data-cy="reassign-confirm" type="submit" variant="secondary" style={{ padding: '8px 15px', fontSize: '0.85rem' }}>
                         TRANSFER
                       </Button>
                     </div>

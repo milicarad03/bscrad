@@ -55,6 +55,32 @@ export const DeviceList = ({
     }
   });
 
+
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      (window as any).triggerStatusUpdate = (
+        deviceId: string,
+        status: DeviceDTO['status']
+      ) => {
+        setLocalDevices((prevDevices) =>
+          prevDevices.map((dev) =>
+            dev.serialNumber === deviceId
+              ? { ...dev, status }
+              : dev
+          )
+        );
+      };
+    }
+    return () => {
+      if (import.meta.env.DEV) {
+        delete (window as any).triggerStatusUpdate;
+      }
+    };
+  }, []);
+
+  
+  
+
   // search
  const filteredDevices = localDevices.filter(dev => {
   const term = searchTerm.toLowerCase();

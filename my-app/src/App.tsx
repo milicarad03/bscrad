@@ -11,12 +11,18 @@ import {usePosts} from './hooks/usePosts'
 import {useDevice} from './hooks/useDevice'
 import {useAuth} from './hooks/useAuth'
 import { Toaster } from 'react-hot-toast';
+import { setUnauthorizedHandler } from './api/client';
 
 function App() {
 
   const auth= useAuth();
   const post=usePosts(auth.token);
   const device=useDevice(auth.token);
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      auth.handleLogout();
+    });
+  }, []);
 
  useEffect(() => {
   if (auth.isLoggedIn && auth.token) {
@@ -28,14 +34,14 @@ function App() {
 
 
 useEffect(() => {
-  if (auth.profile) {
+  if (auth.isLoggedIn && auth.profile?.id) {
     device.fetchDevices(); 
     
     if (auth.profile.role === "ADMIN") {
       auth.fetchUsers();
     }
   }
-}, [auth.profile]);
+}, [auth.isLoggedIn , auth.profile?.id, auth.profile?.role]);
 
   return (
   <BrowserRouter>

@@ -55,6 +55,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                 {user.status === 'PENDING' && (
                   <>
                     <button 
+                    data-cy={`approve-user-${user.id}`}
                       onClick={() => {if (window.confirm(`Approve user ${user.name}?`)) {onApprove(user.id, 'APPROVED')}}}
                       title="Odobri"
                       style={{ 
@@ -74,6 +75,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                     </button>
                     
                     <button 
+                    data-cy={`decline-user-${user.id}`}
                       onClick={() =>  {if (window.confirm(`Decline user ${user.name}?`)) {onApprove(user.id, 'REJECTED')}}}
                       title="Odbij"
                       style={{ 

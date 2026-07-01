@@ -51,10 +51,16 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
   }, [activeTab, auth.profile, device.hasError]);*/
 
 useEffect(() => {
-  if (activeTab === 'devices' && auth.profile &&  !device.hasError) {
+  if (activeTab === 'devices' && auth.profile &&  !device.hasError && device.devices.length==0) {
      device.fetchDevices();
   }
 }, [activeTab, auth.profile, device.hasError]);
+
+useEffect(() => {
+  if (activeTab === 'users' && auth.profile?.role === 'ADMIN') {
+    auth.fetchUsers();
+  }
+}, [activeTab]);
   
 
 

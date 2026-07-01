@@ -14,6 +14,7 @@ if (import.meta.env.DEV) {
 
 
 export const useDevice = (token: string | null) => { 
+
   //dodato useRef
   const isSubmittingRef = useRef(false);
   
@@ -146,6 +147,8 @@ const fetchDevices = useCallback(async (filters?: any) => {
       setDevices(res.data);
     })
     .catch((err: any) => {
+      
+     
       setHasError(true);
       toast.error(err.message || "Failed to fetch devices");
     })

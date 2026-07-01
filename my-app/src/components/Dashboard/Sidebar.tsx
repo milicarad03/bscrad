@@ -48,7 +48,7 @@ export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarP
         ))}
       </nav>
 
-      <Button variant="danger" onClick={onLogout} className="logout-btn">
+      <Button  data-cy="logoutbtn" variant="danger" onClick={onLogout} className="logout-btn">
         <LogOut size={18} style={{ marginRight: '8px' }} />
         Logout
       </Button>
