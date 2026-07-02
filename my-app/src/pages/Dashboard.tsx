@@ -51,7 +51,7 @@ export const Dashboard = ({ auth, post, device }: DashboardProps) => {
   }, [activeTab, auth.profile, device.hasError]);*/
 
 useEffect(() => {
-  if (activeTab === 'devices' && auth.profile &&  !device.hasError && device.devices.length==0) {
+  if (activeTab === 'devices' && auth.profile &&  !device.hasError) {
      device.fetchDevices();
   }
 }, [activeTab, auth.profile, device.hasError]);
@@ -98,6 +98,11 @@ useEffect(() => {
 
        {activeTab === 'devices' && (
         <div className="view-section">
+          {device.hasError && (
+            <div style={{ color: '#ff4d4d', marginBottom: '10px', fontSize: '0.9rem' }}>
+              Error loading devices. Check network connection or try again.
+            </div>
+          )}
          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
             <h2>Device Management</h2>
            
@@ -107,13 +112,18 @@ useEffect(() => {
             device={Array.isArray(device.devices) ? device.devices : []}
             users={auth.users || []}
             onDelete={device.handleDeleteDevice} 
-           onDevice={() => device.fetchDevices()} 
+            onDevice={(e) => {
+              e.preventDefault();
+              device.resetError(); 
+              device.fetchDevices();
+            }}
             //onDevice={device.fetchDevices}
             isAdmin={auth.profile?.role === "ADMIN"}
             onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
             currentUserId={auth.profile?.id}
             onRegister={()=> setActiveTab('register-device')}
             onFilterChange={(ids,types) => {
+              device.resetError();
               device.fetchDevices({userId: ids, type:types})
               device.setSelectedTargetUsers(ids || []);
               device.setSelectedTypes(types || []);

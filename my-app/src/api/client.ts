@@ -10,7 +10,9 @@ export const apiClient = async <T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
   body?: any,
   token?: string | null,
-  params?: Record<string, any>
+  params?: Record<string, any>,
+  signal?: AbortSignal
+  
 ): Promise<T> => {
 
   let url = endpoint;
@@ -43,11 +45,24 @@ export const apiClient = async <T>(
   }
 
 
-  const response = await fetch(url, { 
+ /* const response = await fetch(url, { 
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
-  });
+  });*/
+  let response: Response;
+  try {
+    response = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  } catch (err: any) {
+    // ISPRAVKA: AbortError se ne tretira kao mrezna greska - to je
+    // namerno otkazivanje (npr. unmount), pa ga samo prosledjujemo dalje
+    // bez toast poruke; pozivalac (useCallback cleanup) ce ga ignorisati.
+    if (err?.name === 'AbortError') {
+      throw err;
+    }
+    throw new Error('NetworkError');
+  }
+
 
   /*if (response.status === 401) {
    

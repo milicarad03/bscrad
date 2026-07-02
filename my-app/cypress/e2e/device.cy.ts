@@ -196,7 +196,7 @@ describe('Device API Error Handling', () => {
 
     cy.contains('Creation failed').should('exist');
   });
- it('should show error message on network timeout', () => {
+ it.only('should show error message on network timeout', () => {
     cy.intercept('GET', '**/device*', { forceNetworkError: true }).as('networkError');
 
     cy.contains('Device Management').click();

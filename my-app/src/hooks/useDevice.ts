@@ -17,6 +17,7 @@ export const useDevice = (token: string | null) => {
 
   //dodato useRef
   const isSubmittingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   const [newSerialNumber, setNewSerialNumber] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
@@ -33,32 +34,49 @@ export const useDevice = (token: string | null) => {
   const [models, setModels] = useState<any[]>([]);
 
   const [hasError, setHasError] = useState(false);
+  const resetError = useCallback(() => {
+    setHasError(false);
+  }, []);
 
-  const fetchModels = async () => {
+
+  const fetchModels = useCallback((signal?: AbortSignal)=> {
     if (!token) return;
 
-    apiClient<any[]>(ENDPOINTS.MODEL_VERSIONS.BASE, 'GET', null, token)
+    apiClient<any[]>(ENDPOINTS.MODEL_VERSIONS.BASE, 'GET', null, token,undefined,signal)
       .then((res: any) => {
         const modelsArray = Array.isArray(res) ? res : res.data || [];
         logger.info(`[DEVICE] Successfully loaded ${modelsArray.length} schema models from configuration tables.`);
         setModels(modelsArray);
       })
       .catch((err: any) => {
+        if (err?.name === 'AbortError') return;
         
         logger.error("[DEVICE] Failed to populate schema model blueprints from backend:", err.message);
       });
-  };
+  }, [token]);
 
 
   useEffect(() => {
     setSelectedTypes([]);
     setSelectedTargetUsers([]);
     setSelectedDeviceModel([]);
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+ 
     if (token) {
-      fetchModels(); 
+      fetchModels(controller.signal); 
     }
+
+  /*  if (token) {
+      fetchModels(); 
+    }*/
+       return () => {
+      controller.abort();
+    };
+
     
-  }, [token]); 
+  }, [token, fetchModels]); 
 
 const handleCreateDevice = (e: React.SyntheticEvent) => {
   if (!token) {
@@ -89,6 +107,7 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
       setDevices(prev => [newDeviceFromServer, ...prev]);
       fetchDevices();
       fetchModels();
+      resetError();
       setNewDeviceName('');
       setNewSerialNumber('');
       setNewDeviceType('');
@@ -136,23 +155,25 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
       })
       .finally(() => setLoading(false));
   };*/
-  // U useDevice.ts
-const fetchDevices = useCallback(async (filters?: any) => {
+  
+const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => {
   if (loading || hasError) return;
   setLoading(true);
   setHasError(false);
 
-  apiClient<{data: DeviceDTO[]; meta: any }>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
+  apiClient<{data: DeviceDTO[]; meta: any }>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters, signal)
     .then((res) => {
       setDevices(res.data);
     })
     .catch((err: any) => {
-      
-     
+      if (err?.name === 'AbortError') return;
       setHasError(true);
       toast.error(err.message || "Failed to fetch devices");
+      logger.error('[DEVICE] Fetch devices failed:', err.message);
     })
-    .finally(() => setLoading(false));
+    .finally(() => {
+       if (!signal?.aborted) setLoading(false);
+    });
 }, [token, loading, hasError]); 
 
 
@@ -197,7 +218,7 @@ const fetchDevices = useCallback(async (filters?: any) => {
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError};
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError};
 
 };
   

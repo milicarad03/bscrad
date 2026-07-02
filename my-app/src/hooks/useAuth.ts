@@ -68,7 +68,9 @@ export const useAuth = () => {
 
   const handleLogin = (e: React.SyntheticEvent) => {
     e.preventDefault();
+
     if (!email || !password) {
+    console.log("Polja su prazna!");
     setMessage("Email and password are required!"); 
     return;
   }
