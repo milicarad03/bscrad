@@ -7,6 +7,7 @@ import { Sidebar } from '../components/Dashboard/Sidebar';
 import { useDeviceTelemetry} from '../hooks/useDeviceTelemetry';
 import { useAuth } from '../hooks/useAuth';
 import { useDevice } from '../hooks/useDevice';
+import { toast } from 'react-hot-toast';
 
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
@@ -15,6 +16,8 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { handleReassignDevice, fetchDevices } = useDevice(auth?.token);
   const { users, fetchUsers } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const { sendDeviceCommand } = useDevice(auth?.token);
+  const [isPending, setIsPending] = useState(false);
 
   const isAdmin = auth?.profile?.role === 'ADMIN';
 
@@ -40,6 +43,31 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     }
   }
   };
+  const handleStart = async () => {
+    setIsPending(true);
+    try {
+      await sendDeviceCommand(id!, 'SET_STATE', { state: 'ACTIVE' });
+      toast.success("Device is now active!");
+    } catch (err: any) {
+      if (err.message === 'DEVICE_OFFLINE') {
+        toast.error("Device is OFFLINE. Please check power supply.");
+      } else {
+        toast.error("An error occurred.");
+      }
+    } finally {
+      setIsPending(false);
+    }
+  };
+  const isStreamActive = () => {
+    if (!latestTelemetry) return false;
+    
+    const lastUpdate = new Date(latestTelemetry.timestamp).getTime();
+    const now = new Date().getTime();
+    const diffInSeconds = (now - lastUpdate) / 1000;
+    
+    // Ako je podatak stigao u poslednjih 60 sekundi, smatramo ga aktivnim
+    return diffInSeconds < 60; 
+  };
   return (
     <div className="dashboard-layout"> 
       <Sidebar 
@@ -62,6 +90,14 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
           <div className="device-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
             <Card title="CORE_DATA">
               <p><strong>SERIAL:</strong> {id}</p>
+              <p>
+                <strong>STREAM_STATUS:</strong>{' '}
+                {isStreamActive() ? (
+                  <span style={{ color: '#00ff41', fontWeight: 'bold' }}>ACTIVE</span>
+                ) : (
+                  <span style={{ color: '#ff4d4d', fontWeight: 'bold' }}>IDLE</span>
+                )}
+              </p>
               <p><strong>STATUS:</strong> <span className="status-active">OPERATIONAL</span></p>
               <p><strong>TYPE:</strong> GPIO_CONTROLLER</p>
             </Card>
@@ -110,6 +146,22 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                     </div>
                   </form>
                 )}
+              </div>
+            </Card>
+            <Card title="CONTROL_PLANE">
+              <div style={{ display: 'flex', gap: '10px' }}>
+               <Button 
+                onClick={handleStart} 
+                disabled={isPending}
+              >
+                {isPending ? "WAKING UP..." : "START_TELEMETRY"}
+              </Button>
+                <Button 
+                  onClick={() => sendDeviceCommand(id!, 'SET_STATE', { state: 'IDLE' })}
+                  variant="secondary"
+                >
+                  STOP_TELEMETRY
+                </Button>
               </div>
             </Card>
             <Card title="LATEST_TELEMETRY">

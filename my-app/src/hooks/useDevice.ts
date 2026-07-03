@@ -204,6 +204,20 @@ const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => 
       toast.error(err.message || "Failed to reassign device");
     });
 };
+const sendDeviceCommand = async (deviceId: string, command: string, payload?: any) => {
+  logger.info(`[COMMAND] Sending ${command} to device ${deviceId}`);
+  return apiClient(ENDPOINTS.DEVICE.COMMAND(deviceId), 'POST', { command, payload }, token)
+    .then(() => toast.success("Command sent!"))
+    .catch((err) => {
+      if (err.message === 'Device unreachable' || err.message === 'Request Timeout') {
+        logger.error(`[COMMAND] Device ${deviceId} timed out.`);
+        throw new Error('DEVICE_OFFLINE');
+      }
+      logger.error(`[COMMAND] Failed: ${err.message}`);
+      toast.error(err.message || "Failed to send command");
+      throw err;
+    });
+};
 
 
  
@@ -218,7 +232,7 @@ const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => 
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError};
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand};
 
 };
   
