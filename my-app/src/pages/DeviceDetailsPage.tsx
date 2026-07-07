@@ -8,24 +8,160 @@ import { useDeviceTelemetry} from '../hooks/useDeviceTelemetry';
 import { useAuth } from '../hooks/useAuth';
 import { useDevice } from '../hooks/useDevice';
 import { toast } from 'react-hot-toast';
+import { useDevicesStatuses } from '../hooks/useDeviceStatus';
+import { useCallback } from 'react';
+
 
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
+  
   const navigate = useNavigate();
   const {latestTelemetry, telemetryHistory, loading}= useDeviceTelemetry({deviceId:id, token:auth?.token})
-  const { handleReassignDevice, fetchDevices } = useDevice(auth?.token);
+//  const { handleReassignDevice, fetchDevices } = useDevice(auth?.token);
   const { users, fetchUsers } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const { sendDeviceCommand } = useDevice(auth?.token);
-  const [isPending, setIsPending] = useState(false);
+ // const { sendDeviceCommand } = useDevice(auth?.token);
+  //const [isPending, setIsPending] = useState(false);
+  const [isCommandLoading, setIsCommandLoading] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+ const [streamStatus, setStreamStatus] = useState<'ACTIVE' | 'IDLE'>('IDLE');
+ 
+
+
+// const { devices, updateDeviceStatus,loading: devicesLoading} = useDevice(auth?.token);
+const {
+  handleReassignDevice,
+  fetchDevices,
+  sendDeviceCommand,
+  devices,
+  updateDeviceStatus,
+  loading: devicesLoading
+} = useDevice(auth?.token);
+ const currentDevice = devices.find(d => 
+    String(d.id) === String(id) || String(d.serialNumber) === String(id)
+  );
+  const isDeviceConnected = currentDevice?.status === 'ONLINE';
 
   const isAdmin = auth?.profile?.role === 'ADMIN';
+
+  const handleStatusUpdate = useCallback(
+    (deviceId: string, newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED') => {
+      console.log("WebSocket primio update za:", deviceId, newStatus);
+
+      updateDeviceStatus(deviceId, newStatus);
+
+      if (newStatus === 'OFFLINE') {
+            setStreamStatus('IDLE');
+          }
+
+      toast.success(`Node ${deviceId} is now ${newStatus}`);
+    },
+    [updateDeviceStatus]
+  );
+  useDevicesStatuses({
+    onStatusUpdate: handleStatusUpdate,
+  });
+ 
+
+useEffect(() => {
+  console.log("DEVICE DETAILS MOUNT");
+
+  return () => {
+    console.log("DEVICE DETAILS UNMOUNT");
+  };
+}, []);
 
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
     }
   }, [isAdmin]);
+
+  useEffect(() => {
+      console.log("Svi uređaji u state-u:", devices);
+      const foundDevice = devices.find(d =>
+      String(d.id) === String(id) ||
+      String(d.serialNumber) === String(id)
+  );
+    console.log("Uređaj pronađen u listi:", foundDevice);
+  }, [devices, id]);
+  
+  useEffect(() => {
+    if (!isDeviceConnected) {
+      setStreamStatus('IDLE');
+      return;
+    }
+
+    if (!latestTelemetry) {
+      setStreamStatus('IDLE');
+      return;
+    }
+
+    const age =
+      (Date.now() -
+        new Date(latestTelemetry.timestamp).getTime()) / 1000;
+
+    setStreamStatus(age < 10 ? 'ACTIVE' : 'IDLE');
+  }, [latestTelemetry, isDeviceConnected]);
+
+
+
+  useEffect(() => {
+    if (auth?.token) {
+      fetchDevices();
+    }
+  }, [auth?.token]);
+
+ /* useEffect(() => {
+    if (!id || !isDeviceConnected) return;
+
+    
+    console.log("[TELEMETRY] Inicijalizacija automatskog pokretanja za:", id);
+    sendDeviceCommand(id, 'SET_STATE', { state: 'ACTIVE' })
+      .then(() => {
+        setStreamStatus('ACTIVE');
+        toast.success("Telemetry stream started.");
+      })
+      .catch((err) => console.error("Auto-start error:", err));
+
+    
+    return () => {
+      console.log("[TELEMETRY] Zaustavljanje telemetrije pri izlasku:", id);
+      sendDeviceCommand(id, 'SET_STATE', { state: 'IDLE' })
+        .catch((err) => console.error("Cleanup stop error:", err));
+    };
+  }, [id, isDeviceConnected]); */
+  useEffect(() => {
+    if (!id) return;
+
+    if (!isDeviceConnected) {
+      //toast("Device is offline");
+      return;
+    }
+
+    sendDeviceCommand(id, 'SET_STATE', {
+      state: 'ACTIVE'
+    })
+    .catch(err => {
+     // toast.error(err.message);
+
+      if (err.message === 'DEVICE_OFFLINE') {
+          return;
+        }
+
+    });
+
+    return () => {
+      if (isDeviceConnected) {
+        sendDeviceCommand(id, 'SET_STATE', {
+          state: 'IDLE'
+        }).catch(() => {});
+      }
+    };
+  }, [id, isDeviceConnected]);
+
+
 
   const onTransferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,31 +179,66 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     }
   }
   };
-  const handleStart = async () => {
-    setIsPending(true);
-    try {
-      await sendDeviceCommand(id!, 'SET_STATE', { state: 'ACTIVE' });
-      toast.success("Device is now active!");
-    } catch (err: any) {
-      if (err.message === 'DEVICE_OFFLINE') {
-        toast.error("Device is OFFLINE. Please check power supply.");
-      } else {
-        toast.error("An error occurred.");
-      }
-    } finally {
-      setIsPending(false);
+
+
+  const handleCommand = async (command: string, payload: any, setter: (val: boolean) => void) => {
+
+  console.log(
+    "[FRONTEND COMMAND]",
+    command,
+    payload
+  );
+
+ console.log(
+    'BUTTON CLICK',
+    payload.state,
+    new Date().toISOString()
+  );
+  console.trace(
+  "[BUTTON TRACE]",
+  payload.state
+);
+  console.log("PRE SET TRUE", payload.state);
+
+setter(true);
+
+console.log("AFTER SET TRUE", payload.state);
+  try {
+    //if (payload.state === 'IDLE') setForcedStatus(false);
+    //if (payload.state === 'ACTIVE') setForcedStatus(true);
+    await sendDeviceCommand(id!, 'SET_STATE', payload);
+    setStreamStatus(payload.state);
+    toast.success(`Command processed successfully!`);
+  } catch (err: any) {
+    
+    if (err.message === 'DEVICE_OFFLINE') {
+      return;
     }
-  };
-  const isStreamActive = () => {
-    if (!latestTelemetry) return false;
-    
-    const lastUpdate = new Date(latestTelemetry.timestamp).getTime();
-    const now = new Date().getTime();
-    const diffInSeconds = (now - lastUpdate) / 1000;
-    
-    // Ako je podatak stigao u poslednjih 60 sekundi, smatramo ga aktivnim
-    return diffInSeconds < 60; 
-  };
+
+    toast.error("Failed to execute command.");
+
+  } finally {
+      console.log("FINALLY", payload.state);
+    setter(false); 
+    //setTimeout(() => setForcedStatus(null), 5000);
+  }
+};
+
+if (devicesLoading) {
+    return <div className="dashboard-layout">Loading system data...</div>;
+  }
+
+  if (!currentDevice) {
+    return (
+      <div className="dashboard-layout">
+        <main className="dashboard-content">
+          <h1>Device not found</h1>
+          <p>The device with ID/SN "{id}" could not be found in the registry.</p>
+          <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+        </main>
+      </div>
+    );
+  }
   return (
     <div className="dashboard-layout"> 
       <Sidebar 
@@ -92,11 +263,19 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
               <p><strong>SERIAL:</strong> {id}</p>
               <p>
                 <strong>STREAM_STATUS:</strong>{' '}
-                {isStreamActive() ? (
-                  <span style={{ color: '#00ff41', fontWeight: 'bold' }}>ACTIVE</span>
-                ) : (
-                  <span style={{ color: '#ff4d4d', fontWeight: 'bold' }}>IDLE</span>
-                )}
+
+                  <span
+                      style={{
+                        color: streamStatus === 'ACTIVE'
+                          ? '#00ff41'
+                          : '#ff4d4d',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {streamStatus}
+                    </span>
+
+                
               </p>
               <p><strong>STATUS:</strong> <span className="status-active">OPERATIONAL</span></p>
               <p><strong>TYPE:</strong> GPIO_CONTROLLER</p>
@@ -150,18 +329,35 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             </Card>
             <Card title="CONTROL_PLANE">
               <div style={{ display: 'flex', gap: '10px' }}>
-               <Button 
-                onClick={handleStart} 
-                disabled={isPending}
+                <Button
+                onClick={() =>
+                  handleCommand(
+                    'SET_STATE',
+                    { state: 'ACTIVE' },
+                    setIsStarting
+                  )
+                }
+                disabled={isStarting || !isDeviceConnected}
               >
-                {isPending ? "WAKING UP..." : "START_TELEMETRY"}
+                {!isDeviceConnected
+                  ? "OFFLINE_NODE"
+                  : (isStarting
+                      ? "ACTIVATING..."
+                      : "START_TELEMETRY")}
               </Button>
-                <Button 
-                  onClick={() => sendDeviceCommand(id!, 'SET_STATE', { state: 'IDLE' })}
-                  variant="secondary"
-                >
-                  STOP_TELEMETRY
-                </Button>
+
+              <Button
+                onClick={() =>
+                  handleCommand( 'SET_STATE', { state: 'IDLE' }, setIsStopping)}
+                disabled={isStopping || !isDeviceConnected}
+              >
+                {!isDeviceConnected
+                  ? "OFFLINE_NODE"
+                  : (isStopping
+                      ? "STOPPING..."
+                      : "STOP_TELEMETRY")}
+              </Button>
+                        
               </div>
             </Card>
             <Card title="LATEST_TELEMETRY">

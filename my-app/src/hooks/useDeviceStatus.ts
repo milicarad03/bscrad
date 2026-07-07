@@ -29,6 +29,12 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
 
     socket.on('connect', () => {
       logger.info(`[WS-STATUS] Connected. Dispatching global status subscribe command.`);
+
+      console.log(
+          '[WS-STATUS] Connected:',
+          socket.id
+        );
+
       
    
       socket.emit('devices:subscribe_statuses');
@@ -36,14 +42,23 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
 
 
     socket.on('device:status_update', (payload: StatusUpdatePayload) => {
+       console.count('STATUS_EVENT');
       logger.info(`[WS-STATUS] Status delta captured for node [${payload.deviceId}] -> ${payload.status}`);
       
     
       onStatusUpdate(payload.deviceId, payload.status);
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       logger.warn(`[WS-STATUS] Global status pipeline closed.`);
+
+      console.log(
+          '[WS-STATUS] Disconnected:',
+          socket.id,
+          reason
+        );
+
+      
     });
 
     return () => {

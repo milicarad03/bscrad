@@ -206,18 +206,59 @@ const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => 
 };
 const sendDeviceCommand = async (deviceId: string, command: string, payload?: any) => {
   logger.info(`[COMMAND] Sending ${command} to device ${deviceId}`);
+
+
+  console.log(
+    "[API SEND]",
+    deviceId,
+    command,
+    payload
+  );
   return apiClient(ENDPOINTS.DEVICE.COMMAND(deviceId), 'POST', { command, payload }, token)
     .then(() => toast.success("Command sent!"))
     .catch((err) => {
+      console.log("COMMAND ERROR:", err);
+      console.log("COMMAND ERROR MESSAGE:", err.message);
+
       if (err.message === 'Device unreachable' || err.message === 'Request Timeout') {
-        logger.error(`[COMMAND] Device ${deviceId} timed out.`);
         throw new Error('DEVICE_OFFLINE');
       }
-      logger.error(`[COMMAND] Failed: ${err.message}`);
+
+      if (err.message.includes('OFFLINE')) {
+        //toast.error('Device is offline');
+        throw new Error('DEVICE_OFFLINE');
+      }
+
       toast.error(err.message || "Failed to send command");
       throw err;
     });
 };
+/*const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED') => {
+  setDevices(prev => prev.map(d => 
+    d.id === deviceId ? { ...d, status: newStatus } : d
+  ));
+}, []);*/
+const updateDeviceStatus = useCallback(
+  (
+    deviceId: string,
+    newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED'
+  ) => {
+
+  console.log(
+        "[STATUS UPDATE]",
+        deviceId,
+        newStatus
+      );
+
+    setDevices(prev =>
+      prev.map(d =>
+        d.id === deviceId ||
+        d.serialNumber === deviceId
+          ? { ...d, status: newStatus }
+          : d
+      )
+    );
+  },[]);
 
 
  
@@ -232,7 +273,7 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand};
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus};
 
 };
   
