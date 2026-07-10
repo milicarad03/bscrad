@@ -1,230 +1,160 @@
 // DeviceDetailsPage.tsx
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Sidebar } from '../components/Dashboard/Sidebar';
-import { useDeviceTelemetry} from '../hooks/useDeviceTelemetry';
+import { useDeviceTelemetry } from '../hooks/useDeviceTelemetry';
 import { useAuth } from '../hooks/useAuth';
 import { useDevice } from '../hooks/useDevice';
 import { toast } from 'react-hot-toast';
 import { useDevicesStatuses } from '../hooks/useDeviceStatus';
-import { useCallback } from 'react';
+import '../styles/layouts/deviceDetailsPage.css';
 
 
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
-  
   const navigate = useNavigate();
-  const {latestTelemetry, telemetryHistory, loading}= useDeviceTelemetry({deviceId:id, token:auth?.token})
-//  const { handleReassignDevice, fetchDevices } = useDevice(auth?.token);
+
+  const { latestTelemetry, telemetryHistory, loading } = useDeviceTelemetry({
+    deviceId: id,
+    token: auth?.token,
+  });
   const { users, fetchUsers } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
- // const { sendDeviceCommand } = useDevice(auth?.token);
-  //const [isPending, setIsPending] = useState(false);
-  const [isCommandLoading, setIsCommandLoading] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
- const [streamStatus, setStreamStatus] = useState<'ACTIVE' | 'IDLE'>('IDLE');
- 
+  const [streamStatus, setStreamStatus] = useState<'ACTIVE' | 'IDLE'>('IDLE');
+  const [localLedColor, setLocalLedColor] = useState<string | null>(null);
+  const [localLedState, setLocalLedState] = useState<boolean | null>(null);
+  const [persistedLedColor, setPersistedLedColor] = useState<string>('');
+  const [persistedLedState, setPersistedLedState] = useState<boolean>(false);
 
+  const {
+    handleReassignDevice,
+    fetchDevices,
+    sendDeviceCommand,
+    devices,
+    updateDeviceStatus,
+    loading: devicesLoading,
+  } = useDevice(auth?.token);
 
-// const { devices, updateDeviceStatus,loading: devicesLoading} = useDevice(auth?.token);
-const {
-  handleReassignDevice,
-  fetchDevices,
-  sendDeviceCommand,
-  devices,
-  updateDeviceStatus,
-  loading: devicesLoading
-} = useDevice(auth?.token);
- const currentDevice = devices.find(d => 
-    String(d.id) === String(id) || String(d.serialNumber) === String(id)
+  const currentDevice = devices.find(
+    (d) => String(d.id) === String(id) || String(d.serialNumber) === String(id)
   );
-  const isDeviceConnected = currentDevice?.status === 'ONLINE';
 
+  const commands = currentDevice?.modelVersion?.schema?.commands || {};
+  const supportsLed = !!commands.SET_LED;
+  const supportsLedColor = !!commands.SET_LED_COLOR;
+  const ledColors = commands.SET_LED_COLOR?.payload?.properties?.color?.enum || [];
+
+  const displayLedColor = localLedColor || persistedLedColor;
+  const displayLedState = localLedState !== null ? localLedState : persistedLedState;
+  const isDeviceConnected = currentDevice?.status === 'ONLINE';
   const isAdmin = auth?.profile?.role === 'ADMIN';
+
+  const handleLedStateChange = async (value: boolean) => {
+    setLocalLedState(value);
+    try {
+      await sendDeviceCommand(id!, 'SET_LED', { value });
+      toast.success(`LED turned ${value ? 'ON' : 'OFF'}`);
+    } catch {
+      setLocalLedState(null);
+      toast.error('Failed to change LED state');
+    }
+  };
+
+  const handleLedColorChange = async (color: string) => {
+    setLocalLedColor(color);
+    try {
+      await sendDeviceCommand(id!, 'SET_LED_COLOR', { color });
+      toast.success(`LED color set to ${color}`);
+    } catch {
+      setLocalLedColor(null);
+      toast.error('Failed to change LED color');
+    }
+  };
 
   const handleStatusUpdate = useCallback(
     (deviceId: string, newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED') => {
-      console.log("WebSocket primio update za:", deviceId, newStatus);
-
       updateDeviceStatus(deviceId, newStatus);
-
       if (newStatus === 'OFFLINE') {
-            setStreamStatus('IDLE');
-          }
-
-      toast.success(`Node ${deviceId} is now ${newStatus}`);
+        setStreamStatus('IDLE');
+      }
     },
     [updateDeviceStatus]
   );
-  useDevicesStatuses({
-    onStatusUpdate: handleStatusUpdate,
-  });
- 
-
-useEffect(() => {
-  console.log("DEVICE DETAILS MOUNT");
-
-  return () => {
-    console.log("DEVICE DETAILS UNMOUNT");
-  };
-}, []);
+  useDevicesStatuses({ onStatusUpdate: handleStatusUpdate });
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchUsers();
-    }
+    if (isAdmin) fetchUsers();
   }, [isAdmin]);
 
   useEffect(() => {
-      console.log("Svi uređaji u state-u:", devices);
-      const foundDevice = devices.find(d =>
-      String(d.id) === String(id) ||
-      String(d.serialNumber) === String(id)
-  );
-    console.log("Uređaj pronađen u listi:", foundDevice);
-  }, [devices, id]);
-  
+    if (latestTelemetry?.ledColor !== undefined) setPersistedLedColor(latestTelemetry.ledColor);
+    if (latestTelemetry?.led !== undefined) setPersistedLedState(latestTelemetry.led);
+  }, [latestTelemetry]);
+
   useEffect(() => {
-    if (!isDeviceConnected) {
+    if (!isDeviceConnected || !latestTelemetry) {
       setStreamStatus('IDLE');
       return;
     }
-
-    if (!latestTelemetry) {
-      setStreamStatus('IDLE');
-      return;
-    }
-
-    const age =
-      (Date.now() -
-        new Date(latestTelemetry.timestamp).getTime()) / 1000;
-
+    const age = (Date.now() - new Date(latestTelemetry.timestamp).getTime()) / 1000;
     setStreamStatus(age < 10 ? 'ACTIVE' : 'IDLE');
   }, [latestTelemetry, isDeviceConnected]);
 
-
-
   useEffect(() => {
-    if (auth?.token) {
-      fetchDevices();
-    }
+    if (auth?.token) fetchDevices();
   }, [auth?.token]);
 
- /* useEffect(() => {
+  useEffect(() => {
     if (!id || !isDeviceConnected) return;
 
-    
-    console.log("[TELEMETRY] Inicijalizacija automatskog pokretanja za:", id);
-    sendDeviceCommand(id, 'SET_STATE', { state: 'ACTIVE' })
-      .then(() => {
-        setStreamStatus('ACTIVE');
-        toast.success("Telemetry stream started.");
-      })
-      .catch((err) => console.error("Auto-start error:", err));
-
-    
-    return () => {
-      console.log("[TELEMETRY] Zaustavljanje telemetrije pri izlasku:", id);
-      sendDeviceCommand(id, 'SET_STATE', { state: 'IDLE' })
-        .catch((err) => console.error("Cleanup stop error:", err));
-    };
-  }, [id, isDeviceConnected]); */
-  useEffect(() => {
-    if (!id) return;
-
-    if (!isDeviceConnected) {
-      //toast("Device is offline");
-      return;
-    }
-
-    sendDeviceCommand(id, 'SET_STATE', {
-      state: 'ACTIVE'
-    })
-    .catch(err => {
-     // toast.error(err.message);
-
-      if (err.message === 'DEVICE_OFFLINE') {
-          return;
-        }
-
+    sendDeviceCommand(id, 'SET_STATE', { state: 'ACTIVE' }).catch((err) => {
+      if (err.message === 'DEVICE_OFFLINE') return;
     });
 
     return () => {
       if (isDeviceConnected) {
-        sendDeviceCommand(id, 'SET_STATE', {
-          state: 'IDLE'
-        }).catch(() => {});
+        sendDeviceCommand(id, 'SET_STATE', { state: 'IDLE' }).catch(() => {});
       }
     };
   }, [id, isDeviceConnected]);
 
-
-
   const onTransferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !selectedUserId) return;
-    
+
     if (window.confirm(`TRANSFER OWNERSHIP OF NODE ${id}?`)) {
       try {
-      
-      await handleReassignDevice(id, Number(selectedUserId));
-      
-   
-      setSelectedUserId('');
-   
-    } catch (err) {
+        await handleReassignDevice(id, Number(selectedUserId));
+        setSelectedUserId('');
+      } catch (err) {
+        // handled by toast in useDevice
+      }
     }
-  }
   };
 
-
-  const handleCommand = async (command: string, payload: any, setter: (val: boolean) => void) => {
-
-  console.log(
-    "[FRONTEND COMMAND]",
-    command,
-    payload
-  );
-
- console.log(
-    'BUTTON CLICK',
-    payload.state,
-    new Date().toISOString()
-  );
-  console.trace(
-  "[BUTTON TRACE]",
-  payload.state
-);
-  console.log("PRE SET TRUE", payload.state);
-
-setter(true);
-
-console.log("AFTER SET TRUE", payload.state);
-  try {
-    //if (payload.state === 'IDLE') setForcedStatus(false);
-    //if (payload.state === 'ACTIVE') setForcedStatus(true);
-    await sendDeviceCommand(id!, 'SET_STATE', payload);
-    setStreamStatus(payload.state);
-    toast.success(`Command processed successfully!`);
-  } catch (err: any) {
-    
-    if (err.message === 'DEVICE_OFFLINE') {
-      return;
+  const handleCommand = async (
+    command: string,
+    payload: any,
+    setter: (val: boolean) => void
+  ) => {
+    setter(true);
+    try {
+      await sendDeviceCommand(id!, 'SET_STATE', payload);
+      setStreamStatus(payload.state);
+      toast.success(`Command processed successfully!`);
+    } catch (err: any) {
+      if (err.message === 'DEVICE_OFFLINE') return;
+      toast.error('Failed to execute command.');
+    } finally {
+      setter(false);
     }
+  };
 
-    toast.error("Failed to execute command.");
-
-  } finally {
-      console.log("FINALLY", payload.state);
-    setter(false); 
-    //setTimeout(() => setForcedStatus(null), 5000);
-  }
-};
-
-if (devicesLoading) {
+  if (devicesLoading) {
     return <div className="dashboard-layout">Loading system data...</div>;
   }
 
@@ -239,163 +169,204 @@ if (devicesLoading) {
       </div>
     );
   }
+
   return (
-    <div className="dashboard-layout"> 
-      <Sidebar 
-        profile={auth.profile} 
+    <div className="dashboard-layout">
+      <Sidebar
+        profile={auth.profile}
         activeTab="devices"
-        setActiveTab={() => navigate('/dashboard')} 
+        setActiveTab={() => navigate('/dashboard')}
         onLogout={auth.handleLogout}
       />
-      
+
       <main className="dashboard-content">
         <div className="view-section">
-          <header className="device-header">
-            <button className="btn-back-link" onClick={() => navigate('/dashboard?tab=devices')}>
-               RETURN_TO_SYSTEM_REGISTRY
+          <header className="dd-header">
+            <button className="dd-back" onClick={() => navigate('/dashboard?tab=devices')}>
+              RETURN_TO_SYSTEM_REGISTRY
             </button>
-            <h1 style={{marginTop: '20px'}}>SYSTEM_NODE: <span className="highlight">{id}</span></h1>
+            <h1 className="dd-title">
+              SYSTEM_NODE: <span className="highlight">{id}</span>
+            </h1>
           </header>
 
-
-          <div className="device-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+          <div className="dd-grid">
             <Card title="CORE_DATA">
-              <p><strong>SERIAL:</strong> {id}</p>
-              <p>
-                <strong>STREAM_STATUS:</strong>{' '}
-
-                  <span
-                      style={{
-                        color: streamStatus === 'ACTIVE'
-                          ? '#00ff41'
-                          : '#ff4d4d',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      {streamStatus}
-                    </span>
-
-                
-              </p>
-              <p><strong>STATUS:</strong> <span className="status-active">OPERATIONAL</span></p>
-              <p><strong>TYPE:</strong> GPIO_CONTROLLER</p>
+              <div className="dd-field">
+                <span className="dd-field-label">SERIAL</span>
+                <span className="dd-field-value">{id}</span>
+              </div>
+              <div className="dd-field">
+                <span className="dd-field-label">STREAM_STATUS</span>
+                <span
+                  className={`dd-status ${
+                    streamStatus === 'ACTIVE' ? 'dd-status--active' : 'dd-status--idle'
+                  }`}
+                >
+                  <span className="dd-dot" />
+                  {streamStatus}
+                </span>
+              </div>
+              <div className="dd-field">
+                <span className="dd-field-label">STATUS</span>
+                <span className="dd-badge">OPERATIONAL</span>
+              </div>
+              <div className="dd-field">
+                <span className="dd-field-label">TYPE</span>
+                <span className="dd-field-value">GPIO_CONTROLLER</span>
+              </div>
             </Card>
 
             <Card title="ADMIN_ACTIONS">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <Button style={{ flex: 1 }}>REBOOT</Button>
-                  <Button variant="secondary" style={{ flex: 1 }}>DIAGNOSTICS</Button>
-                </div>
-
-                {isAdmin && (
-                  <form onSubmit={onTransferSubmit} style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '15px', marginTop: '5px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: '#aaa' }}>
-                      TRANSFER_NODE_OWNERSHIP
-                    </label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <select
-                        data-cy="reassign-select"
-                        value={selectedUserId}
-                        onChange={(e) => setSelectedUserId(e.target.value)}
-                        className="techno-input"
-                        style={{
-                          flex: 1,
-                          background: '#0d1117',
-                          color: '#fff',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          padding: '8px',
-                          borderRadius: '4px',
-                          fontSize: '0.85rem'
-                        }}
-                        required
-                      >
-                        <option value="">SELECT_TARGET_USER</option>
-                        {users
-                          .filter(u => u.status === 'APPROVED')
-                          .map((u) => (
-                            <option key={u.id} value={u.id}>
-                              {u.name} ({u.email})
-                            </option>
-                          ))}
-                      </select>
-                      <Button data-cy="reassign-confirm" type="submit" variant="secondary" style={{ padding: '8px 15px', fontSize: '0.85rem' }}>
-                        TRANSFER
-                      </Button>
-                    </div>
-                  </form>
-                )}
+              <div className="dd-row">
+                <Button className="dd-btn dd-btn--row">REBOOT</Button>
+                <Button className="dd-btn dd-btn--row">DIAGNOSTICS</Button>
               </div>
+
+              {isAdmin && (
+                <form onSubmit={onTransferSubmit} className="dd-transfer">
+                  <label className="dd-transfer-label">TRANSFER_NODE_OWNERSHIP</label>
+                  <div className="dd-row">
+                    <select
+                      data-cy="reassign-select"
+                      value={selectedUserId}
+                      onChange={(e) => setSelectedUserId(e.target.value)}
+                      className="dd-select"
+                      required
+                    >
+                      <option value="">SELECT_TARGET_USER</option>
+                      {users
+                        .filter((u) => u.status === 'APPROVED')
+                        .map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.name} ({u.email})
+                          </option>
+                        ))}
+                    </select>
+                    <Button data-cy="reassign-confirm" type="submit" className="dd-btn">
+                      TRANSFER
+                    </Button>
+                  </div>
+                </form>
+              )}
             </Card>
+
             <Card title="CONTROL_PLANE">
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="dd-row">
                 <Button
-                onClick={() =>
-                  handleCommand(
-                    'SET_STATE',
-                    { state: 'ACTIVE' },
-                    setIsStarting
-                  )
-                }
-                disabled={isStarting || !isDeviceConnected}
-              >
-                {!isDeviceConnected
-                  ? "OFFLINE_NODE"
-                  : (isStarting
-                      ? "ACTIVATING..."
-                      : "START_TELEMETRY")}
-              </Button>
+                  className={`dd-btn dd-btn--row dd-btn--start ${
+                    streamStatus === 'ACTIVE' ? 'dd-btn--on' : ''
+                  }`}
+                  onClick={() => handleCommand('SET_STATE', { state: 'ACTIVE' }, setIsStarting)}
+                  disabled={isStarting || !isDeviceConnected || streamStatus === 'ACTIVE'}
+                >
+                  {!isDeviceConnected
+                    ? 'OFFLINE_NODE'
+                    : isStarting
+                    ? 'ACTIVATING...'
+                    : streamStatus === 'ACTIVE'
+                    ? 'TELEMETRY_ACTIVE'
+                    : 'START_TELEMETRY'}
+                </Button>
 
-              <Button
-                onClick={() =>
-                  handleCommand( 'SET_STATE', { state: 'IDLE' }, setIsStopping)}
-                disabled={isStopping || !isDeviceConnected}
-              >
-                {!isDeviceConnected
-                  ? "OFFLINE_NODE"
-                  : (isStopping
-                      ? "STOPPING..."
-                      : "STOP_TELEMETRY")}
-              </Button>
-                        
+                <Button
+                  className={`dd-btn dd-btn--row dd-btn--stop ${
+                    streamStatus === 'IDLE' ? 'dd-btn--on' : ''
+                  }`}
+                  onClick={() => handleCommand('SET_STATE', { state: 'IDLE' }, setIsStopping)}
+                  disabled={isStopping || !isDeviceConnected || streamStatus === 'IDLE'}
+                >
+                  {!isDeviceConnected
+                    ? 'OFFLINE_NODE'
+                    : isStopping
+                    ? 'STOPPING...'
+                    : streamStatus === 'IDLE'
+                    ? 'TELEMETRY_IDLE'
+                    : 'STOP_TELEMETRY'}
+                </Button>
               </div>
-            </Card>
-            <Card title="LATEST_TELEMETRY">
-              {loading ? ( <p>Loading telemetry...</p>) : latestTelemetry ? (
-                <div>
-                  <p>
-                    <strong>TIME:</strong>{' '}
-                    {new Date(latestTelemetry.timestamp).toLocaleString()}
-                  </p>
 
+              {supportsLedColor && (
+                <div className="dd-swatches">
+                  {ledColors.map((color: string) => {
+                    const isActive = displayLedColor === color;
+                    return (
+                      <Button
+                        key={color}
+                        className={`dd-btn dd-btn--swatch ${isActive ? 'dd-btn--active' : ''}`}
+                        onClick={() => handleLedColorChange(color)}
+                        disabled={!isDeviceConnected}
+                        style={isActive ? { background: color.toLowerCase() } : undefined}
+                      >
+                        {color}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {supportsLed && (
+                <div className="dd-row">
+                  <Button
+                    className={`dd-btn dd-btn--led-on ${
+                      displayLedState === true ? 'dd-btn--active' : ''
+                    }`}
+                    disabled={!isDeviceConnected}
+                    onClick={() => handleLedStateChange(true)}
+                  >
+                    LED ON
+                  </Button>
+
+                  <Button
+                    className={`dd-btn dd-btn--led-off ${
+                      displayLedState === false ? 'dd-btn--active' : ''
+                    }`}
+                    disabled={!isDeviceConnected}
+                    onClick={() => handleLedStateChange(false)}
+                  >
+                    LED OFF
+                  </Button>
+                </div>
+              )}
+            </Card>
+
+            <Card title="LATEST_TELEMETRY">
+              {loading ? (
+                <p>Loading telemetry...</p>
+              ) : latestTelemetry ? (
+                <div>
+                  <div className="dd-field">
+                    <span className="dd-field-label">TIME</span>
+                    <span className="dd-field-value">
+                      {new Date(latestTelemetry.timestamp).toLocaleString()}
+                    </span>
+                  </div>
                   {Object.entries(latestTelemetry.data).map(([key, value]) => (
-                    <p key={key}>
-                      <strong>{key.toUpperCase()}:</strong> {String(value)}
-                    </p>
+                    <div className="dd-field" key={key}>
+                      <span className="dd-field-label">{key.toUpperCase()}</span>
+                      <span className="dd-field-value">{String(value)}</span>
+                    </div>
                   ))}
                 </div>
               ) : (
                 <p>No telemetry received yet.</p>
               )}
             </Card>
+
             <Card title="TELEMETRY_HISTORY">
-              {loading ? ( <p>Loading history...</p> ) : telemetryHistory.length > 0 ? (
+              {loading ? (
+                <p>Loading history...</p>
+              ) : telemetryHistory.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {telemetryHistory.map((item, index) => (
                     <div
                       key={item.id ?? `${item.deviceId}-${item.timestamp}-${index}`}
-                      style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.15)',
-                        paddingBottom: '8px',
-                      }}
+                      className="dd-history-item"
                     >
-                      <p>
-                        <strong>{new Date(item.timestamp).toLocaleString()}</strong>
-                      </p>
-
-                      <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
-                        {JSON.stringify(item.data, null, 2)}
-                      </pre>
+                      <span className="dd-history-time">
+                        {new Date(item.timestamp).toLocaleString()}
+                      </span>
+                      <pre className="dd-history-data">{JSON.stringify(item.data, null, 2)}</pre>
                     </div>
                   ))}
                 </div>

@@ -125,36 +125,6 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
         isSubmittingRef.current = false;
       });
 };
-
-
-  /*const fetchDevices = async (filters?: { status?: string; type?: string[]; userId?: number[]}) => {
-    if (!token) {
-      logger.warn("[DEVICE] Drop query execution for fetchDevices. Unauthenticated state.");
-      return;
-    }
-    if (loading || hasError) {
-    logger.warn("[DEVICE] Fetch aborted: Already loading or in error state.");
-    return;
-  }
-    setLoading(true);
-
-    setHasError(false);
-
-    logger.debug(`[DEVICE] Fetching active devices registry index. Query Filters: ${JSON.stringify(filters || {})}`);
-    
-    apiClient<{data: DeviceDTO[]; meta : any }>(ENDPOINTS.DEVICE.BASE, 'GET', null, token, filters)
-      .then((res) => {
-        
-        logger.info(`[DEVICE] Registry index pulled successfully. Records bound: ${res.data.length}`);
-        setDevices(res.data);
-      })
-      .catch((err: any) => {
-        setHasError(true);
-        logger.error("[DEVICE] Failed to synchronous parse server inventory states:", err.message);
-        toast.error(err.message || "Failed to fetch devices");
-      })
-      .finally(() => setLoading(false));
-  };*/
   
 const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => {
   if (loading || hasError) return;

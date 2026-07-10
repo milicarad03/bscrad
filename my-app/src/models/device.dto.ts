@@ -16,6 +16,16 @@ export interface DeviceDTO {
 
   lastseen: string; 
   status: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED';
+  
+  modelVersion?: {
+    id: string;
+    version: string;
+
+    schema?: {
+      commands?: Record<string, any>;
+    };
+  };
+
   latestTelemetry?: DeviceTelemetryDTO | null;
   
 }

@@ -1,0 +1,241 @@
+/* ============================================================
+   DEVICE DETAILS — design tokens & components
+   Theme: industrial telemetry / node control panel
+   ============================================================ */
+
+:root {
+  /* surfaces */
+  --dd-void: #0a0d12;
+  --dd-panel: #12161d;
+  --dd-panel-raised: #171c24;
+  --dd-border: rgba(255, 255, 255, 0.08);
+  --dd-border-strong: rgba(255, 255, 255, 0.16);
+
+  /* text */
+  --dd-text: #e6e9ef;
+  --dd-text-dim: #7a8394;
+  --dd-text-faint: #4b5261;
+
+  /* state colors */
+  --dd-online: #3ddc84;
+  --dd-online-dim: rgba(61, 220, 132, 0.12);
+  --dd-offline: #ff5c6c;
+  --dd-offline-dim: rgba(255, 92, 108, 0.12);
+  --dd-signal: #4d9fff;
+  --dd-signal-dim: rgba(77, 159, 255, 0.12);
+
+  /* type */
+  --dd-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --dd-font-sans: "Inter", system-ui, -apple-system, sans-serif;
+
+  --dd-radius: 6px;
+  --dd-gap: 16px;
+}
+
+/* ---------- layout shell ---------- */
+.dd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--dd-gap);
+  margin-top: var(--dd-gap);
+}
+@media (max-width: 860px) {
+  .dd-grid { grid-template-columns: 1fr; }
+}
+
+.dd-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dd-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--dd-text-dim);
+  font-family: var(--dd-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+}
+.dd-back:hover { color: var(--dd-signal); }
+.dd-back::before { content: "← "; }
+
+.dd-title {
+  font-family: var(--dd-font-sans);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--dd-text);
+  margin: 0;
+}
+.dd-title .highlight {
+  font-family: var(--dd-font-mono);
+  color: var(--dd-signal);
+  font-weight: 500;
+}
+
+/* ---------- status ---------- */
+.dd-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--dd-font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+.dd-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+.dd-status--active { color: var(--dd-online); }
+.dd-status--idle { color: var(--dd-offline); }
+
+.dd-status--active .dd-dot { animation: dd-pulse 1.8s ease-in-out infinite; }
+
+@keyframes dd-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.dd-badge {
+  display: inline-block;
+  font-family: var(--dd-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--dd-online-dim);
+  color: var(--dd-online);
+}
+
+/* ---------- field rows (replaces raw <p><strong>) ---------- */
+.dd-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--dd-border);
+  font-family: var(--dd-font-sans);
+  font-size: 0.85rem;
+}
+.dd-field:last-child { border-bottom: none; }
+.dd-field-label {
+  color: var(--dd-text-dim);
+  font-family: var(--dd-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+}
+.dd-field-value { color: var(--dd-text); }
+
+/* ---------- buttons ---------- */
+.dd-btn {
+  font-family: var(--dd-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  padding: 10px 16px;
+  border-radius: var(--dd-radius);
+  border: 1px solid var(--dd-border-strong);
+  background: var(--dd-panel-raised);
+  color: var(--dd-text);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+.dd-btn:hover:not(:disabled) { border-color: var(--dd-signal); color: var(--dd-signal); }
+.dd-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.dd-btn--row { flex: 1; }
+
+.dd-btn--start.dd-btn--on {
+  background: var(--dd-online-dim);
+  border-color: var(--dd-online);
+  color: var(--dd-online);
+}
+.dd-btn--stop.dd-btn--on {
+  background: var(--dd-offline-dim);
+  border-color: var(--dd-offline);
+  color: var(--dd-offline);
+}
+
+.dd-btn--swatch {
+  min-width: 72px;
+  text-transform: capitalize;
+}
+.dd-btn--swatch.dd-btn--active {
+  border-color: #fff;
+  color: #0a0d12;
+  font-weight: 600;
+}
+
+.dd-btn--led-on.dd-btn--active {
+  background: var(--dd-online-dim);
+  border-color: var(--dd-online);
+  color: var(--dd-online);
+}
+.dd-btn--led-off.dd-btn--active {
+  background: var(--dd-offline-dim);
+  border-color: var(--dd-offline);
+  color: var(--dd-offline);
+}
+
+/* ---------- groups ---------- */
+.dd-row { display: flex; gap: 10px; }
+.dd-row + .dd-row { margin-top: 15px; }
+.dd-swatches { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+
+/* ---------- transfer form ---------- */
+.dd-transfer {
+  border-top: 1px solid var(--dd-border);
+  padding-top: 15px;
+  margin-top: 5px;
+}
+.dd-transfer-label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--dd-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--dd-text-dim);
+}
+.dd-select {
+  flex: 1;
+  background: var(--dd-void);
+  color: var(--dd-text);
+  border: 1px solid var(--dd-border-strong);
+  padding: 9px 10px;
+  border-radius: var(--dd-radius);
+  font-family: var(--dd-font-sans);
+  font-size: 0.82rem;
+}
+.dd-select:focus-visible,
+.dd-btn:focus-visible,
+.dd-back:focus-visible {
+  outline: 2px solid var(--dd-signal);
+  outline-offset: 2px;
+}
+
+/* ---------- telemetry history ---------- */
+.dd-history-item {
+  border-bottom: 1px solid var(--dd-border);
+  padding-bottom: 10px;
+}
+.dd-history-time {
+  font-family: var(--dd-font-mono);
+  font-size: 0.75rem;
+  color: var(--dd-text-dim);
+}
+.dd-history-data {
+  white-space: pre-wrap;
+  margin: 6px 0 0;
+  font-family: var(--dd-font-mono);
+  font-size: 0.75rem;
+  color: var(--dd-text);
+  background: var(--dd-void);
+  padding: 8px 10px;
+  border-radius: var(--dd-radius);
+}
