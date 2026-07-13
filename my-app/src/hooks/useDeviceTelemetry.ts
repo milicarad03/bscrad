@@ -48,6 +48,7 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
 
   useEffect(() => {
     if (!deviceId) return;
+    console.count('TELEMETRY_SOCKET_CREATED');
     logger.debug(`[WS] Initializing real-time stream pipeline container towards: ${WS_BASE_URL}`);
 
     const socket: Socket = io(WS_BASE_URL, {
@@ -86,8 +87,22 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
     socket.on('disconnect', () => {
       logger.warn(`[WS] Connection socket interface closed or dropped by peer destination target.`);
     });
+    socket.on('connect_error', (err) => {
+      console.error(
+        '[WS] connect_error',
+        err.message
+      );
+    });
+
+    socket.on('reconnect_attempt', (attempt) => {
+      console.log(
+        '[WS] reconnect_attempt',
+        attempt
+      );
+    });
 
     return () => {
+      console.count('TELEMETRY_SOCKET_DESTROYED');
       logger.debug(`[WS] Destruction hook called. Tearing down active stream pipe connection for device: ${deviceId}`);
       socket.disconnect();
     };

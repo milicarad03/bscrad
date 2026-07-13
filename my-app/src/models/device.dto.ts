@@ -20,6 +20,13 @@ export interface DeviceDTO {
   modelVersion?: {
     id: string;
     version: string;
+    modelId?: string;
+
+    model?: {
+      id: string;
+      name: string;
+      description?: string;
+    };
 
     schema?: {
       commands?: Record<string, any>;

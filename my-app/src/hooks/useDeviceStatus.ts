@@ -21,7 +21,10 @@ interface UseDevicesStatusesParams {
 
 export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams) => {
   useEffect(() => {
+    
     logger.debug(`[WS-STATUS] Initializing global status stream container towards: ${WS_BASE_URL}`);
+
+    console.count('STATUS_SOCKET_CREATED');
 
     const socket: Socket = io(WS_BASE_URL, {
       withCredentials: true,
@@ -65,8 +68,22 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
           reason
         );
     });
+    socket.on('connect_error', (err) => {
+      console.error(
+        '[WS-STATUS] connect_error',
+        err.message
+      );
+    });
+
+socket.on('reconnect_attempt', (attempt) => {
+  console.log(
+    '[WS-STATUS] reconnect_attempt',
+    attempt
+  );
+});
 
     return () => {
+      console.count('STATUS_SOCKET_DESTROYED');
       logger.debug(`[WS-STATUS] Tearing down active global status pipe.`);
       socket.disconnect();
     };

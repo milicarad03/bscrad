@@ -29,6 +29,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const [localLedState, setLocalLedState] = useState<boolean | null>(null);
   const [persistedLedColor, setPersistedLedColor] = useState<string>('');
   const [persistedLedState, setPersistedLedState] = useState<boolean>(false);
+  //const [currentProfile, setCurrentProfile] = useState('NORMAL');
 
   const {
     handleReassignDevice,
@@ -46,10 +47,12 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const commands = currentDevice?.modelVersion?.schema?.commands || {};
   const supportsLed = !!commands.SET_LED;
   const supportsLedColor = !!commands.SET_LED_COLOR;
+  const supportsOperatingProfile = !!commands.SET_OPERATING_PROFILE;
   const ledColors = commands.SET_LED_COLOR?.payload?.properties?.color?.enum || [];
 
   const displayLedColor = localLedColor || persistedLedColor;
   const displayLedState = localLedState !== null ? localLedState : persistedLedState;
+  const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
   const isDeviceConnected = currentDevice?.status === 'ONLINE';
   const isAdmin = auth?.profile?.role === 'ADMIN';
 
@@ -61,6 +64,28 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     } catch {
       setLocalLedState(null);
       toast.error('Failed to change LED state');
+    }
+  };
+  const sendOperatingProfile = async () => {
+    try {
+      await sendDeviceCommand(id!, 'SET_OPERATING_PROFILE', {
+        mode: 'BOOST',
+        pressure: {
+          target: 12,
+        },
+        safety: {
+          maxTemperature: 95,
+          maxVibration: 5,
+        },
+        schedule: {
+          durationMinutes: 1,
+        },
+      });
+      //setCurrentProfile('BOOST');
+
+      toast.success('Operating profile applied');
+    } catch {
+      toast.error('Failed to apply operating profile');
     }
   };
 
@@ -89,17 +114,23 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   useEffect(() => {
     if (isAdmin) fetchUsers();
   }, [isAdmin]);
-
   useEffect(() => {
-    if (latestTelemetry?.ledColor !== undefined) setPersistedLedColor(latestTelemetry.ledColor);
-    if (latestTelemetry?.led !== undefined) setPersistedLedState(latestTelemetry.led);
-  }, [latestTelemetry]);
+  if (latestTelemetry?.data?.ledColor !== undefined) {
+    setPersistedLedColor(latestTelemetry.data.ledColor);
+  }
+
+  if (latestTelemetry?.data?.led !== undefined) {
+    setPersistedLedState(latestTelemetry.data.led);
+  }
+}, [latestTelemetry]);
+
 
   useEffect(() => {
     if (!isDeviceConnected || !latestTelemetry) {
       setStreamStatus('IDLE');
       return;
     }
+  
     const age = (Date.now() - new Date(latestTelemetry.timestamp).getTime()) / 1000;
     setStreamStatus(age < 10 ? 'ACTIVE' : 'IDLE');
   }, [latestTelemetry, isDeviceConnected]);
@@ -107,6 +138,15 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   useEffect(() => {
     if (auth?.token) fetchDevices();
   }, [auth?.token]);
+  useEffect(() => {
+  console.count('DEVICE_DETAILS_MOUNT');
+
+  return () => {
+    console.count('DEVICE_DETAILS_UNMOUNT');
+  };
+}, []);
+
+
 
   useEffect(() => {
     if (!id || !isDeviceConnected) return;
@@ -121,6 +161,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
       }
     };
   }, [id, isDeviceConnected]);
+  
 
   const onTransferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,16 +172,18 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
         await handleReassignDevice(id, Number(selectedUserId));
         setSelectedUserId('');
       } catch (err) {
-        // handled by toast in useDevice
       }
     }
   };
+  const getTextColor = (color: string) => {
+    const lightColors = ['WHITE', 'YELLOW', 'LIME', 'CYAN'];
 
-  const handleCommand = async (
-    command: string,
-    payload: any,
-    setter: (val: boolean) => void
-  ) => {
+    return lightColors.includes(color.toUpperCase())
+      ? '#0a0d12'
+      : '#ffffff';
+  };
+
+  const handleCommand = async ( command: string, payload: any, setter: (val: boolean) => void) => {
     setter(true);
     try {
       await sendDeviceCommand(id!, 'SET_STATE', payload);
@@ -196,16 +239,26 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                 <span className="dd-field-label">SERIAL</span>
                 <span className="dd-field-value">{id}</span>
               </div>
-              <div className="dd-field">
-                <span className="dd-field-label">STREAM_STATUS</span>
-                <span
-                  className={`dd-status ${
-                    streamStatus === 'ACTIVE' ? 'dd-status--active' : 'dd-status--idle'
-                  }`}
-                >
-                  <span className="dd-dot" />
-                  {streamStatus}
-                </span>
+              <div className="dd-stats">
+                <div className="dd-stat">
+                  <span className="dd-stat-label">SERIAL</span>
+                  <span className="dd-stat-value">{id}</span>
+                </div>
+
+                <div className="dd-stat">
+                  <span className="dd-stat-label">STREAM_STATUS</span>
+                  <span className="dd-stat-value">
+                    {streamStatus}
+                  </span>
+                </div>
+
+                <div className="dd-stat">
+                  <span className="dd-stat-label">MODEL</span>
+                  <span className="dd-stat-value">
+                    {currentDevice.modelVersion?.modelId ?? 'N/A'}
+                  </span>
+                </div>
+
               </div>
               <div className="dd-field">
                 <span className="dd-field-label">STATUS</span>
@@ -285,49 +338,65 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                     : 'STOP_TELEMETRY'}
                 </Button>
               </div>
-
               {supportsLedColor && (
-                <div className="dd-swatches">
-                  {ledColors.map((color: string) => {
-                    const isActive = displayLedColor === color;
-                    return (
+                <div className="dd-section">
+                  <span className="dd-section-title">LED COLOR CONFIG</span>
+                  <div className="dd-swatches">
+                    {ledColors.map((color: string) => (
                       <Button
-                        key={color}
-                        className={`dd-btn dd-btn--swatch ${isActive ? 'dd-btn--active' : ''}`}
-                        onClick={() => handleLedColorChange(color)}
-                        disabled={!isDeviceConnected}
-                        style={isActive ? { background: color.toLowerCase() } : undefined}
-                      >
-                        {color}
-                      </Button>
-                    );
-                  })}
+                      key={color}
+                      className={`dd-btn dd-btn--swatch ${
+                        displayLedColor === color ? 'dd-btn--active' : ''
+                      }`}
+                      onClick={() => handleLedColorChange(color)}
+                      disabled={!isDeviceConnected}
+                      style={
+                        displayLedColor === color ? { background: color.toLowerCase(), color: getTextColor(color)} : undefined
+                      }
+                    >
+                      {color}
+                    </Button>
+                    ))}
+                  </div>
                 </div>
               )}
+
 
               {supportsLed && (
-                <div className="dd-row">
-                  <Button
-                    className={`dd-btn dd-btn--led-on ${
-                      displayLedState === true ? 'dd-btn--active' : ''
-                    }`}
-                    disabled={!isDeviceConnected}
-                    onClick={() => handleLedStateChange(true)}
-                  >
-                    LED ON
-                  </Button>
-
-                  <Button
-                    className={`dd-btn dd-btn--led-off ${
-                      displayLedState === false ? 'dd-btn--active' : ''
-                    }`}
-                    disabled={!isDeviceConnected}
-                    onClick={() => handleLedStateChange(false)}
-                  >
-                    LED OFF
-                  </Button>
+                <div className="dd-section">
+                  <span className="dd-section-title">POWER CONTROL</span>
+                  <div className="dd-row">
+                    <Button
+                      className={`dd-btn dd-btn--led-on flex-1 ${displayLedState === true ? 'dd-btn--active' : ''}`}
+                      disabled={!isDeviceConnected}
+                      onClick={() => handleLedStateChange(true)}
+                    >
+                      LED ON
+                    </Button>
+                    <Button
+                      className={`dd-btn dd-btn--led-off flex-1 ${displayLedState === false ? 'dd-btn--active' : ''}`}
+                      disabled={!isDeviceConnected}
+                      onClick={() => handleLedStateChange(false)}
+                    >
+                      LED OFF
+                    </Button>
+                  </div>
                 </div>
               )}
+              {supportsOperatingProfile && (
+              <div className="dd-section">
+                <span className="dd-section-title">
+                  OPERATING PROFILE
+                </span>
+
+                <Button
+                  disabled={ !isDeviceConnected || currentProfile === 'BOOST'}
+                  onClick={sendOperatingProfile}
+                >
+                {currentProfile === 'BOOST' ? 'BOOST ACTIVE' : 'APPLY BOOST PROFILE'}
+              </Button>
+              </div>
+            )}
             </Card>
 
             <Card title="LATEST_TELEMETRY">
@@ -341,16 +410,68 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                       {new Date(latestTelemetry.timestamp).toLocaleString()}
                     </span>
                   </div>
+                  <div className="dd-telemetry-grid">
                   {Object.entries(latestTelemetry.data).map(([key, value]) => (
-                    <div className="dd-field" key={key}>
-                      <span className="dd-field-label">{key.toUpperCase()}</span>
-                      <span className="dd-field-value">{String(value)}</span>
+                    <div className="dd-metric" key={key}>
+                      <div className="dd-metric-label">
+                        {key.toUpperCase()}
+                      </div>
+                      <div className="dd-metric-value">
+                        {String(value)}
+                      </div>
                     </div>
                   ))}
+                </div>
                 </div>
               ) : (
                 <p>No telemetry received yet.</p>
               )}
+            </Card>
+            <Card title="DEVICE_STATE">
+              <div className="dd-device-state">
+
+                <div className="dd-state-row">
+                  <span>LED STATE</span>
+
+                  <span
+                    className={
+                      displayLedState
+                        ? 'dd-indicator-on'
+                        : 'dd-indicator-off'
+                    }
+                  >
+                    {displayLedState ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+
+                <div className="dd-state-row">
+                  <span>LED COLOR</span>
+
+                <div className="dd-led-color-display">
+                  <span
+                    className="dd-led-dot"
+                    style={{
+                      background: displayLedColor?.toLowerCase() || '#666'
+                    }}
+                  />
+                  <span>{displayLedColor}</span>
+                </div>
+                </div>
+                <div className="dd-state-row">
+                  <span>CURRENT PROFILE</span>
+
+                  <span
+                    className={
+                      currentProfile === 'BOOST'
+                        ? 'dd-indicator-on'
+                        : 'dd-indicator-off'
+                    }
+                  >
+                    {currentProfile}
+                  </span>
+                </div>
+
+              </div>
             </Card>
 
             <Card title="TELEMETRY_HISTORY">
