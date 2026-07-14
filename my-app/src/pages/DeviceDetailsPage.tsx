@@ -10,6 +10,9 @@ import { useDevice } from '../hooks/useDevice';
 import { toast } from 'react-hot-toast';
 import { useDevicesStatuses } from '../hooks/useDeviceStatus';
 import '../styles/layouts/deviceDetailsPage.css';
+import type { CommandMetadata } from '../models/device.dto';
+import { CommandConsole } from '../components/DeviceCommands/CommandConsole';
+import { buildPayloadFromCommandFields } from '../utils/commandFields';
 
 
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
@@ -30,6 +33,9 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const [persistedLedColor, setPersistedLedColor] = useState<string>('');
   const [persistedLedState, setPersistedLedState] = useState<boolean>(false);
   //const [currentProfile, setCurrentProfile] = useState('NORMAL');
+  const [commandMetadata, setCommandMetadata] = useState<CommandMetadata[]>([]);
+  const [selectedCommand, setSelectedCommand] = useState('');
+  const [commandPayload, setCommandPayload] = useState<Record<string, any>>({});
 
   const {
     handleReassignDevice,
@@ -38,6 +44,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     devices,
     updateDeviceStatus,
     loading: devicesLoading,
+    getCommandMetadata
   } = useDevice(auth?.token);
 
   const currentDevice = devices.find(
@@ -45,17 +52,45 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   );
 
   const commands = currentDevice?.modelVersion?.schema?.commands || {};
-  const supportsLed = !!commands.SET_LED;
-  const supportsLedColor = !!commands.SET_LED_COLOR;
-  const supportsOperatingProfile = !!commands.SET_OPERATING_PROFILE;
-  const ledColors = commands.SET_LED_COLOR?.payload?.properties?.color?.enum || [];
+
+  const supportsLed = commandMetadata.some(c => c.command === 'SET_LED');
+
+  const supportsLedColor = commandMetadata.some( c => c.command === 'SET_LED_COLOR');
+
+  const supportsOperatingProfile = commandMetadata.some(c => c.command === 'SET_OPERATING_PROFILE');
+  const ledColors =commandMetadata.find(c => c.command === 'SET_LED_COLOR')?.fields.find(f => f.name === 'color')?.enum ?? [];
+ 
+
 
   const displayLedColor = localLedColor || persistedLedColor;
   const displayLedState = localLedState !== null ? localLedState : persistedLedState;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
   const isDeviceConnected = currentDevice?.status === 'ONLINE';
   const isAdmin = auth?.profile?.role === 'ADMIN';
+  const activeCommand =
+  commandMetadata.find( c => c.command === selectedCommand);
 
+
+
+ const updateCommandField = (path: string, value: any) => {
+  setCommandPayload(prev => ({
+    ...prev,
+    [path]: value
+  }));
+};
+const executeGenericCommand = async () => {
+  if (!selectedCommand || !activeCommand) return;
+  try {
+    const allowedPaths = new Set(activeCommand.fields.map(f => f.path));
+    const payload = buildPayloadFromCommandFields(commandPayload, allowedPaths);
+
+    await sendDeviceCommand(id!, selectedCommand, payload);
+    setCommandPayload({});
+    toast.success(`${selectedCommand} sent`);
+  } catch {
+    toast.error('Command failed');
+  }
+};
   const handleLedStateChange = async (value: boolean) => {
     setLocalLedState(value);
     try {
@@ -81,7 +116,6 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
           durationMinutes: 1,
         },
       });
-      //setCurrentProfile('BOOST');
 
       toast.success('Operating profile applied');
     } catch {
@@ -132,19 +166,32 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     }
   
     const age = (Date.now() - new Date(latestTelemetry.timestamp).getTime()) / 1000;
-    setStreamStatus(age < 10 ? 'ACTIVE' : 'IDLE');
-  }, [latestTelemetry, isDeviceConnected]);
+      setStreamStatus(age < 10 ? 'ACTIVE' : 'IDLE');
+    }, [latestTelemetry, isDeviceConnected]);
 
   useEffect(() => {
-    if (auth?.token) fetchDevices();
+    if (auth?.token) {
+      fetchDevices();
+    }
   }, [auth?.token]);
-  useEffect(() => {
-  console.count('DEVICE_DETAILS_MOUNT');
 
-  return () => {
-    console.count('DEVICE_DETAILS_UNMOUNT');
-  };
-}, []);
+  useEffect(() => {
+
+    if (!id) return;
+
+    getCommandMetadata(id)
+      .then(setCommandMetadata)
+      .catch(console.error);
+
+  }, [id,  getCommandMetadata]);
+
+  useEffect(() => {
+    console.count('DEVICE_DETAILS_MOUNT');
+
+    return () => {
+      console.count('DEVICE_DETAILS_UNMOUNT');
+    };
+  }, []);
 
 
 
@@ -495,6 +542,42 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                 <p>No telemetry history.</p>
               )}
             </Card>
+              <Card title="AVAILABLE_COMMANDS">
+                
+
+                {commandMetadata.map(command => (
+                  <div
+                    key={command.command}
+                    className="dd-section"
+                  >
+                    <strong>
+                      {command.command}
+                    </strong>
+
+                    {command.fields.map(field => (
+                      <div key={field.path}>
+                        {field.name}
+                        {" | "}
+                        {field.type}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              
+            </Card>
+            <CommandConsole
+              commandMetadata={commandMetadata}
+              selectedCommand={selectedCommand}
+              onSelectCommand={(cmd) => {
+                setSelectedCommand(cmd);
+                setCommandPayload({});
+              }}
+              commandPayload={commandPayload}
+              onFieldChange={(path, value) => updateCommandField(path, value)}
+              onExecute={executeGenericCommand}
+              disabled={!isDeviceConnected}
+            />
+            
           </div>
         </div>
       </main>

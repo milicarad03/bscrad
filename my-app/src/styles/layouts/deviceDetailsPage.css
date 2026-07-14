@@ -393,3 +393,77 @@
     0 0 12px currentColor,
     0 0 24px currentColor;
 }
+.cf-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cf-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--dd-border, #333);
+  background: transparent;
+  color: var(--dd-text, #e6e6e6);   /* <-- dodato */
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.cf-pill:hover:not(.cf-pill--active) {
+  border-color: var(--dd-accent, #0af);
+}
+
+.cf-pill--active {
+  background: var(--dd-accent, #0af);
+  color: #0a0d12;
+  border-color: var(--dd-accent, #0af);
+}
+
+.cf-command-select {
+  margin-bottom: 16px;
+}
+
+.cf-group {
+  margin-bottom: 14px;
+}
+
+.cf-group-title {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+
+.cf-group-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.cf-field-label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.dd-input {
+  width: 100%;
+  padding: 8px 10px;
+  color: #e6e6e6;
+  border-radius: 6px;
+  border: 1px solid var(--dd-border, #333);
+  background: transparent;
+}
+.cf-input--error {
+  border: 2px solid #ff4d4f !important;
+  background-color: #fff1f0;
+}
+
+.cf-error-text {
+  color: #ff4d4f;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: block;
+}

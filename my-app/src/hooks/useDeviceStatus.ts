@@ -75,12 +75,12 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
       );
     });
 
-socket.on('reconnect_attempt', (attempt) => {
-  console.log(
-    '[WS-STATUS] reconnect_attempt',
-    attempt
-  );
-});
+    socket.on('reconnect_attempt', (attempt) => {
+      console.log(
+        '[WS-STATUS] reconnect_attempt',
+        attempt
+      );
+    });
 
     return () => {
       console.count('STATUS_SOCKET_DESTROYED');

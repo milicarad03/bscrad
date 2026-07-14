@@ -4,6 +4,7 @@ import type {CreateDeviceDTO} from '../models/device.dto'
 import {ENDPOINTS} from '../api/config.ts'
 import {apiClient} from '../api/client.ts'
 import { toast } from 'react-hot-toast';
+import type { CommandMetadata } from '../models/device.dto';
 import log from 'loglevel';
 const logger = log.getLogger('useDevice');
 if (import.meta.env.DEV) {
@@ -203,11 +204,35 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
       throw err;
     });
 };
-/*const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED') => {
-  setDevices(prev => prev.map(d => 
-    d.id === deviceId ? { ...d, status: newStatus } : d
-  ));
-}, []);*/
+const getCommandMetadata = async (
+  deviceId: string
+) => {
+
+  logger.info(
+    `[COMMAND METADATA] Loading metadata for device ${deviceId}`
+  );
+
+  return apiClient<CommandMetadata[]>(ENDPOINTS.DEVICE.COMMAND_METADATA(deviceId),'GET', null, token)
+    .then((response) => {
+
+      logger.info(
+        `[COMMAND METADATA] Loaded metadata for device ${deviceId}`
+      );
+
+      return response;
+    })
+    .catch((err) => {
+
+      logger.error(
+        `[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`,
+        err.message
+      );
+
+      throw err;
+    });
+};
+
+
 const updateDeviceStatus = useCallback(
   (
     deviceId: string,
@@ -243,7 +268,7 @@ const updateDeviceStatus = useCallback(
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus};
+,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus, getCommandMetadata};
 
 };
   

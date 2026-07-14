@@ -27,6 +27,7 @@ export const ENDPOINTS = {
     TELEMETRY_LATEST: (id: string) => `${API_BASE_URL}/device/${id}/telemetry/latest`,
     REASSIGN: (id: string) => `${API_BASE_URL}/device/${id}/reassign`,
     COMMAND: (id: string) => `${API_BASE_URL}/device/${id}/command`,
+    COMMAND_METADATA:(id:string)=> `${API_BASE_URL}/device/${id}/command-metadata`,
 
   
   },

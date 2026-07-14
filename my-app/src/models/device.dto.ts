@@ -44,3 +44,24 @@ export interface CreateDeviceDTO {
   targetUserId?: number;
   modelVersionId? : string;
 }
+
+export interface CommandFieldMetadata {
+  name: string;
+  path: string;
+  type: string;
+
+  required: boolean;
+
+  enum?: string[];
+
+  minimum?: number;
+  maximum?: number;
+
+  default?: any;
+  description?: string;
+}
+
+export interface CommandMetadata {
+  command: string;
+  fields: CommandFieldMetadata[];
+}
