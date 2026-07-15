@@ -36,6 +36,9 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const [commandMetadata, setCommandMetadata] = useState<CommandMetadata[]>([]);
   const [selectedCommand, setSelectedCommand] = useState('');
   const [commandPayload, setCommandPayload] = useState<Record<string, any>>({});
+  const [pendingLedColor, setPendingLedColor] = useState<string | null>(null);
+
+  const [pendingLedState, setPendingLedState] = useState<boolean | null>(null);
 
   const {
     handleReassignDevice,
@@ -62,8 +65,11 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
  
 
 
-  const displayLedColor = localLedColor || persistedLedColor;
-  const displayLedState = localLedState !== null ? localLedState : persistedLedState;
+  //const displayLedColor = localLedColor || persistedLedColor;
+ // const displayLedState = localLedState !== null ? localLedState : persistedLedState;
+  const displayLedColor = latestTelemetry?.data?.ledColor ?? '';
+
+  const displayLedState =latestTelemetry?.data?.led ?? false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
   const isDeviceConnected = currentDevice?.status === 'ONLINE';
   const isAdmin = auth?.profile?.role === 'ADMIN';
@@ -83,7 +89,13 @@ const executeGenericCommand = async () => {
   try {
     const allowedPaths = new Set(activeCommand.fields.map(f => f.path));
     const payload = buildPayloadFromCommandFields(commandPayload, allowedPaths);
+    if (selectedCommand === 'SET_LED_COLOR') {
+      setPendingLedColor(commandPayload['color']);
+    }
 
+    if (selectedCommand === 'SET_LED') {
+      setPendingLedState(commandPayload['value']);
+    }
     await sendDeviceCommand(id!, selectedCommand, payload);
     setCommandPayload({});
     toast.success(`${selectedCommand} sent`);
@@ -148,7 +160,8 @@ const executeGenericCommand = async () => {
   useEffect(() => {
     if (isAdmin) fetchUsers();
   }, [isAdmin]);
-  useEffect(() => {
+
+ /* useEffect(() => {
   if (latestTelemetry?.data?.ledColor !== undefined) {
     setPersistedLedColor(latestTelemetry.data.ledColor);
   }
@@ -156,7 +169,22 @@ const executeGenericCommand = async () => {
   if (latestTelemetry?.data?.led !== undefined) {
     setPersistedLedState(latestTelemetry.data.led);
   }
-}, [latestTelemetry]);
+}, [latestTelemetry]);*/
+  useEffect(() => {
+    const telemetryColor = latestTelemetry?.data?.ledColor;
+
+    if ( pendingLedColor && telemetryColor === pendingLedColor) {
+      setPendingLedColor(null);
+    }
+  }, [latestTelemetry, pendingLedColor]);
+
+  useEffect(() => {
+    const telemetryLed = latestTelemetry?.data?.led;
+
+    if (pendingLedState !== null && telemetryLed === pendingLedState) {
+      setPendingLedState(null);
+    }
+  }, [latestTelemetry, pendingLedState]);
 
 
   useEffect(() => {
@@ -475,10 +503,12 @@ const executeGenericCommand = async () => {
               )}
             </Card>
             <Card title="DEVICE_STATE">
-              <div className="dd-device-state">
+              <div className="dd-state-grid">
 
-                <div className="dd-state-row">
-                  <span>LED STATE</span>
+                <div className="dd-state-card">
+                  <span className="dd-state-label">
+                    LED STATE
+                  </span>
 
                   <span
                     className={
@@ -489,23 +519,42 @@ const executeGenericCommand = async () => {
                   >
                     {displayLedState ? 'ON' : 'OFF'}
                   </span>
+
+                  {pendingLedState !== null && (
+                    <span className="dd-pending">
+                      PENDING...
+                    </span>
+                  )}
                 </div>
 
-                <div className="dd-state-row">
-                  <span>LED COLOR</span>
+                <div className="dd-state-card">
+                  <span className="dd-state-label">
+                    LED COLOR
+                  </span>
 
-                <div className="dd-led-color-display">
-                  <span
-                    className="dd-led-dot"
-                    style={{
-                      background: displayLedColor?.toLowerCase() || '#666'
-                    }}
-                  />
-                  <span>{displayLedColor}</span>
+                  <div className="dd-led-color-display">
+                    <span
+                      className="dd-led-dot"
+                      style={{
+                        background:
+                          displayLedColor?.toLowerCase()
+                      }}
+                    />
+
+                    <span>{displayLedColor}</span>
+                  </div>
+
+                  {pendingLedColor && (
+                    <span className="dd-pending">
+                      PENDING...
+                    </span>
+                  )}
                 </div>
-                </div>
-                <div className="dd-state-row">
-                  <span>CURRENT PROFILE</span>
+
+                <div className="dd-state-card">
+                  <span className="dd-state-label">
+                    PROFILE
+                  </span>
 
                   <span
                     className={

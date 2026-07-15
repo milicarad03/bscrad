@@ -467,3 +467,37 @@
   margin-top: 4px;
   display: block;
 }
+.dd-pending {
+  margin-left: 10px;
+  color: #ffb347;
+  font-size: 0.8rem;
+  font-weight: 700;
+
+  animation: dd-pulse 1.2s infinite;
+}
+.dd-state-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(180px, 1fr)
+  );
+  gap: 12px;
+}
+
+.dd-state-card {
+  background: var(--dd-panel-raised);
+  border: 1px solid var(--dd-border);
+  border-radius: 10px;
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dd-state-label {
+  font-size: 0.75rem;
+  color: var(--dd-text-dim);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
