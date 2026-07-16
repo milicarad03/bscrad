@@ -424,7 +424,12 @@ const executeGenericCommand = async () => {
                         displayLedColor === color ? 'dd-btn--active' : ''
                       }`}
                       onClick={() => handleLedColorChange(color)}
-                      disabled={!isDeviceConnected}
+                      
+                      disabled={
+                        !isDeviceConnected ||
+                        pendingLedColor !== null ||
+                        displayLedColor === color
+                      }
                       style={
                         displayLedColor === color ? { background: color.toLowerCase(), color: getTextColor(color)} : undefined
                       }
