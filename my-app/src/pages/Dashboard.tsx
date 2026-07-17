@@ -181,7 +181,7 @@ useEffect(() => {
 
         {activeTab === 'notifications' && (
           <div className="view-section">
-            <h2>Obaveštenja</h2>
+            <h2>Notifications</h2>
             <p>No notifications at the moment</p>
           </div>
         )}

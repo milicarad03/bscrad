@@ -98,16 +98,6 @@ export const DeviceList = ({
   return matchesSearch && matchesType;
 });
 
-/*const filteredDevices = localDevices.filter(dev => {
-    const term = searchTerm.toLowerCase();
-    return (
-      dev.name?.toLowerCase().includes(term) ||
-      dev.type.toLowerCase().includes(term) ||
-      dev.serialNumber.toLowerCase().includes(term) ||
-      dev.user?.email?.toLowerCase().includes(term)
-    );
-  });*/
-
   
   useEffect(() => {
     if (localDevices.length > 0) {

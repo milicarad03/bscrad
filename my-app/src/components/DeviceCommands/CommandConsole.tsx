@@ -29,11 +29,9 @@ export const CommandConsole = ({
     const isInvalid = activeCommand?.fields.some(field => {
     const val = commandPayload[field.path];
     const isMissing = field.required && (val === undefined || val === '' || val === null);
-    
-    // 1. Provera da li je obavezno polje prazno
+   
     if (isMissing) return true;
 
-    // 2. Provera numeričkih ograničenja (samo ako vrednost postoji)
     if (field.type === 'number' && val !== undefined && val !== '' && val !== null) {
       if (field.minimum !== undefined && val < field.minimum) return true;
       if (field.maximum !== undefined && val > field.maximum) return true;
@@ -42,7 +40,7 @@ export const CommandConsole = ({
     return false;
   });
 
-  // Dodatno: ako nije izabrana komanda, takođe je invalid
+  
   const isButtonDisabled = disabled || isInvalid || !activeCommand;
 
   return (
