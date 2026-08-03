@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import '../styles/layouts/deviceDetailsPage.css';
 import type { CommandMetadata } from '../models/device.dto';
 import { CommandCard } from '../components/DeviceCommands/CommandCard';
+import { TemperatureChart } from '../styles/components/charts/TemperatureChart';
 
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
@@ -33,6 +34,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const displayLedColor = latestTelemetry?.data?.ledColor ?? 'N/A';
   const displayLedState = latestTelemetry?.data?.led ?? false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
+  const historicalTemperatureData = latestTelemetry?.data?.historicalTelemetry ?? [];
 
   const executeCommand = async (command: string, payload: any) => {
     try {
@@ -130,7 +132,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             )}
           </Card>
 
-          {/* Vraćena i integrisana Device Status kartica */}
+          
           <Card title="DEVICE_STATUS">
             <div className="dd-state-grid">
               <div className="dd-state-card">
@@ -165,11 +167,9 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             ))}
           </div>
         </Card>
-        {/* Srednji red: Telemetrija i Komande */}
         <div className="dd-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
           
           <Card title="LATEST_TELEMETRY">
-            {/* Ograničavamo visinu i dodajemo scroll */}
             <div style={{ maxHeight: '300px', overflowY: 'auto', fontSize: '0.85rem' }}>
               {latestTelemetry ? (
                 <pre>{JSON.stringify(latestTelemetry.data, null, 2)}</pre>
@@ -177,6 +177,14 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
                 <p>No telemetry data available.</p>
               )}
             </div>
+          </Card>
+         
+          <Card title="TEMPERATURE_HISTORY">
+            {historicalTemperatureData.length > 0 ? (
+              <TemperatureChart data={historicalTemperatureData} />
+            ) : (
+              <p>No historical telemetry available.</p>
+            )}
           </Card>
 
           <Card title="AVAILABLE_COMMANDS">

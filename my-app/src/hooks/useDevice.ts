@@ -208,9 +208,7 @@ const getCommandMetadata = async (
   deviceId: string
 ) => {
 
-  logger.info(
-    `[COMMAND METADATA] Loading metadata for device ${deviceId}`
-  );
+  logger.info(`[COMMAND METADATA] Loading metadata for device ${deviceId}`);
 
   return apiClient<CommandMetadata[]>(ENDPOINTS.DEVICE.COMMAND_METADATA(deviceId),'GET', null, token)
     .then((response) => {
