@@ -596,3 +596,23 @@ pre {
 .cf-field {
   margin-bottom: 10px;
 }
+.dd-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dd-table th,
+.dd-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.dd-table th {
+  font-weight: 600;
+  color: #fff;
+}
+
+.dd-table tr:hover {
+  background: rgba(255,255,255,0.05);
+}

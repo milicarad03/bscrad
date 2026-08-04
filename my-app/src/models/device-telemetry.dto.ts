@@ -1,4 +1,4 @@
-export interface TelemetryData {
+/*export interface TelemetryData {
   led?: boolean;
   ledColor?: string;
   humidity?: number;
@@ -11,8 +11,8 @@ export interface TelemetryData {
       };
     };
 
-}
-export interface HistoricalTelemetryPoint {
+}*/
+/*export interface HistoricalTelemetryPoint {
 
 timestamp: string;
 temperature: number;
@@ -20,6 +20,26 @@ humidity: number;
 pressure: number;
 led: boolean;
 
+
+}*/
+
+export interface TelemetryData {
+  historicalTelemetry?: HistoricalTelemetryPoint[];
+
+  led?: boolean;
+  ledColor?: string;
+
+  system?: {
+    status?: {
+      operatingProfile?: 'NORMAL' | 'BOOST' | 'ECONOMY';
+    };
+  };
+
+  [key: string]: unknown;
+}
+export interface HistoricalTelemetryPoint {
+  timestamp: string;
+  [key: string]: unknown;
 }
 
 

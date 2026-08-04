@@ -11,6 +11,8 @@ import '../styles/layouts/deviceDetailsPage.css';
 import type { CommandMetadata } from '../models/device.dto';
 import { CommandCard } from '../components/DeviceCommands/CommandCard';
 import { TemperatureChart } from '../styles/components/charts/TemperatureChart';
+import { TelemetryChart } from '../styles/components/charts/TelemetryChart';
+import { TelemetryAggregationCard } from "../styles/components/agregation/TelemetryAgregation"
 
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
@@ -23,6 +25,14 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const [isStopping, setIsStopping] = useState(false);
   const [streamStatus, setStreamStatus] = useState<'ACTIVE' | 'IDLE'>('IDLE');
   const [commandMetadata, setCommandMetadata] = useState<CommandMetadata[]>([]);
+  const units: Record<string, string> = {
+    temperature: "°C",
+    humidity: "%",
+    pressure: "hPa",
+    flow: "l/min",
+    vibration: "mm/s",
+    rpm: "rpm"
+  };
 
   const { handleReassignDevice, fetchDevices, sendDeviceCommand, devices, loading: devicesLoading, getCommandMetadata } = useDevice(auth?.token);
 
@@ -34,9 +44,27 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const displayLedColor = latestTelemetry?.data?.ledColor ?? 'N/A';
   const displayLedState = latestTelemetry?.data?.led ?? false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
-  const historicalTemperatureData = latestTelemetry?.data?.historicalTelemetry ?? [];
+  const historicalData = latestTelemetry?.data?.historicalTelemetry ?? [];
+ /* const telemetryFields = historicalData.length > 0 ? Object.keys(historicalData[0]).filter(key => { 
+    const value = historicalData[0][key as keyof typeof historicalData[0]];
+    return ( key !== "timestamp" && typeof value === "number" );
+  }): [];*/
+  const telemetryFields = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) =>typeof value === "number").map(([key]) => key);
 
-  const executeCommand = async (command: string, payload: any) => {
+  const hasTemperature = historicalData.some(item => item.temperature !== undefined);
+  const currentMetrics = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) => typeof value === "number" && key !== "historicalTelemetry");
+ /* const currentMetrics = telemetryFields
+  .map(field => ({
+    field,
+    value: latestTelemetry?.data?.[field]
+  }))
+  .filter(metric => metric.value !== undefined);*/
+  const hasHumidity =historicalData.some(item => item.humidity !== undefined);
+
+  const hasPressure = historicalData.some(item => item.pressure !== undefined);
+  const supportsTemperature = historicalData.some( item => item.temperature !== undefined);
+
+ const executeCommand = async (command: string, payload: any) => {
     try {
       await sendDeviceCommand(id!, command, payload);
       toast.success(`${command} executed`);
@@ -153,6 +181,26 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             </div>
           </Card>
         </div>
+         <Card title="CURRENT_METRICS">
+          <div className="dd-state-grid">
+            {currentMetrics.map(([key, value]) => (
+              <div
+                key={key}
+                className="dd-state-card"
+              >
+                <span className="dd-state-label">
+                  {key.toUpperCase()}
+                </span>
+
+                <strong>{typeof value === "number" ? value : "N/A"}</strong>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <TelemetryAggregationCard
+          historicalData={historicalData}
+          title="TELEMETRY_ANALYTICS"
+        />
         <Card title="DEVICE_COMMANDS">
           <div className="dd-commands-container">
             {commandMetadata.map(command => (
@@ -178,15 +226,19 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
               )}
             </div>
           </Card>
-         
-          <Card title="TEMPERATURE_HISTORY">
-            {historicalTemperatureData.length > 0 ? (
-              <TemperatureChart data={historicalTemperatureData} />
-            ) : (
-              <p>No historical telemetry available.</p>
-            )}
-          </Card>
-
+          {telemetryFields.map(field => (
+            <Card
+              key={field}
+              title={`${field.toUpperCase()}_HISTORY`}
+            >
+              <TelemetryChart
+                data={historicalData}
+                field={field}
+                label={field}
+                unit={units[field] ?? ""}
+              />
+            </Card>
+          ))}
           <Card title="AVAILABLE_COMMANDS">
           {commandMetadata.map(command => (
                   <div
@@ -210,16 +262,40 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
         </div>
 
         <div style={{ marginTop: '20px' }}>
-          <Card title="TELEMETRY_HISTORY">
-            <div className="dd-history-scroll" style={{ maxHeight: '500px' }}>
-              {telemetryHistory.map((item, i) => (
-                <div key={i} className="dd-history-item">
-                  <span className="dd-history-time">{new Date(item.timestamp).toLocaleString()}</span>
-                  <pre className="dd-history-data">{JSON.stringify(item.data, null, 2)}</pre>
-                </div>
-              ))}
-            </div>
-          </Card>
+        <Card title="TELEMETRY_HISTORY">
+          <div style={{ overflowX: "auto" }}>
+            <table className="dd-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+
+                  {telemetryFields.map(field => (
+                    <th key={field}>
+                      {field.toUpperCase()}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {telemetryHistory.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      {new Date(item.timestamp).toLocaleString()}
+                    </td>
+                      {telemetryFields.map(field => (
+                        <td key={field}>
+                          {String(item.data?.[field] ?? "N/A")}
+                          {" "}
+                          {units[field] ?? ""}
+                        </td>
+                      ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
         </div>
       </main>
     </div>
