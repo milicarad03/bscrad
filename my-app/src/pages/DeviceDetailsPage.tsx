@@ -18,7 +18,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { latestTelemetry, telemetryHistory, loading: telemetryLoading } = useDeviceTelemetry({ deviceId: id, token: auth?.token });
+  const { latestTelemetry, telemetryHistory, loading: telemetryLoading, chartData } = useDeviceTelemetry({ deviceId: id, token: auth?.token });
   const { users, fetchUsers } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [isStarting, setIsStarting] = useState(false);
@@ -44,13 +44,16 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const displayLedColor = latestTelemetry?.data?.ledColor ?? 'N/A';
   const displayLedState = latestTelemetry?.data?.led ?? false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
-  const historicalData = latestTelemetry?.data?.historicalTelemetry ?? [];
+  //const historicalData = latestTelemetry?.data?.historicalTelemetry ?? [];
+  const historicalData = chartData;
  /* const telemetryFields = historicalData.length > 0 ? Object.keys(historicalData[0]).filter(key => { 
     const value = historicalData[0][key as keyof typeof historicalData[0]];
     return ( key !== "timestamp" && typeof value === "number" );
   }): [];*/
-  const telemetryFields = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) =>typeof value === "number").map(([key]) => key);
-
+  //const telemetryFields = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) =>typeof value === "number").map(([key]) => key);
+  const telemetryFields =chartData.length > 0? Object.keys(chartData[0]).filter(key =>
+          key !== 'timestamp' &&
+          typeof chartData[0][key] === 'number' ): [];
   const hasTemperature = historicalData.some(item => item.temperature !== undefined);
   const currentMetrics = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) => typeof value === "number" && key !== "historicalTelemetry");
  /* const currentMetrics = telemetryFields
@@ -114,9 +117,10 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     
     return () => {
       if (isDeviceConnected) {
-        sendDeviceCommand(id, 'SET_STATE', { state: 'IDLE' }).catch(() => {});
+        sendDeviceCommand( id, 'SET_STATE', { state: 'IDLE' }, true).catch(() => {});
       }
     };
+
   }, [id, isDeviceConnected]);
 
   useEffect(() => { if (isAdmin) fetchUsers(); }, [isAdmin]);

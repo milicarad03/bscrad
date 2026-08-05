@@ -95,8 +95,10 @@ export class TelemetryAggregator {
   static aggregateAllMetrics(
     historicalData: any[]
   ): AggregatedTelemetry {
-    const fields = historicalData.length? Object.keys(historicalData[0]).filter(
-      key =>  key !== 'timestamp' && typeof historicalData[0][key] === 'number'): [];
+   /* const fields = historicalData.length? Object.keys(historicalData[0]).filter(
+      key =>  key !== 'timestamp' && typeof historicalData[0][key] === 'number'): [];*/
+    const fields = Array.from( new Set( historicalData.flatMap(item => Object.keys(item).filter( key =>
+                key !== "timestamp" &&typeof item[key] === "number" ))));
     const metrics: { [key: string]: TelemetryMetric } = {};
 
     fields.forEach((field) => {

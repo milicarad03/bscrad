@@ -175,7 +175,7 @@ const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => 
       toast.error(err.message || "Failed to reassign device");
     });
 };
-const sendDeviceCommand = async (deviceId: string, command: string, payload?: any) => {
+const sendDeviceCommand = async (deviceId: string, command: string, payload?: any, silent = false) => {
   logger.info(`[COMMAND] Sending ${command} to device ${deviceId}`);
 
 
@@ -186,7 +186,7 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
     payload
   );
   return apiClient(ENDPOINTS.DEVICE.COMMAND(deviceId), 'POST', { command, payload }, token)
-    .then(() => toast.success("Command sent!"))
+    .then(() => { if (!silent) toast.success("Command sent!");})
     .catch((err) => {
       console.log("COMMAND ERROR:", err);
       console.log("COMMAND ERROR MESSAGE:", err.message);
@@ -195,53 +195,34 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
         throw new Error('DEVICE_OFFLINE');
       }
 
-      if (err.message.includes('OFFLINE')) {
-        //toast.error('Device is offline');
+      if ( err.message?.toLowerCase().includes('offline')) {
         throw new Error('DEVICE_OFFLINE');
       }
-
-      toast.error(err.message || "Failed to send command");
+     if (!silent) toast.error(err.message || "Failed to send command");
       throw err;
     });
 };
-const getCommandMetadata = async (
-  deviceId: string
-) => {
+const getCommandMetadata = async ( deviceId: string) => {
 
   logger.info(`[COMMAND METADATA] Loading metadata for device ${deviceId}`);
 
   return apiClient<CommandMetadata[]>(ENDPOINTS.DEVICE.COMMAND_METADATA(deviceId),'GET', null, token)
     .then((response) => {
-
-      logger.info(
-        `[COMMAND METADATA] Loaded metadata for device ${deviceId}`
-      );
+      logger.info(`[COMMAND METADATA] Loaded metadata for device ${deviceId}`);
 
       return response;
     })
     .catch((err) => {
 
-      logger.error(
-        `[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`,
-        err.message
-      );
-
+      logger.error( `[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`, err.message );
       throw err;
     });
 };
 
 
-const updateDeviceStatus = useCallback(
-  (
-    deviceId: string,
-    newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED'
-  ) => {
+const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED' ) => {
 
-  console.log(
-        "[STATUS UPDATE]",
-        deviceId,
-        newStatus
-      );
+  console.log( "[STATUS UPDATE]", deviceId, newStatus);
 
     setDevices(prev =>
       prev.map(d =>

@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { apiClient} from '../api/client';
 import {ENDPOINTS, WS_BASE_URL} from '../api/config.ts'
 import type { DeviceTelemetryDTO } from '../models/device-telemetry.dto';
+import type { HistoricalTelemetryPoint} from '../models/device-telemetry.dto';
 import log from 'loglevel';
 const logger = log.getLogger('useDeviceTelemetry');
 if (import.meta.env.DEV) {
@@ -21,6 +22,7 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
   const [latestTelemetry, setLatestTelemetry] = useState<DeviceTelemetryDTO| null>(null);
   const [telemetryHistory, setTelemetryHistory] = useState<DeviceTelemetryDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<HistoricalTelemetryPoint[]>([]);
 
   useEffect(() => {
     if (!deviceId) return;
@@ -35,6 +37,21 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
           logger.info(`[TELEMETRY] Successfully populated hardware analytics. History stack size: ${history.length}`);
             setLatestTelemetry(latest);
             setTelemetryHistory(history);
+         /*   const initialChartData = latest?.data?.historicalTelemetry ?? [];
+
+            setChartData(initialChartData);*/
+            const historical =latest?.data?.historicalTelemetry ?? [];
+
+            const latestPoint = latest? [{
+                  timestamp: latest.timestamp,
+                  ...latest.data
+                }]
+              : [];
+
+            setChartData([
+              ...historical,
+              ...latestPoint
+            ]);
         })
         .catch((error: any) => {
             logger.error(`[TELEMETRY] Critical connection dropped during HTTP synchronization for node [${deviceId}]:`, error.message);
@@ -82,6 +99,12 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
         const updated = [telemetry, ...previous];
         return updated.slice(0, 5);
       });
+      setChartData(prev => [ ...prev,
+      {
+        timestamp: telemetry.timestamp,
+        ...(telemetry.data ?? {})
+      }
+    ].slice(-100));
     });
 
     socket.on('disconnect', () => {
@@ -112,5 +135,6 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
     latestTelemetry,
     telemetryHistory,
     loading,
+    chartData
   };
 };
