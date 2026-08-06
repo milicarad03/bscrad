@@ -13,7 +13,7 @@ import { CommandCard } from '../components/DeviceCommands/CommandCard';
 import { TemperatureChart } from '../styles/components/charts/TemperatureChart';
 import { TelemetryChart } from '../styles/components/charts/TelemetryChart';
 import { TelemetryAggregationCard } from "../styles/components/agregation/TelemetryAgregation"
-
+import { transformTelemetryForCharts } from '../utils/telemetryTransformer';
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -42,21 +42,69 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   
   // Ekstrakcija stanja iz telemetrije
   const displayLedColor = latestTelemetry?.data?.ledColor ?? 'N/A';
-  const displayLedState = latestTelemetry?.data?.led ?? false;
+//  const displayLedState = latestTelemetry?.data?.led ?? false;
+const ledSamples = latestTelemetry?.data?.led ?? [];
+
+const displayLedState =
+  Array.isArray(ledSamples) && ledSamples.length > 0
+    ? ledSamples[ledSamples.length - 1][0]
+    : false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
   //const historicalData = latestTelemetry?.data?.historicalTelemetry ?? [];
-  const historicalData = chartData;
+  //const historicalData = chartData;
+  const historicalData =
+  latestTelemetry?.data
+    ? transformTelemetryForCharts(
+        latestTelemetry.data
+      )
+    : [];
  /* const telemetryFields = historicalData.length > 0 ? Object.keys(historicalData[0]).filter(key => { 
     const value = historicalData[0][key as keyof typeof historicalData[0]];
     return ( key !== "timestamp" && typeof value === "number" );
   }): [];*/
   //const telemetryFields = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) =>typeof value === "number").map(([key]) => key);
-  const telemetryFields =chartData.length > 0? Object.keys(chartData[0]).filter(key =>
+ /* const telemetryFields =chartData.length > 0? Object.keys(chartData[0]).filter(key =>
           key !== 'timestamp' &&
-          typeof chartData[0][key] === 'number' ): [];
+          typeof chartData[0][key] === 'number' ): [];*/
+  const telemetryFields =
+  historicalData.length > 0
+    ? Object.keys(historicalData[0]).filter(
+        key =>
+          key !== "timestamp" &&
+          typeof historicalData[0][key] === "number"
+      )
+    : [];
   const hasTemperature = historicalData.some(item => item.temperature !== undefined);
-  const currentMetrics = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) => typeof value === "number" && key !== "historicalTelemetry");
- /* const currentMetrics = telemetryFields
+  //const currentMetrics = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) => typeof value === "number" && key !== "historicalTelemetry");
+ 
+const currentMetrics =
+  Object.entries(
+    latestTelemetry?.data ?? {}
+  )
+    .map(([key, values]) => {
+
+      if (!Array.isArray(values)) {
+        return null;
+      }
+
+      const last =
+        values[values.length - 1];
+
+      if (!last) {
+        return null;
+      }
+
+      return {
+        key,
+        value: last[0]
+      };
+    })
+    .filter(
+      metric =>
+        metric !== null &&
+        typeof metric.value !== "boolean"
+    );
+  /* const currentMetrics = telemetryFields
   .map(field => ({
     field,
     value: latestTelemetry?.data?.[field]
@@ -187,16 +235,20 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
         </div>
          <Card title="CURRENT_METRICS">
           <div className="dd-state-grid">
-            {currentMetrics.map(([key, value]) => (
+            {currentMetrics.map(metric => (
               <div
-                key={key}
+                key={metric!.key}
                 className="dd-state-card"
               >
                 <span className="dd-state-label">
-                  {key.toUpperCase()}
+                  {metric!.key.toUpperCase()}
                 </span>
 
-                <strong>{typeof value === "number" ? value : "N/A"}</strong>
+                <strong>
+                  {metric!.value}
+                  {" "}
+                  {units[metric!.key] ?? ""}
+                </strong>
               </div>
             ))}
           </div>
@@ -282,18 +334,23 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
               </thead>
 
               <tbody>
-                {telemetryHistory.map((item) => (
-                  <tr key={item.id}>
+                {historicalData.map(item => (
+                  <tr key={item.timestamp}>
                     <td>
-                      {new Date(item.timestamp).toLocaleString()}
+                      {new Date(
+                        item.timestamp
+                      ).toLocaleString()}
                     </td>
-                      {telemetryFields.map(field => (
-                        <td key={field}>
-                          {String(item.data?.[field] ?? "N/A")}
-                          {" "}
-                          {units[field] ?? ""}
-                        </td>
-                      ))}
+
+                    {telemetryFields.map(field => (
+                      <td key={field}>
+                        {String(
+                          item[field] ?? "N/A"
+                        )}
+                        {" "}
+                        {units[field] ?? ""}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>

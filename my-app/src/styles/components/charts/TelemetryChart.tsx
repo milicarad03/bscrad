@@ -29,13 +29,13 @@ export function TelemetryChart({
   unit = "",
   color = "#ff6b35"
 }: Props) {
-  const chartData = data
-    .filter(item => typeof item[field] === "number")
-    .map(item => ({
-      time: new Date(item.timestamp).getTime(),
-      value: Number(item[field] as number)
-    }));
-
+ const chartData = data
+  .filter(item => typeof item[field] === "number")
+  .map((item, index) => ({
+    index,
+    timestamp: item.timestamp,
+    value: Number(item[field] as number)
+  }));
     if (chartData.length === 0) {
     return (
         <div className="dd-empty-state">
@@ -50,16 +50,19 @@ export function TelemetryChart({
         <CartesianGrid strokeDasharray="3 3" />
 
         <XAxis
-          dataKey="time"
-          type="number"
-          scale="time"
-          domain={["dataMin", "dataMax"]}
-          tickFormatter={(value) =>
-            new Date(value).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit"
-            })
-          }
+          dataKey="index"
+          tickFormatter={(value) => {
+            const item = chartData.find(
+              p => p.index === value
+            );
+
+            return item
+              ? new Date(item.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })
+              : "";
+          }}
           minTickGap={40}
         />
 
@@ -71,10 +74,16 @@ export function TelemetryChart({
           ]}
         />
 
-        <Tooltip
-          labelFormatter={(value) =>
-            new Date(Number(value)).toLocaleString()
-          }
+      <Tooltip
+          labelFormatter={(value) => {
+            const item = chartData.find(
+              p => p.index === value
+            );
+
+            return item
+              ? new Date(item.timestamp).toLocaleString()
+              : "";
+          }}
           formatter={(value) => [
             `${Number(value).toFixed(1)} ${unit}`,
             label
