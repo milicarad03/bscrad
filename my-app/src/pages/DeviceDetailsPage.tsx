@@ -41,14 +41,14 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const isAdmin = auth?.profile?.role === 'ADMIN';
   
   // Ekstrakcija stanja iz telemetrije
-  const displayLedColor = latestTelemetry?.data?.ledColor ?? 'N/A';
-//  const displayLedState = latestTelemetry?.data?.led ?? false;
-const ledSamples = latestTelemetry?.data?.led ?? [];
+  //const displayLedColor = latestTelemetry?.data?.ledColor ?? 'N/A';
+  const ledColorSamples = latestTelemetry?.data?.ledColor ?? [];
 
-const displayLedState =
-  Array.isArray(ledSamples) && ledSamples.length > 0
-    ? ledSamples[ledSamples.length - 1][0]
-    : false;
+  const displayLedColor =Array.isArray(ledColorSamples) && ledColorSamples.length > 0 ? ledColorSamples[ledColorSamples.length - 1][0]: "N/A";
+  //  const displayLedState = latestTelemetry?.data?.led ?? false;
+  const ledSamples = latestTelemetry?.data?.led ?? [];
+
+  const displayLedState = Array.isArray(ledSamples) && ledSamples.length > 0 ? ledSamples[ledSamples.length - 1][0] : false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
   //const historicalData = latestTelemetry?.data?.historicalTelemetry ?? [];
   //const historicalData = chartData;
@@ -58,6 +58,15 @@ const displayLedState =
         latestTelemetry.data
       )
     : [];
+    const filteredHistoricalData =
+  historicalData.filter(item =>
+    Object.entries(item).some(
+      ([key, value]) =>
+        key !== "timestamp" &&
+        typeof value === "number"
+    )
+  );
+    console.log("historicalData",historicalData.slice(0, 100));
  /* const telemetryFields = historicalData.length > 0 ? Object.keys(historicalData[0]).filter(key => { 
     const value = historicalData[0][key as keyof typeof historicalData[0]];
     return ( key !== "timestamp" && typeof value === "number" );
@@ -66,63 +75,57 @@ const displayLedState =
  /* const telemetryFields =chartData.length > 0? Object.keys(chartData[0]).filter(key =>
           key !== 'timestamp' &&
           typeof chartData[0][key] === 'number' ): [];*/
-  const telemetryFields =
-  historicalData.length > 0
-    ? Object.keys(historicalData[0]).filter(
+ // const telemetryFields = historicalData.length > 0 ? Object.keys(historicalData[0]).filter(
+       // key => key !== "timestamp" && typeof historicalData[0][key] === "number")  : [];
+       const telemetryFields = Array.from(
+  new Set(
+    historicalData.flatMap(item =>
+      Object.keys(item).filter(
         key =>
           key !== "timestamp" &&
-          typeof historicalData[0][key] === "number"
+          typeof item[key] === "number"
       )
-    : [];
+    )
+  )
+);
   const hasTemperature = historicalData.some(item => item.temperature !== undefined);
   //const currentMetrics = Object.entries(latestTelemetry?.data ?? {}).filter(([key, value]) => typeof value === "number" && key !== "historicalTelemetry");
  
-const currentMetrics =
-  Object.entries(
-    latestTelemetry?.data ?? {}
-  )
-    .map(([key, values]) => {
-
-      if (!Array.isArray(values)) {
-        return null;
-      }
-
-      const last =
-        values[values.length - 1];
-
-      if (!last) {
-        return null;
-      }
-
-      return {
-        key,
-        value: last[0]
-      };
-    })
-    .filter(
-      metric =>
-        metric !== null &&
-        typeof metric.value !== "boolean"
-    );
-  /* const currentMetrics = telemetryFields
-  .map(field => ({
-    field,
-    value: latestTelemetry?.data?.[field]
-  }))
-  .filter(metric => metric.value !== undefined);*/
+  const currentMetrics = Object.entries(latestTelemetry?.data ?? {})
+      .map(([key, values]) => {
+        if (!Array.isArray(values)) return null;
+    
+        const last = values[values.length - 1];
+        if (!last) return null;
+        return {
+          key,
+          value: last[0]
+        };
+      })
+      .filter(
+        metric =>
+          metric !== null &&
+          typeof metric.value !== "boolean"
+      );
+    /* const currentMetrics = telemetryFields
+    .map(field => ({
+      field,
+      value: latestTelemetry?.data?.[field]
+    }))
+    .filter(metric => metric.value !== undefined);*/
   const hasHumidity =historicalData.some(item => item.humidity !== undefined);
 
   const hasPressure = historicalData.some(item => item.pressure !== undefined);
   const supportsTemperature = historicalData.some( item => item.temperature !== undefined);
 
- const executeCommand = async (command: string, payload: any) => {
-    try {
-      await sendDeviceCommand(id!, command, payload);
-      toast.success(`${command} executed`);
-    } catch {
-      toast.error('Command failed');
-    }
-  };
+  const executeCommand = async (command: string, payload: any) => {
+      try {
+        await sendDeviceCommand(id!, command, payload);
+        toast.success(`${command} executed`);
+      } catch {
+        toast.error('Command failed');
+      }
+    };
 
   const handleCommand = async (command: string, payload: any, setter: (val: boolean) => void) => {
     setter(true);
@@ -334,7 +337,7 @@ const currentMetrics =
               </thead>
 
               <tbody>
-                {historicalData.map(item => (
+                {filteredHistoricalData.reverse().map(item => (
                   <tr key={item.timestamp}>
                     <td>
                       {new Date(
