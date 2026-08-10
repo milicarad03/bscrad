@@ -28,11 +28,12 @@ export const ENDPOINTS = {
     REASSIGN: (id: string) => `${API_BASE_URL}/device/${id}/reassign`,
     COMMAND: (id: string) => `${API_BASE_URL}/device/${id}/command`,
     COMMAND_METADATA:(id:string)=> `${API_BASE_URL}/device/${id}/command-metadata`,
-
+    APPLY_MODEL_VERSION: (id: string) =>`${API_BASE_URL}/device/${id}/model-version`,
   
   },
   MODEL_VERSIONS:{
     BASE: `${API_BASE_URL}/model-versions`,
     GET_ONE: (id: number) => `${API_BASE_URL}/model-versions/${id}`,
+    UPLOAD:`${API_BASE_URL}/model-versions/upload`,
   }
 };

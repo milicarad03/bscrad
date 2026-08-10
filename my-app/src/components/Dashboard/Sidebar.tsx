@@ -4,7 +4,8 @@ import {
   Bell, 
   Users, 
   User, 
-  LogOut 
+  LogOut,
+  PackagePlus,
 } from 'lucide-react';
 import { Button } from '../UI/Button';
 
@@ -24,10 +25,31 @@ export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarP
     { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
   ];
 
-  if (profile?.role === 'ADMIN') {
-    menuItems.push({ id: 'users', label: 'Users', icon: <Users size={18} /> });
-  }
+ if (
+  profile?.role ===
+  'ADMIN'
+) {
+  menuItems.push({
+    id: 'users',
 
+    label: 'Users',
+
+    icon:
+      <Users size={18} />,
+  });
+
+  menuItems.push({
+    id: 'model-versions',
+
+    label:
+      'Model Versions',
+
+    icon:
+      <PackagePlus
+        size={18}
+      />,
+  });
+}
   return (
     <aside className="sidebar">
       <div className="sidebar-user-info">

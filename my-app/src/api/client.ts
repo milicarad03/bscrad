@@ -36,23 +36,34 @@ export const apiClient = async <T>(
     }
   }
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
+  const isFormData =
+    typeof FormData !== 'undefined' &&
+    body instanceof FormData;
+
+  const headers: HeadersInit = {};
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-
- /* const response = await fetch(url, { 
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });*/
   let response: Response;
   try {
-    response = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    const requestBody =
+      body !== undefined && body !== null
+        ? isFormData
+          ? body
+          : JSON.stringify(body)
+        : undefined;
+
+    response = await fetch(url, {
+      method,
+      headers,
+      body: requestBody,
+    });
   } catch (err: any) {
     // ISPRAVKA: AbortError se ne tretira kao mrezna greska - to je
     // namerno otkazivanje (npr. unmount), pa ga samo prosledjujemo dalje
@@ -83,14 +94,28 @@ export const apiClient = async <T>(
 }
 
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+ if (!response.ok) {
+  const errorData = await response.json().catch(() => ({}));
 
-    console.log("STATUS:", response.status);
-    console.log("ERROR DATA:", errorData);
+  console.log('STATUS:', response.status);
+  console.log('ERROR DATA:', errorData);
 
-    throw new Error(errorData.message || 'Došlo je do greške na serveru');
-  }
+  const message =
+    Array.isArray(errorData.message)
+      ? errorData.message.join(', ')
+      : errorData.message;
+
+  const details =
+    Array.isArray(errorData.errors)
+      ? errorData.errors.join(' | ')
+      : null;
+
+  throw new Error(
+    details ||
+    message ||
+    'Error on server',
+  );
+}
   const text = await response.text();
   if (!text) {
     return null as T;
@@ -101,6 +126,5 @@ export const apiClient = async <T>(
   } catch {
     return null as T;
   }
-
  // return response.json();
 };

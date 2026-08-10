@@ -65,3 +65,14 @@ export interface CommandMetadata {
   command: string;
   fields: CommandFieldMetadata[];
 }
+export interface ModelVersionDTO {
+  id: string;
+
+  version: string;
+
+  modelId: string;
+
+  schema?: Record<string, any>;
+
+  mapping?: Record<string, any>;
+}

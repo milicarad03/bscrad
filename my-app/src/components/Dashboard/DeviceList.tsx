@@ -1,5 +1,8 @@
 import { Card } from '../../components/UI/Card';
-import type { DeviceDTO } from '../../models/device.dto';
+import type {
+  DeviceDTO,
+  ModelVersionDTO,
+} from '../../models/device.dto';
 import { RotateCw } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { useState, useEffect } from 'react';
@@ -19,6 +22,11 @@ interface DeviceListProps {
   targetUserIds: number[];
   selectedTypes: string[];
    currentUserId: string | number | undefined;
+   modelVersions: ModelVersionDTO[];
+   onApplyModelVersion: (
+  deviceId: string,
+  modelVersionId: string,
+) => Promise<unknown>;
 }
 
 export const DeviceList = ({
@@ -33,6 +41,8 @@ export const DeviceList = ({
   targetUserIds = [],
   selectedTypes = [],
   currentUserId,
+    modelVersions = [],
+  onApplyModelVersion,
 }: DeviceListProps) => {
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -206,13 +216,17 @@ export const DeviceList = ({
           </FilterDropdown>
         </div>
 
-        <DeviceTable 
-          devices={filteredDevices} 
-          isAdmin={isAdmin} 
-          onDelete={onDelete} 
-          onDeviceClick={onDeviceClick} 
+        <DeviceTable
+          devices={filteredDevices}
+          isAdmin={isAdmin}
+          onDelete={onDelete}
+          onDeviceClick={onDeviceClick}
+          modelVersions={modelVersions}
+          onApplyModelVersion={
+            onApplyModelVersion
+          }
         />
-      </div>
+          </div>
     </Card>
   );
 };

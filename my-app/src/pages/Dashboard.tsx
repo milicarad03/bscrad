@@ -16,6 +16,7 @@ import { Sidebar } from '../components/Dashboard/Sidebar';
 import { DeviceDetailsModal} from '../components/Dashboard/DeviceDetailsModal';
 import {useNavigate,useLocation} from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
+import { ModelVersionManager} from '../components/Dashboard/ModelVersionManager';
 
 interface DashboardProps {
 
@@ -61,6 +62,21 @@ useEffect(() => {
     auth.fetchUsers();
   }
 }, [activeTab]);
+
+
+useEffect(() => {
+  if (
+    activeTab ===
+      'model-versions' &&
+    auth.profile?.role ===
+      'ADMIN'
+  ) {
+    device.fetchModels();
+  }
+}, [
+  activeTab,
+  auth.profile?.role,
+]);
   
 
 
@@ -130,6 +146,13 @@ useEffect(() => {
             }}
             targetUserIds={device.selectedTargetUsers || []}
             selectedTypes={device.selectedTypes || []}
+            modelVersions={
+              device.models || []
+            }
+
+            onApplyModelVersion={
+              device.applyModelVersion
+            }
             
           />
         </div>
@@ -194,6 +217,30 @@ useEffect(() => {
               onDelete={auth.handleDeleteUser} 
               onApprove={auth.handleApproveUser}
               onUsers={auth.fetchUsers}
+            />
+          </div>
+        )}
+        {activeTab ===
+          'model-versions' &&
+        auth.profile?.role ===
+          'ADMIN' && (
+          <div className="view-section">
+            <h2>
+              Model Version Registry
+            </h2>
+
+            <ModelVersionManager
+              modelVersions={
+                device.models || []
+              }
+
+              onUpload={
+                device.uploadModelVersion
+              }
+
+              onRefresh={() =>
+                device.fetchModels()
+              }
             />
           </div>
         )}

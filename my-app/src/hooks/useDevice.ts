@@ -1,10 +1,14 @@
 import { useState,useEffect , useCallback, useRef} from 'react';
-import type {DeviceDTO} from '../models/device.dto'
-import type {CreateDeviceDTO} from '../models/device.dto'
+import type {
+  DeviceDTO,
+  CreateDeviceDTO,
+  CommandMetadata,
+  ModelVersionDTO,
+} from '../models/device.dto';
 import {ENDPOINTS} from '../api/config.ts'
 import {apiClient} from '../api/client.ts'
 import { toast } from 'react-hot-toast';
-import type { CommandMetadata } from '../models/device.dto';
+
 import log from 'loglevel';
 const logger = log.getLogger('useDevice');
 if (import.meta.env.DEV) {
@@ -12,6 +16,19 @@ if (import.meta.env.DEV) {
 } else {
   logger.setLevel('warn');
 }
+
+type ApplyModelVersionResponse = {
+  success: boolean;
+  staged: boolean;
+  restartRequired: boolean;
+
+  deviceId: string;
+  serialNumber: string;
+
+  model: string;
+  version: string;
+  modelVersionId: string;
+};
 
 
 export const useDevice = (token: string | null) => { 
@@ -32,29 +49,67 @@ export const useDevice = (token: string | null) => {
 
 
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]); 
-  const [models, setModels] = useState<any[]>([]);
-
+  const [models, setModels] = useState<ModelVersionDTO[]>([]);
   const [hasError, setHasError] = useState(false);
   const resetError = useCallback(() => {
     setHasError(false);
   }, []);
 
 
-  const fetchModels = useCallback((signal?: AbortSignal)=> {
-    if (!token) return;
+  const fetchModels =
+  useCallback(
+    async (
+      signal?: AbortSignal,
+    ) => {
+      if (!token) {
+        return;
+      }
 
-    apiClient<any[]>(ENDPOINTS.MODEL_VERSIONS.BASE, 'GET', null, token,undefined,signal)
-      .then((res: any) => {
-        const modelsArray = Array.isArray(res) ? res : res.data || [];
-        logger.info(`[DEVICE] Successfully loaded ${modelsArray.length} schema models from configuration tables.`);
-        setModels(modelsArray);
-      })
-      .catch((err: any) => {
-        if (err?.name === 'AbortError') return;
-        
-        logger.error("[DEVICE] Failed to populate schema model blueprints from backend:", err.message);
-      });
-  }, [token]);
+      try {
+        const res =
+          await apiClient<
+            ModelVersionDTO[]
+          >(
+            ENDPOINTS
+              .MODEL_VERSIONS
+              .BASE,
+
+            'GET',
+            null,
+            token,
+            undefined,
+            signal,
+          );
+
+        const modelsArray =
+          Array.isArray(res)
+            ? res
+            : [];
+
+        logger.info(
+          `[DEVICE] Successfully loaded ${modelsArray.length} model versions.`,
+        );
+
+        setModels(
+          modelsArray,
+        );
+      } catch (err: any) {
+        if (
+          err?.name ===
+          'AbortError'
+        ) {
+          return;
+        }
+
+        logger.error(
+          '[DEVICE] Failed to load model versions:',
+          err.message,
+        );
+      }
+    },
+
+    [token],
+  );
 
 
   useEffect(() => {
@@ -202,7 +257,7 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
       throw err;
     });
 };
-const getCommandMetadata = async ( deviceId: string) => {
+/*const getCommandMetadata = async ( deviceId: string) => {
 
   logger.info(`[COMMAND METADATA] Loading metadata for device ${deviceId}`);
 
@@ -217,7 +272,20 @@ const getCommandMetadata = async ( deviceId: string) => {
       logger.error( `[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`, err.message );
       throw err;
     });
-};
+};*/
+const getCommandMetadata = useCallback(async (deviceId: string) => {
+  logger.info(`[COMMAND METADATA] Loading metadata for device ${deviceId}`);
+
+  return apiClient<CommandMetadata[]>(ENDPOINTS.DEVICE.COMMAND_METADATA(deviceId), 'GET', null, token)
+    .then((response) => {
+      logger.info(`[COMMAND METADATA] Loaded metadata for device ${deviceId}`);
+      return response;
+    })
+    .catch((err) => {
+      logger.error(`[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`, err.message);
+      throw err;
+    });
+}, [token]); // Dodaj token u zavisnosti
 
 
 const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED' ) => {
@@ -233,6 +301,166 @@ const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 
       )
     );
   },[]);
+  const uploadModelVersion =
+  useCallback(
+    async (params: {
+      modelName: string;
+
+      version: string;
+
+      schemaFile: File;
+
+      mappingFile: File;
+    }) => {
+      if (!token) {
+        throw new Error(
+          'Unauthorized',
+        );
+      }
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        'modelName',
+        params.modelName,
+      );
+
+      formData.append(
+        'version',
+        params.version,
+      );
+
+      formData.append(
+        'schema',
+        params.schemaFile,
+      );
+
+      formData.append(
+        'mapping',
+        params.mappingFile,
+      );
+
+      try {
+        const created =
+          await apiClient<ModelVersionDTO>(
+            ENDPOINTS
+              .MODEL_VERSIONS
+              .UPLOAD,
+
+            'POST',
+            formData,
+            token,
+          );
+
+        toast.success(
+          `Model version ${params.modelName}:${params.version} uploaded`,
+        );
+
+        /*
+         * Posle uspešnog uploada
+         * ponovo učitaj listu verzija.
+         */
+        await fetchModels();
+
+        return created;
+      } catch (err: any) {
+        logger.error(
+          '[MODEL VERSION] Upload failed:',
+          err.message,
+        );
+
+        toast.error(
+          err.message ||
+            'Model version upload failed',
+        );
+
+        throw err;
+      }
+    },
+
+    [
+      token,
+      fetchModels,
+    ],
+  );
+  const applyModelVersion =
+  useCallback(
+    async (
+      deviceId: string,
+      modelVersionId: string,
+    ) => {
+      if (!token) {
+        throw new Error(
+          'Unauthorized',
+        );
+      }
+
+      try {
+        logger.info(
+          `[MODEL VERSION] Applying modelVersionId=${modelVersionId} to device=${deviceId}`,
+        );
+
+        const result =
+          await apiClient<ApplyModelVersionResponse>(
+            ENDPOINTS.DEVICE
+              .APPLY_MODEL_VERSION(
+                deviceId,
+              ),
+
+            'PATCH',
+
+            {
+              modelVersionId,
+            },
+
+            token,
+          );
+
+        logger.info(
+          `[MODEL VERSION] Device ${result.serialNumber} switched to ${result.model}:${result.version}`,
+        );
+
+        if (
+          result.restartRequired
+        ) {
+          toast.success(
+            `Model ${result.model}:${result.version} applied. Device must be restarted.`,
+          );
+        } else {
+          toast.success(
+            `Model ${result.model}:${result.version} applied.`,
+          );
+        }
+
+        /*
+         * DB je sada promenjen na
+         * novu ModelVersion, pa
+         * osvežavamo listu uređaja.
+         */
+        await fetchDevices();
+
+        return result;
+      } catch (err: any) {
+        logger.error(
+          '[MODEL VERSION] Device update failed:',
+          err.message,
+        );
+
+        toast.error(
+          err.message ||
+            'Failed to update device version',
+        );
+
+        throw err;
+      }
+    },
+
+    [
+      token,
+      fetchDevices,
+    ],
+  );
 
 
  
@@ -247,7 +475,7 @@ const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message,setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus, getCommandMetadata};
+,message, applyModelVersion, fetchModels, uploadModelVersion, setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus, getCommandMetadata};
 
 };
   
