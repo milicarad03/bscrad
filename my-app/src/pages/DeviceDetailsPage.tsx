@@ -10,10 +10,96 @@ import { toast } from 'react-hot-toast';
 import '../styles/layouts/deviceDetailsPage.css';
 import type { CommandMetadata } from '../models/device.dto';
 import { CommandCard } from '../components/DeviceCommands/CommandCard';
-import { TemperatureChart } from '../styles/components/charts/TemperatureChart';
 import { TelemetryChart } from '../styles/components/charts/TelemetryChart';
 import { TelemetryAggregationCard } from "../styles/components/agregation/TelemetryAgregation"
 import { transformTelemetryForCharts } from '../utils/telemetryTransformer';
+import { DynamicDeviceDashboard, type DashboardConfig } from 'device-dashboard-ui-plugin';
+
+/*const testDashboardConfig: DashboardConfig = {
+  sections: [
+    {
+      id: 'current-metrics',
+      title: 'CURRENT METRICS FROM UI PLUGIN',
+      columns: 4,
+      items: [
+        {
+          id: 'uptime',
+          component: 'value-card',
+          bind: 'uptime',
+          title: 'Uptime',
+        },
+        {
+          id: 'op-mode',
+          component: 'value-card',
+          bind: 'opMode',
+          title: 'Operating Mode',
+        },
+        {
+          id: 'led',
+          component: 'value-card',
+          bind: 'led',
+          title: 'LED State',
+        },
+        {
+          id: 'led-switch',
+          component: 'switch',
+          bind: 'led',
+          title: 'LED Control',
+          command: 'SET_LED',
+          commandField: 'state',
+        },
+        {
+          id: 'rpm-control',
+          component: 'numeric-input',
+          title: 'RPM Control',
+          command: 'SET_RPM',
+          commandField: 'rpm',
+          min: 0,
+          max: 5000,
+          step: 100,
+        },
+        {
+          id: 'wide-card',
+          component: 'value-card',
+          bind: 'uptime',
+          title: 'Wide Card',
+          colSpan: 2,
+        },
+        {
+          id: 'uptime-chart',
+          component: 'line-chart',
+          bind: 'uptime',
+          title: 'Uptime History',
+          colSpan: 2,
+        },
+        {
+          id: 'uptime-table',
+          component: 'table',
+          bind: 'uptime',
+          title: 'Uptime Table',
+          colSpan: 2,
+        },
+        {
+          id: 'visible-test',
+          component: 'value-card',
+          bind: 'led',
+          title: 'VISIBLE ONLY WHEN LED IS ON',
+          visibleWhen: {
+            bind: 'led',
+            equals: true,
+          },
+        }
+     ],
+    },
+  ],
+};
+const testTelemetry = {
+  temperature: 23.5,
+};
+*/
+
+
+
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -47,10 +133,12 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
 
   const displayLedState = Array.isArray(ledSamples) && ledSamples.length > 0 ? ledSamples[ledSamples.length - 1][0] : false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
-  //const historicalData = latestTelemetry?.data?.historicalTelemetry ?? [];
-  //const historicalData = chartData;
   const historicalData = latestTelemetry?.data? transformTelemetryForCharts(latestTelemetry.data) : [];
-    const filteredHistoricalData =  historicalData.filter(item =>
+  
+  const dashboardConfig = currentDevice?.modelVersion?.mapping?.dashboard as DashboardConfig
+  console.log('DASHBOARD CONFIG', dashboardConfig);
+  
+  const filteredHistoricalData =  historicalData.filter(item =>
     Object.entries(item).some(
       ([key, value]) =>
         key !== "timestamp" &&
@@ -69,7 +157,6 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
           )
         )
       );
-  const hasTemperature = historicalData.some(item => item.temperature !== undefined);
  
   const currentMetrics = Object.entries(latestTelemetry?.data ?? {})
       .map(([key, values]) => {
@@ -87,10 +174,35 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
           metric !== null &&
           typeof metric.value !== "boolean"
       );
-  const hasHumidity =historicalData.some(item => item.humidity !== undefined);
 
-  const hasPressure = historicalData.some(item => item.pressure !== undefined);
-  const supportsTemperature = historicalData.some( item => item.temperature !== undefined);
+  const pluginTelemetry = Object.entries( latestTelemetry?.data ?? {}).reduce<Record<string, unknown>>(
+    (result, [field, values]) => {
+      if (!Array.isArray(values) || values.length === 0) {
+        return result;
+      }
+
+      const last = values[values.length - 1];
+
+      if (!Array.isArray(last)) {
+        return result;
+      }
+
+      result[field] = last[0];
+
+      return result;
+    },
+    {},
+  );
+  const dashboardCommandHandler = async (
+  command: string,
+  payload: Record<string, unknown>,
+) => {
+  await sendDeviceCommand(
+    id!,
+    command,
+    payload,
+  );
+};
 
   const executeCommand = async (command: string, payload: any) => {
       try {
@@ -210,6 +322,16 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             </div>
           </Card>
         </div>
+        {dashboardConfig && (
+
+        <DynamicDeviceDashboard
+        deviceId={id ?? 'unknown-device'}
+        config={dashboardConfig}
+        telemetry={pluginTelemetry}
+        history={historicalData}
+        onCommand={dashboardCommandHandler}
+        />
+        )}
          <Card title="CURRENT_METRICS">
           <div className="dd-state-grid">
             {currentMetrics.map(metric => (

@@ -31,6 +31,7 @@ export interface DeviceDTO {
     schema?: {
       commands?: Record<string, any>;
     };
+    mapping?: Record<string, any>;
   };
 
   latestTelemetry?: DeviceTelemetryDTO | null;
