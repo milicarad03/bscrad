@@ -13,7 +13,14 @@ import { CommandCard } from '../components/DeviceCommands/CommandCard';
 import { TelemetryChart } from '../styles/components/charts/TelemetryChart';
 import { TelemetryAggregationCard } from "../styles/components/agregation/TelemetryAgregation"
 import { transformTelemetryForCharts } from '../utils/telemetryTransformer';
-import { DynamicDeviceDashboard, type DashboardConfig } from 'device-dashboard-ui-plugin';
+import { DynamicDeviceDashboard, registerDashboardRenderer, type DashboardConfig } from 'device-dashboard-ui-plugin';
+import { OilGaugeRenderer } from '../components/CustomRenderers/OilGaugeRenderer';
+import { useDevicesStatuses } from '../hooks/useDeviceStatus';
+
+registerDashboardRenderer(
+  'oil-gauge',
+  OilGaugeRenderer,
+);
 
 /*const testDashboardConfig: DashboardConfig = {
   sections: [
@@ -120,9 +127,16 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     rpm: "rpm"
   };
 
-  const { handleReassignDevice, fetchDevices, sendDeviceCommand, devices, loading: devicesLoading, getCommandMetadata } = useDevice(auth?.token);
+  const { handleReassignDevice, fetchDevices, sendDeviceCommand, devices, loading: devicesLoading, getCommandMetadata, updateDeviceStatus} = useDevice(auth?.token);
 
   const currentDevice = devices.find((d) => String(d.id) === String(id) || String(d.serialNumber) === String(id));
+  console.log(
+  'DEVICE STATUS:',
+  currentDevice?.status,
+);
+  
+  
+  
   const isDeviceConnected = currentDevice?.status === 'ONLINE';
   const isAdmin = auth?.profile?.role === 'ADMIN';
   const ledColorSamples = latestTelemetry?.data?.ledColor ?? [];
@@ -203,6 +217,17 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     payload,
   );
 };
+useDevicesStatuses({
+  onStatusUpdate: (
+    deviceId,
+    newStatus,
+  ) => {
+    updateDeviceStatus(
+      deviceId,
+      newStatus,
+    );
+  },
+});
 
   const executeCommand = async (command: string, payload: any) => {
       try {
@@ -330,6 +355,8 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
         telemetry={pluginTelemetry}
         history={historicalData}
         onCommand={dashboardCommandHandler}
+        disabled={!isDeviceConnected}
+        schema={currentDevice?.modelVersion?.schema}
         />
         )}
          <Card title="CURRENT_METRICS">

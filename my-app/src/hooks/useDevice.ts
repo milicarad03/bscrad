@@ -271,7 +271,7 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
 
       logger.error( `[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`, err.message );
       throw err;
-    });
+    });ac
 };*/
 const getCommandMetadata = useCallback(async (deviceId: string) => {
   logger.info(`[COMMAND METADATA] Loading metadata for device ${deviceId}`);
