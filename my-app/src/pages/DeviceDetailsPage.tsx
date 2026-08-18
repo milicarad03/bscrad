@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Sidebar } from '../components/Dashboard/Sidebar';
@@ -17,10 +17,11 @@ import { DynamicDeviceDashboard, registerDashboardRenderer, type DashboardConfig
 import { OilGaugeRenderer } from '../components/CustomRenderers/OilGaugeRenderer';
 import { useDevicesStatuses } from '../hooks/useDeviceStatus';
 
-registerDashboardRenderer(
+/*registerDashboardRenderer(
   'oil-gauge',
   OilGaugeRenderer,
-);
+);*/
+registerDashboardRenderer('oil-gauge', new OilGaugeRenderer());
 
 /*const testDashboardConfig: DashboardConfig = {
   sections: [
@@ -116,6 +117,8 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [stylePreset, setStylePreset] = useState<
+  'default' | 'modern' | 'compact'>('default');
   const [streamStatus, setStreamStatus] = useState<'ACTIVE' | 'IDLE'>('IDLE');
   const [commandMetadata, setCommandMetadata] = useState<CommandMetadata[]>([]);
   const units: Record<string, string> = {
@@ -148,7 +151,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const displayLedState = Array.isArray(ledSamples) && ledSamples.length > 0 ? ledSamples[ledSamples.length - 1][0] : false;
   const currentProfile = latestTelemetry?.data?.system?.status?.operatingProfile ?? 'NORMAL';
   const historicalData = latestTelemetry?.data? transformTelemetryForCharts(latestTelemetry.data) : [];
-  
+
   const dashboardConfig = currentDevice?.modelVersion?.mapping?.dashboard as DashboardConfig
   console.log('DASHBOARD CONFIG', dashboardConfig);
   
@@ -217,6 +220,8 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     payload,
   );
 };
+
+/*
 useDevicesStatuses({
   onStatusUpdate: (
     deviceId,
@@ -228,7 +233,12 @@ useDevicesStatuses({
     );
   },
 });
-
+*/
+useDevicesStatuses({
+  onStatusUpdate: (deviceId, newStatus) => {
+    updateDeviceStatus(deviceId, newStatus);
+  },
+});
   const executeCommand = async (command: string, payload: any) => {
       try {
         await sendDeviceCommand(id!, command, payload);
@@ -347,6 +357,31 @@ useDevicesStatuses({
             </div>
           </Card>
         </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px',
+          }}
+        >
+          <button
+            onClick={() => setStylePreset('default')}
+          >
+            Default
+          </button>
+
+          <button
+            onClick={() => setStylePreset('modern')}
+          >
+            Modern
+          </button>
+
+          <button
+            onClick={() => setStylePreset('compact')}
+          >
+            Compact
+          </button>
+        </div>
         {dashboardConfig && (
 
         <DynamicDeviceDashboard
@@ -357,6 +392,7 @@ useDevicesStatuses({
         onCommand={dashboardCommandHandler}
         disabled={!isDeviceConnected}
         schema={currentDevice?.modelVersion?.schema}
+        stylePreset={stylePreset}
         />
         )}
          <Card title="CURRENT_METRICS">
