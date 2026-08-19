@@ -13,9 +13,11 @@ import { CommandCard } from '../components/DeviceCommands/CommandCard';
 import { TelemetryChart } from '../styles/components/charts/TelemetryChart';
 import { TelemetryAggregationCard } from "../styles/components/agregation/TelemetryAgregation"
 import { transformTelemetryForCharts } from '../utils/telemetryTransformer';
-import { DynamicDeviceDashboard, registerDashboardRenderer, type DashboardConfig } from 'device-dashboard-ui-plugin';
+import { DynamicDeviceDashboard, type DashboardConfig } from 'device-dashboard-ui-plugin';
+import { registerDashboardRenderer } from 'device-dashboard-ui-plugin/registry';
 import { OilGaugeRenderer } from '../components/CustomRenderers/OilGaugeRenderer';
 import { useDevicesStatuses } from '../hooks/useDeviceStatus';
+
 
 /*registerDashboardRenderer(
   'oil-gauge',
@@ -117,8 +119,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
-  const [stylePreset, setStylePreset] = useState<
-  'default' | 'modern' | 'compact'>('default');
+  //const [stylePreset, setStylePreset] = useState<'default' | 'modern' | 'compact'>('default');
   const [streamStatus, setStreamStatus] = useState<'ACTIVE' | 'IDLE'>('IDLE');
   const [commandMetadata, setCommandMetadata] = useState<CommandMetadata[]>([]);
   const units: Record<string, string> = {
@@ -357,31 +358,7 @@ useDevicesStatuses({
             </div>
           </Card>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
-          }}
-        >
-          <button
-            onClick={() => setStylePreset('default')}
-          >
-            Default
-          </button>
-
-          <button
-            onClick={() => setStylePreset('modern')}
-          >
-            Modern
-          </button>
-
-          <button
-            onClick={() => setStylePreset('compact')}
-          >
-            Compact
-          </button>
-        </div>
+  
         {dashboardConfig && (
 
         <DynamicDeviceDashboard
@@ -392,7 +369,6 @@ useDevicesStatuses({
         onCommand={dashboardCommandHandler}
         disabled={!isDeviceConnected}
         schema={currentDevice?.modelVersion?.schema}
-        stylePreset={stylePreset}
         />
         )}
          <Card title="CURRENT_METRICS">
