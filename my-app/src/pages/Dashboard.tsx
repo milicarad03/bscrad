@@ -153,6 +153,12 @@ useEffect(() => {
             onApplyModelVersion={
               device.applyModelVersion
             }
+           onTransferOwnership={async (deviceId, userId) => {
+            await device.handleReassignDevice(
+            deviceId,
+            Number(userId),
+            );
+            }}
             
           />
         </div>

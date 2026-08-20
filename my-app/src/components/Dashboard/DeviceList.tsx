@@ -24,9 +24,13 @@ interface DeviceListProps {
    currentUserId: string | number | undefined;
    modelVersions: ModelVersionDTO[];
    onApplyModelVersion: (
-  deviceId: string,
-  modelVersionId: string,
-) => Promise<unknown>;
+    deviceId: string,
+    modelVersionId: string,
+  ) => Promise<unknown>;
+  onTransferOwnership: (
+    deviceId: string,
+    userId: string,
+  ) => Promise<void>;
 }
 
 export const DeviceList = ({
@@ -43,6 +47,7 @@ export const DeviceList = ({
   currentUserId,
     modelVersions = [],
   onApplyModelVersion,
+  onTransferOwnership,
 }: DeviceListProps) => {
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -224,6 +229,10 @@ export const DeviceList = ({
           modelVersions={modelVersions}
           onApplyModelVersion={
             onApplyModelVersion
+          }
+          users={users}
+          onTransferOwnership={
+          onTransferOwnership
           }
         />
           </div>
