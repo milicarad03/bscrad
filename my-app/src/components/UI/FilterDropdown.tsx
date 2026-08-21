@@ -1,5 +1,5 @@
-
-import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import '../../styles/layouts/filterDropdown.css'; // Updated CSS reference
 
 interface FilterDropdownProps {
   label: string;
@@ -11,28 +11,32 @@ interface FilterDropdownProps {
   'data-cy'?: string;
 }
 
-export const FilterDropdown = ({ label, selectedCount, placeholder, isOpen, onToggle, children, 'data-cy': dataCy}: FilterDropdownProps) => (
-  <div className="custom-dropdown-container" data-cy={dataCy} style={{ position: 'relative', width: '250px' }}>
-    <p style={{ fontSize: '0.7rem', color: '#888', marginBottom: '5px' }}>{label}:</p>
+export const FilterDropdown = ({
+  label,
+  selectedCount,
+  placeholder,
+  isOpen,
+  onToggle,
+  children,
+  'data-cy': dataCy,
+}: FilterDropdownProps) => (
+  <div className="filter-dropdown-container" data-cy={dataCy}>
+    <label className="filter-dropdown-title">{label}</label>
     <div 
+      className={`filter-dropdown-toggle ${isOpen ? 'open' : ''}`}
       onClick={onToggle}
-      style={{
-        background: 'rgba(5, 10, 37, 0.4)', border: '1px solid #444',
-        padding: '10px', borderRadius: '4px', cursor: 'pointer',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#5cd6ce'
-      }}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isOpen}
     >
-      <span style={{ fontSize: '0.8rem' }}>
-        {selectedCount > 0 ? `SELECTED (${selectedCount})` : placeholder}
+      <span className="filter-dropdown-value">
+        {selectedCount > 0 ? `Selected (${selectedCount})` : placeholder}
       </span>
-      <span>{isOpen ? '▲' : '▼'}</span>
+      {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
     </div>
+    
     {isOpen && (
-      <div style={{
-        position: 'absolute', top: '100%', left: 0, right: 0,
-        background: '#1a1a1a', border: '1px solid #81a4e4', zIndex: 1000,
-        maxHeight: '200px', overflowY: 'auto', marginTop: '5px', borderRadius: '4px'
-      }}>
+      <div className="filter-dropdown-menu">
         {children}
       </div>
     )}

@@ -1,14 +1,12 @@
 import { Card } from '../../components/UI/Card';
-import type {
-  DeviceDTO,
-  ModelVersionDTO,
-} from '../../models/device.dto';
-import { RotateCw } from 'lucide-react';
+import type { DeviceDTO, ModelVersionDTO } from '../../models/device.dto';
+import { RotateCw, Search, Plus } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { useState, useEffect } from 'react';
 import { DeviceTable } from './DeviceTable'; 
 import { FilterDropdown } from '../UI/FilterDropdown'; 
 import { useDevicesStatuses } from '../../hooks/useDeviceStatus';
+import '../../styles/layouts/deviceList.css'; // Updated CSS reference
 
 interface DeviceListProps {
   device: DeviceDTO[];
@@ -21,9 +19,9 @@ interface DeviceListProps {
   onFilterChange: (userIds?: number[], typeNames?: string[]) => void;
   targetUserIds: number[];
   selectedTypes: string[];
-   currentUserId: string | number | undefined;
-   modelVersions: ModelVersionDTO[];
-   onApplyModelVersion: (
+  currentUserId: string | number | undefined;
+  modelVersions: ModelVersionDTO[];
+  onApplyModelVersion: (
     deviceId: string,
     modelVersionId: string,
   ) => Promise<unknown>;
@@ -45,16 +43,14 @@ export const DeviceList = ({
   targetUserIds = [],
   selectedTypes = [],
   currentUserId,
-    modelVersions = [],
+  modelVersions = [],
   onApplyModelVersion,
   onTransferOwnership,
 }: DeviceListProps) => {
-  
   const [searchTerm, setSearchTerm] = useState('');
   const [openDropdown, setOpenDropdown] = useState<'user' | 'type' | null>(null);
   const [allPossibleTypes, setAllPossibleTypes] = useState<string[]>([]);
   const [localDevices, setLocalDevices] = useState<DeviceDTO[]>(device);
-
 
   useEffect(() => {
     setLocalDevices(device);
@@ -70,7 +66,6 @@ export const DeviceList = ({
     }
   });
 
-
   useEffect(() => {
     if (import.meta.env.DEV) {
       (window as any).triggerStatusUpdate = (
@@ -79,9 +74,7 @@ export const DeviceList = ({
       ) => {
         setLocalDevices((prevDevices) =>
           prevDevices.map((dev) =>
-            dev.serialNumber === deviceId
-              ? { ...dev, status }
-              : dev
+            dev.serialNumber === deviceId ? { ...dev, status } : dev
           )
         );
       };
@@ -93,149 +86,130 @@ export const DeviceList = ({
     };
   }, []);
 
-  
-  
+  // Search filtering
+  const filteredDevices = localDevices.filter(dev => {
+    const term = searchTerm.toLowerCase();
 
-  // search
- const filteredDevices = localDevices.filter(dev => {
-  const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      (dev.name || '').toLowerCase().includes(term) ||
+      (dev.type || '').toLowerCase().includes(term) ||
+      (dev.serialNumber || '').toLowerCase().includes(term) ||
+      (dev.user?.email || '').toLowerCase().includes(term);
 
-  const matchesSearch =
-    (dev.name || '').toLowerCase().includes(term) ||
-    (dev.type || '').toLowerCase().includes(term) ||
-    (dev.serialNumber || '').toLowerCase().includes(term) ||
-    (dev.user?.email || '').toLowerCase().includes(term);
+    const matchesType =
+      selectedTypes.length === 0 ||
+      selectedTypes.includes(dev.type || '');
 
-  const matchesType =
-    selectedTypes.length === 0 ||
-    selectedTypes.includes(dev.type || '');
-
-  return matchesSearch && matchesType;
-});
-
+    return matchesSearch && matchesType;
+  });
   
   useEffect(() => {
     if (localDevices.length > 0) {
-      const currentTypes =localDevices.map(d => d.type);
+      const currentTypes = localDevices.map(d => d.type).filter(Boolean) as string[];
       setAllPossibleTypes(prev => Array.from(new Set([...prev, ...currentTypes])));
     }
   }, [localDevices]);
 
-
-
   return (
-    <Card title={isAdmin ? "SYSTEM DEVICE FEED" : "MY_ASSIGNED_DEVICES"}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <Card title={isAdmin ? "System Device Feed" : "Assigned Devices"}>
+      <div className="device-list-wrapper">
         
-      
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {isAdmin && <Button className="btn-register-cyber" onClick={onRegister} data-cy="add-device-btn">+ REGISTER_DEVICE</Button>}
-          <Button onClick={onDevice} className="btn-refresh" title="SYNC_DATABASE">
-            <RotateCw size={18} />
-          </Button>
-        </div>
+        {/* Top Header Actions Bar */}
+        <div className="device-list-header">
+          <div className="device-controls-bar">
+            {/* Search Field */}
+            <div className="search-field-group">
+              <label className="search-field-label">Search Devices</label>
+              <div className="search-input-wrapper">
+                <Search size={15} className="search-icon" />
+                <input 
+                  data-cy="device-search"
+                  type="text" 
+                  placeholder="Filter by name, type, SN..." 
+                  className="search-input-cyber"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
 
-    
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          
-       
-          <div style={{ flex: 1, minWidth: '200px' }}>
-            <p style={{ fontSize: '0.7rem', color: '#888', marginBottom: '5px' }}>SEARCH:</p>
-            <input 
-              type="text" 
-              placeholder="NAME, TYPE, SN..." 
-              className="search-input"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+            {/* Filter by Users (Admin only) */}
+            {isAdmin && (
+              <FilterDropdown 
+                data-cy="filter-user"
+                label="Users Filter"
+                placeholder="Select Users"
+                selectedCount={targetUserIds.length}
+                isOpen={openDropdown === 'user'}
+                onToggle={() => setOpenDropdown(openDropdown === 'user' ? null : 'user')}
+              >
+                {users.map(u => (
+                  <label key={u.id} className="filter-dropdown-label">
+                    <input 
+                      type="checkbox"
+                      checked={targetUserIds.includes(u.id)}
+                      onChange={(e) => {
+                        const newIds = e.target.checked ? [...targetUserIds, u.id] : targetUserIds.filter(id => id !== u.id);
+                        onFilterChange(newIds, selectedTypes);
+                      }}
+                    />
+                    <span>{u.email}</span>
+                  </label>
+                ))}
+              </FilterDropdown>
+            )}
 
-          
-          {isAdmin && (
+            {/* Filter by Type */}
             <FilterDropdown 
-              data-cy="filter-user"
-              label="FILTER_BY_USERS"
-              placeholder='SELECT_USERS'
-              selectedCount={targetUserIds.length}
-              isOpen={openDropdown === 'user'}
-              onToggle={() => setOpenDropdown(openDropdown === 'user' ? null : 'user')}
+              data-cy="filter-type"
+              label="Type Filter"
+              placeholder="Select Type"
+              selectedCount={selectedTypes.length}
+              isOpen={openDropdown === 'type'}
+              onToggle={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
             >
-              {users.map(u => (
-                <label key={u.id} style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                padding: '10px', 
-                gap: '10px', 
-                width: '100%', 
-                cursor: 'pointer',
-                borderBottom: '1px solid #222',
-                color: '#ccc'
-              }}
-              className="dropdown-item">
+              {allPossibleTypes.map(typeName => (
+                <label key={typeName} data-cy={`filter-option-${typeName}`} className="filter-dropdown-label">
                   <input 
                     type="checkbox"
-                    checked={targetUserIds.includes(u.id)}
+                    checked={selectedTypes.includes(typeName)}
                     onChange={(e) => {
-                      const newIds = e.target.checked ? [...targetUserIds, u.id] : targetUserIds.filter(id => id !== u.id);
-                      onFilterChange(newIds, selectedTypes);
+                      const newTypes = e.target.checked ? [...selectedTypes, typeName] : selectedTypes.filter(t => t !== typeName);
+                      onFilterChange(targetUserIds, newTypes);
                     }}
                   />
-                  {u.email}
+                  <span>{typeName}</span>
                 </label>
               ))}
             </FilterDropdown>
-          )}
+          </div>
 
-          <FilterDropdown 
-            data-cy="filter-type"
-            label="FILTER_BY_TYPE"
-            placeholder='SELECT_TYPE'
-            selectedCount={selectedTypes.length}
-            isOpen={openDropdown === 'type'}
-            onToggle={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
-          >
-            {allPossibleTypes.map(typeName => (
-              <label key={typeName}  data-cy={`filter-option-${typeName}`}
-              style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              padding: '10px', 
-              gap: '10px', 
-              width: '100%', 
-              cursor: 'pointer',
-              borderBottom: '1px solid #222',
-              color: '#ccc'
-            }}
-              className="dropdown-item">
-                <input 
-                  type="checkbox"
-                  checked={selectedTypes.includes(typeName)}
-                  onChange={(e) => {
-                    const newTypes = e.target.checked ? [...selectedTypes, typeName] : selectedTypes.filter(t => t !== typeName);
-                    onFilterChange(targetUserIds, newTypes);
-                  }}
-                />
-                {typeName}
-              </label>
-            ))}
-          </FilterDropdown>
+          {/* Action Buttons Right */}
+          <div className="device-action-buttons">
+            {isAdmin && (
+              <Button className="btn-register-cyber" onClick={onRegister} data-cy="add-device-btn">
+                <Plus size={15} />
+                <span>Register Device</span>
+              </Button>
+            )}
+            <Button onClick={onDevice} className="btn-refresh" data-cy="refresh-devices-btn" title="Sync Database">
+              <RotateCw size={16} />
+            </Button>
+          </div>
         </div>
 
+        {/* Data Table */}
         <DeviceTable
           devices={filteredDevices}
           isAdmin={isAdmin}
           onDelete={onDelete}
           onDeviceClick={onDeviceClick}
           modelVersions={modelVersions}
-          onApplyModelVersion={
-            onApplyModelVersion
-          }
+          onApplyModelVersion={onApplyModelVersion}
           users={users}
-          onTransferOwnership={
-          onTransferOwnership
-          }
+          onTransferOwnership={onTransferOwnership}
         />
-          </div>
+      </div>
     </Card>
   );
 };

@@ -1,0 +1,144 @@
+/* Layout & Structure */
+.device-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: inherit;
+}
+
+.device-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.device-controls-bar {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.device-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Search Field styling */
+.search-field-group {
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.search-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted, #6b7280);
+  pointer-events: none;
+}
+
+.search-input-cyber {
+  width: 100%;
+  padding: 7px 12px 7px 32px;
+  border-radius: 6px;
+  border: 1px solid var(--input-border, #374151);
+  font-size: 12px;
+  font-family: inherit;
+  background-color: var(--input-bg, rgba(0, 0, 0, 0.2));
+  color: var(--text-main, #f3f4f6);
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.search-input-cyber:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.search-input-cyber::placeholder {
+  color: var(--text-muted, #6b7280);
+}
+
+/* Dropdown Checkbox Items */
+.filter-dropdown-label {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.04));
+  color: var(--text-main, #d1d5db);
+  font-size: 12px;
+  transition: background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.filter-dropdown-label:hover {
+  background-color: var(--table-hover-bg, rgba(255, 255, 255, 0.04));
+}
+
+.filter-dropdown-label input[type="checkbox"] {
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+/* Action Control Buttons */
+.btn-register-cyber {
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-register-cyber:hover {
+  background-color: #2563eb;
+}
+
+.btn-refresh {
+  background-color: transparent;
+  border: 1px solid var(--btn-border, #374151);
+  color: var(--text-muted, #9ca3af);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-refresh:hover {
+  border-color: #3b82f6;
+  color: #60a5fa;
+  background-color: rgba(59, 130, 246, 0.08);
+}
