@@ -42,7 +42,6 @@ export const DeviceList = ({
   onFilterChange,
   targetUserIds = [],
   selectedTypes = [],
-  currentUserId,
   modelVersions = [],
   onApplyModelVersion,
   onTransferOwnership,

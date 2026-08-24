@@ -22,7 +22,7 @@
   color: var(--accent-neon, #9ca3af); /* Umesto neon boje, diskretna siva */
   margin-top: 0;
   margin-bottom: 24px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
   text-transform: uppercase;
   display: flex;
   align-items: center;
@@ -51,7 +51,7 @@
   font-weight: 600;
   color: var(--text-dim, #9ca3af);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
 }
 
 .form-input {
@@ -143,7 +143,7 @@
   font-weight: 700;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -227,7 +227,7 @@
   color: var(--text-dim, #9ca3af);
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0;
   border-bottom: 1px solid var(--border-color, #333);
 }
 

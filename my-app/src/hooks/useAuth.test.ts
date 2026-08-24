@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act} from '@testing-library/react';
 import { useAuth } from './useAuth';
 import { apiClient } from '../api/client';
 import { vi, describe, it, expect, beforeEach } from 'vitest';

@@ -1,25 +1,24 @@
-/* Layout & Structure */
 .device-list-wrapper {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 20px;
-  font-family: inherit;
+  gap: 16px;
 }
 
 .device-list-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-end;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .device-controls-bar {
   display: flex;
-  gap: 12px;
   align-items: flex-end;
-  flex-wrap: wrap;
+  gap: 10px;
   flex: 1;
+  flex-wrap: wrap;
 }
 
 .device-action-buttons {
@@ -28,20 +27,19 @@
   gap: 8px;
 }
 
-/* Search Field styling */
 .search-field-group {
-  min-width: 240px;
   display: flex;
+  min-width: 230px;
+  max-width: 340px;
+  flex: 1;
   flex-direction: column;
   gap: 5px;
 }
 
 .search-field-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted, #9ca3af);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
 }
 
 .search-input-wrapper {
@@ -53,92 +51,86 @@
 .search-icon {
   position: absolute;
   left: 10px;
-  color: var(--text-muted, #6b7280);
+  color: var(--text-muted);
   pointer-events: none;
 }
 
 .search-input-cyber {
   width: 100%;
+  height: 36px;
   padding: 7px 12px 7px 32px;
-  border-radius: 6px;
-  border: 1px solid var(--input-border, #374151);
-  font-size: 12px;
-  font-family: inherit;
-  background-color: var(--input-bg, rgba(0, 0, 0, 0.2));
-  color: var(--text-main, #f3f4f6);
-  transition: all 0.15s ease;
-  box-sizing: border-box;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  color: var(--text-main);
+  background: var(--input-bg);
+  font-size: 0.78rem;
   outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .search-input-cyber:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6;
+  border-color: var(--accent-neon);
+  box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.13);
 }
 
 .search-input-cyber::placeholder {
-  color: var(--text-muted, #6b7280);
+  color: #66717e;
 }
 
-/* Dropdown Checkbox Items */
 .filter-dropdown-label {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  gap: 10px;
   width: 100%;
+  min-height: 36px;
+  gap: 9px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  font-size: 0.76rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.04));
-  color: var(--text-main, #d1d5db);
-  font-size: 12px;
   transition: background-color 0.15s ease;
-  box-sizing: border-box;
 }
 
 .filter-dropdown-label:hover {
-  background-color: var(--table-hover-bg, rgba(255, 255, 255, 0.04));
+  background: var(--table-hover-bg);
 }
 
 .filter-dropdown-label input[type="checkbox"] {
-  accent-color: #3b82f6;
-  cursor: pointer;
+  accent-color: var(--accent-neon);
 }
 
-/* Action Control Buttons */
 .btn-register-cyber {
-  background-color: #3b82f6;
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid #3b78df;
+  border-radius: 5px;
   color: #ffffff;
-  font-weight: 600;
-  padding: 7px 14px;
-  border-radius: 6px;
-  border: none;
-  font-size: 12px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: background-color 0.15s ease;
+  background: #316fd3;
+  font-size: 0.76rem;
+  font-weight: 650;
 }
 
 .btn-register-cyber:hover {
-  background-color: #2563eb;
+  border-color: #4f8cff;
+  background: #3d7ce0;
 }
 
-.btn-refresh {
-  background-color: transparent;
-  border: 1px solid var(--btn-border, #374151);
-  color: var(--text-muted, #9ca3af);
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
+@media (max-width: 680px) {
+  .device-list-header,
+  .device-controls-bar {
+    align-items: stretch;
+  }
 
-.btn-refresh:hover {
-  border-color: #3b82f6;
-  color: #60a5fa;
-  background-color: rgba(59, 130, 246, 0.08);
+  .search-field-group {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .device-action-buttons {
+    width: 100%;
+  }
+
+  .btn-register-cyber {
+    flex: 1;
+  }
 }

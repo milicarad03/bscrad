@@ -1,28 +1,24 @@
 
 :root {
-  /* surfaces */
-  --dd-void: #0a0d12;
-  --dd-panel: #12161d;
-  --dd-panel-raised: #171c24;
-  --dd-border: rgba(255, 255, 255, 0.08);
-  --dd-border-strong: rgba(255, 255, 255, 0.16);
+  --dd-void: #0d1117;
+  --dd-panel: #161b22;
+  --dd-panel-raised: #1c222b;
+  --dd-border: #2b3440;
+  --dd-border-strong: #3a4654;
 
-  /* text */
-  --dd-text: #e6e9ef;
-  --dd-text-dim: #7a8394;
-  --dd-text-faint: #4b5261;
+  --dd-text: #e6edf3;
+  --dd-text-dim: #8b949e;
+  --dd-text-faint: #66717e;
 
-  /* state colors */
-  --dd-online: #3ddc84;
-  --dd-online-dim: rgba(61, 220, 132, 0.12);
-  --dd-offline: #ff5c6c;
-  --dd-offline-dim: rgba(255, 92, 108, 0.12);
-  --dd-signal: #4d9fff;
-  --dd-signal-dim: rgba(77, 159, 255, 0.12);
+  --dd-online: #35b779;
+  --dd-online-dim: rgba(53, 183, 121, 0.1);
+  --dd-offline: #e05d65;
+  --dd-offline-dim: rgba(224, 93, 101, 0.09);
+  --dd-signal: #4f8cff;
+  --dd-signal-dim: rgba(79, 140, 255, 0.1);
 
-  /* type */
-  --dd-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
-  --dd-font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --dd-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --dd-font-sans: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   --dd-radius: 6px;
   --dd-gap: 16px;
@@ -37,10 +33,11 @@
   margin-top: var(--dd-gap);
   align-items: start;
 }
-pre {
-  white-space: pre-wrap;      /* Prebacuje tekst u novi red */
+.dd-grid pre,
+.dd-telemetry-scroll pre {
+  white-space: pre-wrap;
   word-wrap: break-word;      /* Seče dugačke nizove */
-  background: #0b1423;
+  background: var(--dd-void);
   padding: 10px;
   border-radius: 4px;
 }
@@ -51,35 +48,98 @@ pre {
 .dd-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  width: min(100%, 1520px);
+  margin: 0 auto 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--dd-border);
 }
 
 .dd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   align-self: flex-start;
   background: none;
   border: none;
   color: var(--dd-text-dim);
-  font-family: var(--dd-font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
+  font-family: var(--dd-font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 2px 0;
   transition: color 0.15s ease;
 }
 .dd-back:hover { color: var(--dd-signal); }
-.dd-back::before { content: "← "; }
+
+.dd-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dd-heading-copy {
+  min-width: 0;
+}
+
+.dd-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--dd-text-dim);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
 
 .dd-title {
   font-family: var(--dd-font-sans);
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.55rem;
+  font-weight: 650;
   color: var(--dd-text);
   margin: 0;
 }
 .dd-title .highlight {
+  color: var(--dd-text);
+  font-weight: 650;
+}
+
+.dd-device-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+  color: var(--dd-text-dim);
   font-family: var(--dd-font-mono);
-  color: var(--dd-signal);
-  font-weight: 500;
+  font-size: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.dd-device-meta-separator {
+  color: var(--dd-text-faint);
+}
+
+.dd-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.dd-connection--online {
+  color: #63d39b;
+  background: var(--dd-online-dim);
+}
+
+.dd-connection--offline {
+  color: #eb858c;
+  background: var(--dd-offline-dim);
 }
 
 /* ---------- status ---------- */
@@ -89,7 +149,7 @@ pre {
   gap: 8px;
   font-family: var(--dd-font-mono);
   font-size: 0.8rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 .dd-dot {
   width: 7px;
@@ -112,11 +172,22 @@ pre {
   display: inline-block;
   font-family: var(--dd-font-mono);
   font-size: 0.7rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--dd-online-dim);
   color: var(--dd-online);
+}
+
+@media (max-width: 640px) {
+  .dd-heading-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dd-title {
+    font-size: 1.3rem;
+  }
 }
 
 /* ---------- field rows (replaces raw <p><strong>) ---------- */
@@ -134,7 +205,7 @@ pre {
   color: var(--dd-text-dim);
   font-family: var(--dd-font-mono);
   font-size: 0.72rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
 }
 .dd-field-value { color: var(--dd-text); }
 
@@ -142,7 +213,7 @@ pre {
 .dd-btn {
   font-family: var(--dd-font-mono);
   font-size: 0.78rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   padding: 10px 16px;
   border-radius: var(--dd-radius);
   border: 1px solid var(--dd-border-strong);
@@ -208,7 +279,7 @@ pre {
   margin-bottom: 8px;
   font-family: var(--dd-font-mono);
   font-size: 0.72rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
   color: var(--dd-text-dim);
 }
 .dd-select {
@@ -358,7 +429,7 @@ pre {
   text-transform: uppercase;
   color: #a0a8b8;
   margin-bottom: 14px;
-  letter-spacing: 0.15em; 
+  letter-spacing: 0;
   font-weight: 700; 
   border-left: 2px solid var(--dd-signal); 
   padding-left: 8px; 
@@ -441,7 +512,7 @@ pre {
   font-size: 0.75rem;
   opacity: 0.6;
   margin-bottom: 6px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
 }
 
 .cf-group-fields {
@@ -506,7 +577,7 @@ pre {
   font-size: 0.75rem;
   color: var(--dd-text-dim);
   text-transform: uppercase;
-  letter-spacing: .1em;
+  letter-spacing: 0;
 }
 .dd-history-scroll {
   display: flex;

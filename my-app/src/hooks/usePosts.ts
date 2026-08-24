@@ -10,7 +10,7 @@ export const usePosts = (token: string | null) => {
   const [drafts, setDrafts] = useState<PostDTO[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [myPosts, setMyPosts] = useState<PostDTO[]>([]);
   const [message, setMessage] = useState('');
 

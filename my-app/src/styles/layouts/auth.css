@@ -32,7 +32,7 @@
   font-family: var(--font-main);
   font-size: 1.1rem;
   text-transform: uppercase;
-  letter-spacing: 4px;
+  letter-spacing: 0;
   text-align: center;
   margin-bottom: 30px;
   color: var(--accent-neon);
@@ -60,7 +60,7 @@
   font-weight: 800;
   color: #fff;
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 
 /* --- FORMS & INPUTS --- */

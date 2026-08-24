@@ -1,9 +1,6 @@
-import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect} from 'react'
 import './App.css'
-import { BrowserRouter, Routes, Route, Navigate ,useNavigate} from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard'
 import {AuthPage} from './pages/AuthPage'
 import {DeviceDetailsPage} from './pages/DeviceDetailsPage'

@@ -44,7 +44,7 @@ export const UsersList = ({ users, onDelete, onUsers, onApprove }: UserListProps
                 <span style={{ opacity: 0.6, fontSize: '0.8rem', color: '#e0e867' }}>
                   {user.email}
                 </span>
-                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.4 }}>
+                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0', opacity: 0.4 }}>
                   {user.status}
                 </span>
               </div>

@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import heroImg from '../assets/hero.png';
-import { Card } from '../components/UI/Card';
-import { Input } from '../components/UI/Input';
-import { Button } from '../components/UI/Button';
 import { useAuth } from '../hooks/useAuth';
 import { Form } from '../components/UI/Form';
 interface AuthPageProps {

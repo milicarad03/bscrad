@@ -1,20 +1,14 @@
 import { Card } from '../components/UI/Card';
-import { Input } from '../components/UI/Input';
-import { Form } from '../components/UI/Form';
-import { Button } from '../components/UI/Button';
 import {usePosts} from '../hooks/usePosts'
 import {useAuth} from '../hooks/useAuth'
 import {useDevice} from '../hooks/useDevice'
 import {UsersList} from '../components/Dashboard/UserList'
-import {PostForm} from '../components/Dashboard/PostForm'
 import {DeviceForm} from '../components/Dashboard/DeviceForm'
-import {PostList} from '../components/Dashboard/PostList'
-import {DraftList} from '../components/Dashboard/DraftList'
 import {DeviceList} from '../components/Dashboard/DeviceList'
-import { useState,useEffect, useCallback } from 'react';
+import { useState,useEffect} from 'react';
 import { Sidebar } from '../components/Dashboard/Sidebar';
 import { DeviceDetailsModal} from '../components/Dashboard/DeviceDetailsModal';
-import {useNavigate,useLocation} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import { ModelVersionManager} from '../components/Dashboard/ModelVersionManager';
 
@@ -27,10 +21,10 @@ interface DashboardProps {
 
 
 
-export const Dashboard = ({ auth, post, device }: DashboardProps) => {
+export const Dashboard = ({ auth, device }: DashboardProps) => {
   
   
-  const [selectedDevice, setSelectedDevice] = useState<any>(null); 
+  const [selectedDevice] = useState<any>(null); 
   const [showModal, setShowModal] = useState(false); 
 
 
@@ -115,13 +109,12 @@ useEffect(() => {
        {activeTab === 'devices' && (
         <div className="view-section">
           {device.hasError && (
-            <div style={{ color: '#ff4d4d', marginBottom: '10px', fontSize: '0.9rem' }}>
-              Error loading devices. Check network connection or try again.
+            <div data-cy="error-message" style={{ color: '#ff4d4d', marginBottom: '10px', fontSize: '0.9rem' }}>
+              NetworkError: Failed to fetch devices.
             </div>
           )}
-         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
             <h2>Device Management</h2>
-           
           </div>
 
           <DeviceList 

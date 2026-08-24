@@ -9,11 +9,6 @@ import {
 } from "recharts";
 import type { HistoricalTelemetryPoint } from "../../../models/device-telemetry.dto";
 
-type HistoricalPoint = {
-  timestamp: string;
-  [key: string]: unknown;
-};
-
 type Props = {
   data: HistoricalTelemetryPoint[];
   field: string;

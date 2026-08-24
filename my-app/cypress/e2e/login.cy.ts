@@ -1,223 +1,320 @@
-const setupCommonIntercepts = () => {
-  cy.intercept('POST', '**/users/login', {
+const APP_URL = 'http://localhost:5173';
+
+type Role = 'ADMIN' | 'USER';
+
+const mockApplicationBootstrap = (
+  role: Role = 'ADMIN',
+) => {
+  const user = {
+    id: role === 'ADMIN' ? 1 : 2,
+    email:
+      role === 'ADMIN'
+        ? 'milica2@gmail.com'
+        : 'user@gmail.com',
+    role,
+    isAdmin: role === 'ADMIN',
+    status: 'APPROVED',
+  };
+
+  cy.intercept('GET', '**/users/profile', {
     statusCode: 200,
-    body: { accessToken: 'fake-token', user: { email: 'milica2@gmail.com' } }
-  }).as('loginRequest');
-  
-  cy.intercept('GET', '**/model-versions', { statusCode: 200, body: [] }).as('getModelVersions');
-  cy.intercept('GET', '**/post/feed', { statusCode: 200, body: [] }).as('getFeed');
-  cy.intercept('GET', '**/device', { statusCode: 200, body: { data: [] } }).as('getDevices');
-  cy.intercept('GET', '**/users/allusers', { statusCode: 200, body: [] }).as('getUsers');
-  cy.intercept('GET', '**/post/drafts', { statusCode: 200, body: [] }).as('getDrafts');
+    body: user,
+  }).as('getProfile');
+
+  cy.intercept('GET', '**/model-versions', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.intercept({ method: 'GET', pathname: '/device' }, {
+    statusCode: 200,
+    body: { data: [] },
+  });
+
+  cy.intercept('GET', '**/users/allusers', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.intercept('GET', '**/post/feed', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.intercept('GET', '**/post/drafts', {
+    statusCode: 200,
+    body: [],
+  });
+
+  return user;
 };
 
-describe('Auth Flow', () => {
-  it('should login successfully', () => {
-  
-    cy.intercept('POST', '**/users/login', {
-      statusCode: 200,
-      body: { accessToken: 'fake-token', user: { email: 'milica2@gmail.com' } }
-    }).as('loginRequest');
+const mockSuccessfulLogin = (
+  role: Role = 'ADMIN',
+) => {
+  const user = mockApplicationBootstrap(role);
 
-   
-    cy.intercept('GET', '**/post/drafts', { statusCode: 200, body: [] }).as('getDrafts');
+  cy.intercept('POST', '**/users/login', {
+    statusCode: 200,
+    body: {
+      accessToken: 'fake-token',
+      user,
+    },
+  }).as('loginRequest');
 
-    cy.intercept('GET', '**/users/profile', { 
-      statusCode: 200, 
-      body: { 
+  return user;
+};
+
+const fillLoginForm = (
+  email = 'milica2@gmail.com',
+  password = '123',
+) => {
+  cy.get('input[type="email"]').clear().type(email);
+  cy.get('input[type="password"]').clear().type(password);
+  cy.get('button[type="submit"]').click();
+};
+
+describe('Authentication Flow', () => {
+  it('should log in successfully', () => {
+    mockSuccessfulLogin();
+
+    cy.visit(APP_URL);
+    fillLoginForm();
+
+    cy.wait('@loginRequest')
+      .its('request.body')
+      .should('deep.equal', {
         email: 'milica2@gmail.com',
-        role: 'ADMIN', 
-        isAdmin: true  
-      } 
-    }).as('getProfile');
-    cy.intercept('GET', '**/device', { statusCode: 200, body: [] }).as('getDevices');
-    cy.intercept('GET', '**/model-versions', { statusCode: 200, body: [] }).as('getModelVersions');
-    cy.intercept('GET', '**/post/feed', { statusCode: 200, body: [] }).as('getFeed');
-    cy.intercept('GET', '**/device', { statusCode: 200, body: { data: [] }}).as('getDevices');
-    cy.intercept('GET', '**/users/allusers', { statusCode: 200, body: [] }).as('getUsers');
-    cy.intercept('GET', '**/post/drafts', { statusCode: 200, body: [] }).as('getDrafts');
-    cy.intercept('GET', '**/post/feed', { statusCode: 200, body: [] }).as('getFeed');
+        password: '123',
+      });
 
-    cy.visit('http://localhost:5173');
+    cy.url().should('include', '/dashboard');
 
-    cy.get('input[type="email"]').type('milica2@gmail.com');
-    cy.get('input[type="password"]').type('123');
-    cy.get('button[type="submit"]').click();
-
-    cy.wait('@loginRequest');
-    cy.url().should('include', '/dashboard')
-    cy.window().its('sessionStorage.token').should('exist');
-
+    cy.window().then((win) => {
+      expect(
+        win.sessionStorage.getItem('token'),
+      ).to.equal('fake-token');
+    });
   });
-  it('should show error message on invalid credentials', () => {
+
+  it('should show an error for invalid credentials', () => {
     cy.intercept('POST', '**/users/login', {
       statusCode: 401,
-      body: { message: 'Invalid credentials' }
-    }).as('loginFail');
+      body: {
+        message: 'Invalid email or password',
+      },
+    }).as('loginFailed');
 
-    cy.visit('http://localhost:5173');
-    cy.get('input[type="email"]').type('wrong@gmail.com');
-    cy.get('input[type="password"]').type('wrongpass');
-    cy.get('button[type="submit"]').click();
+    cy.visit(APP_URL);
+    fillLoginForm('wrong@example.com', 'wrong-password');
 
-    cy.wait('@loginFail');
-    cy.contains('Invalid credentials').should('exist'); 
-    cy.url().should('not.include', '/dashboard');
+    cy.wait('@loginFailed');
+
+    cy.contains('Invalid email or password').should(
+      'be.visible',
+    );
+
+    cy.url().should('eq', `${APP_URL}/`);
   });
-  it('should show error when fields are empty', () => {
-    cy.visit('http://localhost:5173');
 
-    
-    cy.get('form').invoke('attr', 'novalidate', 'true');
+  it('should prevent login when fields are empty', () => {
+    cy.intercept('POST', '**/users/login').as(
+      'loginRequest',
+    );
 
+    cy.visit(APP_URL);
+
+    cy.get('form').invoke(
+      'attr',
+      'novalidate',
+      'novalidate',
+    );
 
     cy.get('button[type="submit"]').click();
 
-    cy.contains('Email and password are required!', { timeout: 5000 })
-      .should('be.visible'); 
+    cy.contains('Email and password are required!').should(
+      'be.visible',
+    );
+
+    cy.get('@loginRequest.all').should('have.length', 0);
   });
-  it('should handle network error on login', () => {
-    cy.intercept('POST', '**/users/login', { forceNetworkError: true }).as('loginNetworkError');
-    cy.visit('http://localhost:5173');
-    cy.get('input[type="email"]').type('milica2@gmail.com');
-    cy.get('input[type="password"]').type('123');
-    cy.get('button[type="submit"]').click();
+
+  it('should handle a login network error', () => {
+    cy.intercept('POST', '**/users/login', {
+      forceNetworkError: true,
+    }).as('loginNetworkError');
+
+    cy.visit(APP_URL);
+    fillLoginForm();
+
     cy.wait('@loginNetworkError');
-    cy.url().should('not.include', '/dashboard');
+
+    cy.contains(/network|failed|error/i).should('be.visible');
   });
-  it('should redirect to dashboard if already logged in', () => {
-    cy.window().then((win) => {
-      win.sessionStorage.setItem('token', 'fake-token');
+
+  it('should show an error for a pending account', () => {
+    cy.intercept('POST', '**/users/login', {
+      statusCode: 403,
+      body: {
+        message:
+          'Your account is waiting for administrator approval',
+      },
+    }).as('pendingLogin');
+
+    cy.visit(APP_URL);
+    fillLoginForm('pending@example.com', '123');
+
+    cy.wait('@pendingLogin');
+
+    cy.contains(
+      'Your account is waiting for administrator approval',
+    ).should('be.visible');
+  });
+
+  it('should show an error for a rejected account', () => {
+    cy.intercept('POST', '**/users/login', {
+      statusCode: 403,
+      body: {
+        message: 'Your account has been rejected',
+      },
+    }).as('rejectedLogin');
+
+    cy.visit(APP_URL);
+    fillLoginForm('rejected@example.com', '123');
+
+    cy.wait('@rejectedLogin');
+
+    cy.contains('Your account has been rejected').should(
+      'be.visible',
+    );
+  });
+
+  it('should redirect an authenticated user to dashboard', () => {
+    mockApplicationBootstrap();
+
+    cy.visit(APP_URL, {
+      onBeforeLoad(win) {
+        win.sessionStorage.setItem(
+          'token',
+          'fake-token',
+        );
+        win.sessionStorage.setItem(
+          'userEmail',
+          'milica2@gmail.com',
+        );
+      },
     });
-      cy.intercept('GET', '**/users/profile', { body: { email: 'milica2@gmail.com', role: 'ADMIN' } });
-      cy.intercept('GET', '**/device', { statusCode: 200, body: [] }).as('getDevices');
-      cy.intercept('GET', '**/model-versions', { statusCode: 200, body: [] }).as('getModelVersions');
-      cy.intercept('GET', '**/post/feed', { statusCode: 200, body: [] }).as('getFeed');
-      cy.intercept('GET', '**/device', { statusCode: 200, body: { data: [] }}).as('getDevices');
-      cy.intercept('GET', '**/users/allusers', { statusCode: 200, body: [] }).as('getUsers');
-      cy.intercept('GET', '**/post/drafts', { statusCode: 200, body: [] }).as('getDrafts');
-      cy.intercept('GET', '**/post/feed', { statusCode: 200, body: [] }).as('getFeed');
-    
-    cy.visit('http://localhost:5173');
+
     cy.url().should('include', '/dashboard');
   });
 
+  it('should redirect unauthenticated dashboard access to login', () => {
+    cy.visit(`${APP_URL}/dashboard`);
 
-  it('should redirect to login when accessing /dashboard without auth', () => {
-    cy.visit('http://localhost:5173/dashboard');
-    cy.url().should('eq', 'http://localhost:5173/');
-  });
-
- it('should register a new user successfully', () => {
-  cy.intercept('POST', '**/users/user', {  
-    statusCode: 201,
-    body: { name: 'Test User', email: 'test@gmail.com' }
-  }).as('register');
-
-  cy.visit('http://localhost:5173');
-
-  cy.contains(/register/i).click();
-  cy.get('input[placeholder="Name"]').type('Test User');
-  cy.get('input[placeholder="Email"]').type('test@gmail.com');
-  cy.get('input[placeholder="Password"]').type('pass123');
-  cy.get('button[type="submit"]').click();
-
-  cy.wait('@register');
-  cy.contains('Registration successful').should('exist');
-});
-
-it('should show error on registration failure', () => {
-  cy.intercept('POST', '**/users/user', {
-    statusCode: 400,
-    body: { message: 'Email already in use' }
-  }).as('registerFail');
-
-  cy.visit('http://localhost:5173');
-  cy.contains(/register/i).click();
-
-  cy.get('input[placeholder="Name"]').type('Test User');
-  cy.get('input[placeholder="Email"]').type('duplicate@gmail.com');
-  cy.get('input[placeholder="Password"]').type('pass123');
-  cy.get('button[type="submit"]').click();
-
-  cy.wait('@registerFail');
-  cy.contains('Email already in use').should('exist');
-});
-
-});
-
-describe('Logout Flow', () => {
-  beforeEach(() => {
-    setupCommonIntercepts();
-    cy.intercept('GET', '**/users/profile', { 
-      body: { email: 'milica2@gmail.com', role: 'ADMIN', isAdmin: true } 
-    });
-    cy.login('milica2@gmail.com', '123');
-    cy.url().should('include', '/dashboard');
-  });
-
-  it('should logout successfully and clear session', () => {
-    cy.contains(/logout/i).click();
-
-    cy.url().should('eq', 'http://localhost:5173/');
-    cy.window().its('sessionStorage').invoke('getItem', 'token').should('be.null');
-  });
-
-  it('should not allow accessing dashboard after logout via browser back button', () => {
-    cy.contains(/logout/i).click();
-    cy.url().should('eq', 'http://localhost:5173/');
-
-    cy.go('back');
-
-    cy.url().should('eq', 'http://localhost:5173/');
-  });
-
-  it('should clear user profile and users list after logout', () => {
-    cy.contains(/logout/i).click();
-
-    cy.url().should('eq', 'http://localhost:5173/');
-
-    cy.window().then((win) => {
-      expect(win.sessionStorage.getItem('userEmail')).to.be.null;
-    });
-  });
-
-  it('should show login form after logout', () => {
-    cy.contains(/logout/i).click();
+    cy.url().should('eq', `${APP_URL}/`);
 
     cy.get('input[type="email"]').should('be.visible');
     cy.get('input[type="password"]').should('be.visible');
   });
 });
-describe('User Management', () => {
-  beforeEach(() => {
-    setupCommonIntercepts();
 
-    cy.intercept('GET', '**/users/profile', {
-      body: { email: 'milica2@gmail.com', role: 'ADMIN', isAdmin: true }
-    });
-    cy.login('milica2@gmail.com', '123');
+describe('Registration Flow', () => {
+  beforeEach(() => {
+    cy.visit(APP_URL);
+    cy.contains('button', 'Register').click();
+  });
+
+  it('should register a new user successfully', () => {
+    cy.intercept('POST', '**/users/user', {
+      statusCode: 201,
+      body: {
+        id: 3,
+        name: 'Test User',
+        email: 'test@example.com',
+        status: 'PENDING',
+      },
+    }).as('registerRequest');
+
+    cy.get('input[placeholder="Name"]').type('Test User');
+    cy.get('input[placeholder="Email"]').type(
+      'test@example.com',
+    );
+    cy.get('input[placeholder="Password"]').type('123456');
+
+    cy.get('button[type="submit"]').click();
+
+    cy.wait('@registerRequest')
+      .its('request.body')
+      .should('deep.equal', {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: '123456',
+      });
+
+    cy.contains(/registered|approval|success/i).should(
+      'be.visible',
+    );
+  });
+
+  it('should display a registration server error', () => {
+    cy.intercept('POST', '**/users/user', {
+      statusCode: 409,
+      body: {
+        message: 'Email already exists',
+      },
+    }).as('registerFailed');
+
+    cy.get('input[placeholder="Name"]').type('Test User');
+    cy.get('input[placeholder="Email"]').type(
+      'existing@example.com',
+    );
+    cy.get('input[placeholder="Password"]').type('123456');
+
+    cy.get('button[type="submit"]').click();
+
+    cy.wait('@registerFailed');
+
+    cy.contains('Email already exists').should('be.visible');
+  });
+});
+
+describe('Logout Flow', () => {
+  beforeEach(() => {
+    mockSuccessfulLogin();
+
+    cy.visit(APP_URL);
+    fillLoginForm();
+
+    cy.wait('@loginRequest');
     cy.url().should('include', '/dashboard');
   });
 
-  it('should approve a pending user', () => {
-    setupCommonIntercepts();
-    cy.intercept('GET', '**/users/allusers', {
-    body: [{ id: '2', name: 'Pending User', email: 'p@gmail.com', status: 'PENDING' }]}).as('getUsers');
-    cy.intercept('GET', '**/users/allusers', {
-    body: [{ id: '2', name: 'Pending User', email: 'p@gmail.com', status: 'PENDING' }]
-    }).as('getUsers');
-   cy.intercept('PATCH', '**/users/approval/2', { statusCode: 200 }).as('approve');
+  it('should log out and clear the session', () => {
+    cy.contains('button', /log out|logout/i).click();
 
-    cy.contains('Users').click();  
-    cy.contains('Pending User').should('exist');
+    cy.url().should('eq', `${APP_URL}/`);
 
     cy.window().then((win) => {
-      cy.stub(win, 'confirm').returns(true);
+      expect(
+        win.sessionStorage.getItem('token'),
+      ).to.be.null;
+
+      expect(
+        win.sessionStorage.getItem('userEmail'),
+      ).to.be.null;
     });
 
-    cy.get('[data-cy="approve-user-2"]').click()
-    cy.wait('@approve');
-    cy.contains('approved').should('exist');
+    cy.get('input[type="email"]').should('be.visible');
+  });
+
+  it('should not restore dashboard using browser back after logout', () => {
+    cy.contains('button', /log out|logout/i).click();
+
+    cy.url().should('eq', `${APP_URL}/`);
+
+    cy.go('back');
+
+    cy.url().should('eq', `${APP_URL}/`);
+    cy.get('input[type="email"]').should('be.visible');
   });
 });

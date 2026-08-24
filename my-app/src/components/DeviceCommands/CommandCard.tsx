@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Card } from '../UI/Card';
 import { Button } from '../UI/Button';
 import { CommandField } from './CommandField';
 import type { CommandMetadata } from '../../models/device.dto';

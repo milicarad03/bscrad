@@ -2,7 +2,6 @@ import React from 'react';
 import { TelemetryAggregator } from '../../../../src/utils/telemetryAgregation';
 
 import type {
-  AggregatedTelemetry,
   TelemetryMetric
 } from '../../../../src/utils/telemetryAgregation';
 

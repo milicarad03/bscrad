@@ -1,5 +1,4 @@
 // src/components/DeviceCommands/LedColorPicker.tsx
-import { Card } from '../UI/Card';
 import { Button } from '../UI/Button';
 type LedColorPickerProps = {
   colors: string[];

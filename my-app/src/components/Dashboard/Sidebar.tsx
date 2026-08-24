@@ -6,6 +6,7 @@ import {
   User, 
   LogOut,
   PackagePlus,
+  Gauge,
 } from 'lucide-react';
 import { Button } from '../UI/Button';
 
@@ -52,8 +53,18 @@ export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarP
 }
   return (
     <aside className="sidebar">
+      <div className="sidebar-brand">
+        <span className="sidebar-brand-mark" aria-hidden="true">
+          <Gauge size={17} />
+        </span>
+        <span className="sidebar-brand-copy">
+          <span className="sidebar-brand-title">IoT Control</span>
+          <span className="sidebar-brand-subtitle">Operations console</span>
+        </span>
+      </div>
+
       <div className="sidebar-user-info">
-        <h3>{profile?.email?.split('@')[0] || 'Korisnik'}</h3>
+        <h3 title={profile?.email}>{profile?.email?.split('@')[0] || 'User'}</h3>
         <span className="role-badge">{profile?.role}</span>
       </div>
 

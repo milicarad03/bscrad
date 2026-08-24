@@ -63,6 +63,7 @@ export const apiClient = async <T>(
       method,
       headers,
       body: requestBody,
+      signal,
     });
   } catch (err: any) {
     // ISPRAVKA: AbortError se ne tretira kao mrezna greska - to je

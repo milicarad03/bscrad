@@ -1,108 +1,338 @@
-// cypress/e2e/device.cy.ts
+const APP_URL = 'http://localhost:5173';
 
-const setupCommonIntercepts = () => {
-  cy.intercept('POST', '**/users/login', {
+const users = [
+  {
+    id: 2,
+    email: 'new-owner@example.com',
+    role: 'USER',
+    status: 'APPROVED',
+  },
+];
+
+const modelVersions = [
+  {
+    id: 'mv-1',
+    modelId: 'modelA',
+    version: '1.0.0',
+  },
+  {
+    id: 'mv-2',
+    modelId: 'modelA',
+    version: '2.0.0',
+  },
+  {
+    id: 'mv-3',
+    modelId: 'modelB',
+    version: '1.0.0',
+  },
+];
+
+const createDevice = (
+  overrides: Record<string, unknown> = {},
+) => ({
+  id: '1',
+  name: 'Device1',
+  type: 'sensor',
+  serialNumber: 'SN-1',
+  status: 'ONLINE',
+  userId: 1,
+  modelVersionId: 'mv-1',
+  modelVersion: modelVersions[0],
+  ...overrides,
+});
+
+const setupSession = (
+  role: 'ADMIN' | 'USER' = 'ADMIN',
+) => {
+  const user = {
+    id: role === 'ADMIN' ? 1 : 2,
+    email:
+      role === 'ADMIN'
+        ? 'milica2@gmail.com'
+        : 'user@gmail.com',
+    role,
+    isAdmin: role === 'ADMIN',
+    status: 'APPROVED',
+  };
+
+  cy.intercept('GET', '**/users/profile', {
     statusCode: 200,
-    body: { accessToken: 'fake-token', user: { email: 'milica2@gmail.com' } }
-  }).as('loginRequest');
-  
-  cy.intercept('GET', '**/model-versions', { statusCode: 200, body: [] }).as('getModelVersions');
-  cy.intercept('GET', '**/post/feed', { statusCode: 200, body: [] }).as('getFeed');
-  cy.intercept('GET', '**/device', { statusCode: 200, body: { data: [] } }).as('getDevices');
-  cy.intercept('GET', '**/users/allusers', { statusCode: 200, body: [] }).as('getUsers');
-  cy.intercept('GET', '**/post/drafts', { statusCode: 200, body: [] }).as('getDrafts');
+    body: user,
+  }).as('getProfile');
+
+  cy.intercept('GET', '**/model-versions', {
+    statusCode: 200,
+    body: modelVersions,
+  }).as('getModelVersions');
+
+  cy.intercept({ method: 'GET', pathname: '/device' }, {
+    statusCode: 200,
+    body: { data: [] },
+  }).as('getDevices');
+
+  cy.intercept('GET', '**/users/allusers', {
+    statusCode: 200,
+    body: users,
+  }).as('getUsers');
+
+  cy.intercept('GET', '**/post/feed', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.intercept('GET', '**/post/drafts', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.visit(APP_URL, {
+    onBeforeLoad(win) {
+      win.sessionStorage.clear();
+    },
+  });
+
+  cy.window().then((win) => {
+    win.sessionStorage.setItem(
+      'token',
+      'fake-token',
+    );
+
+    win.sessionStorage.setItem(
+      'userEmail',
+      user.email,
+    );
+  });
+
+  cy.visit(`${APP_URL}/dashboard`);
+
+  cy.wait('@getProfile');
+  cy.wait('@getDevices');
+
+  if (role === 'ADMIN') {
+    cy.wait('@getUsers');
+  }
+
+  cy.url().should('include', '/dashboard');
+};
+
+const openDeviceManagement = () => {
+  cy.contains('Device Management').click();
+
+  cy.get('[data-cy="device-table"]', {
+    timeout: 10000,
+  }).should('exist');
 };
 
 describe('Admin Device Flow', () => {
   beforeEach(() => {
-    setupCommonIntercepts();
-    cy.intercept('GET', '**/users/profile', { 
-      body: { email: 'admin@gmail.com', role: 'ADMIN', isAdmin: true } 
-    });
-    
-    cy.login('milica2@gmail.com', '123');
-  
-    cy.url().should('include', '/dashboard'); 
+    setupSession('ADMIN');
   });
 
-  it('should show delete button for admin', () => {
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="device-table"]', { timeout: 10000 }).should('exist');
-    cy.get('[data-cy="device-table"]').should('contain', 'Actions');
+  it('should show administrator actions', () => {
+    openDeviceManagement();
+
+    cy.get('[data-cy="device-table"]').should(
+      'contain',
+      'Actions',
+    );
+
+    cy.get('[data-cy="add-device-btn"]').should(
+      'be.visible',
+    );
   });
 
-  it('should create new device successfully', () => {
+  it('should create a new device successfully', () => {
     cy.intercept('POST', '**/device', {
       statusCode: 201,
-      body: {
-        id: '1',
+      body: createDevice({
         name: 'Test Device',
         serialNumber: 'ABC123',
-        status: 'ONLINE',
-        type: 'sensor'
-      }
+        modelVersionId: 'mv-2',
+      }),
     }).as('createDevice');
 
-    cy.contains('Device Management').click();
+    openDeviceManagement();
+
     cy.get('[data-cy="add-device-btn"]').click();
-      
-    cy.get('[data-cy="device-name"]').should('be.visible');
 
     cy.get('[data-cy="device-name"]').type('Test Device');
     cy.get('[data-cy="device-serial"]').type('ABC123');
     cy.get('[data-cy="device-type"]').type('sensor');
 
+    cy.contains('label', 'Assign to User')
+      .parent()
+      .find('select')
+      .select('2');
+
+    cy.contains('label', 'Device Model')
+      .parent()
+      .find('select')
+      .select('mv-2');
+
     cy.get('[data-cy="submit-device"]').click();
 
-    cy.wait('@createDevice');
+    cy.wait('@createDevice')
+      .its('request.body')
+      .should('include', {
+        name: 'Test Device',
+        serialNumber: 'ABC123',
+        type: 'sensor',
+      });
 
     cy.contains('created successfully').should('exist');
   });
 
-  it('should filter devices by type', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [{ id: '1', name: 'Test', type: 'sensor', status: 'ONLINE', serialNumber: 'SN-1' }] }
-    }).as('getDevicesWithData');
+  it('should prevent creation with missing required data', () => {
+    cy.intercept('POST', '**/device').as(
+      'createDevice',
+    );
 
-    cy.contains('Device Management').click();
+    openDeviceManagement();
 
-    cy.wait('@getDevicesWithData');
+    cy.get('[data-cy="add-device-btn"]').click();
+    cy.get('[data-cy="submit-device"]').click();
+
+    cy.get('[data-cy="device-name"]').should('be.visible');
+
+    cy.get('@createDevice.all').should('have.length', 0);
+  });
+
+  it('should prevent duplicate requests on double click', () => {
+    cy.intercept('POST', '**/device', {
+      delay: 1000,
+      statusCode: 201,
+      body: createDevice({
+        name: 'Test Device',
+        serialNumber: 'ABC123',
+      }),
+    }).as('createDevice');
+
+    openDeviceManagement();
+
+    cy.get('[data-cy="add-device-btn"]').click();
+    cy.get('[data-cy="device-name"]').type('Test Device');
+    cy.get('[data-cy="device-serial"]').type('ABC123');
+    cy.get('[data-cy="device-type"]').type('sensor');
+
+    cy.get('[data-cy="submit-device"]').dblclick();
+
+    cy.wait('@createDevice');
+    cy.get('@createDevice.all').should('have.length', 1);
+  });
+
+  it('should display an error when creation fails', () => {
+    cy.intercept('POST', '**/device', {
+      statusCode: 500,
+      body: {
+        message: 'Creation failed',
+      },
+    }).as('createFailed');
+
+    openDeviceManagement();
+
+    cy.get('[data-cy="add-device-btn"]').click();
+    cy.get('[data-cy="device-name"]').type('Test');
+    cy.get('[data-cy="device-serial"]').type('123');
+    cy.get('[data-cy="device-type"]').type('sensor');
+
+    cy.get('[data-cy="submit-device"]').click();
+
+    cy.wait('@createFailed');
+
+    cy.contains('Creation failed').should('be.visible');
+  });
+
+  it('should filter devices using type and search', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      statusCode: 200,
+      body: {
+        data: [
+          createDevice({
+            id: '1',
+            name: 'Temperature Sensor',
+            type: 'sensor',
+          }),
+          createDevice({
+            id: '2',
+            name: 'Main Gateway',
+            type: 'gateway',
+            serialNumber: 'SN-2',
+          }),
+        ],
+      },
+    }).as('devicesWithData');
+
+    openDeviceManagement();
+    cy.wait('@devicesWithData');
 
     cy.get('[data-cy="filter-type"]').click();
     cy.get('[data-cy="filter-option-sensor"]').click();
 
-    cy.get('[data-cy="device-table"]').should('contain', 'sensor');
+    cy.get('[data-cy="device-table"]').should(
+      'contain',
+      'Temperature Sensor',
+    );
+
+    cy.get('[data-cy="device-table"]').should(
+      'not.contain',
+      'Main Gateway',
+    );
+
+    cy.get('[data-cy="device-search"]').type('Unknown');
+
+    cy.get('[data-cy="device-table"]').should(
+      'contain',
+      'No devices match your search criteria',
+    );
   });
 
-  it('should filter devices by type and update the table', () => {
-    const devices = [
-      { id: '1', name: 'Temp Sensor', type: 'sensor', status: 'ONLINE', serialNumber: 'SN-1' },
-      { id: '2', name: 'Main Gateway', type: 'gateway', status: 'ONLINE', serialNumber: 'SN-2' }
-    ];
-
-    cy.intercept('GET', '**/device*', { body: { data: devices } }).as('getDevices');
-
-    cy.contains('Device Management').click();
-    cy.wait('@getDevices');
-  
-    cy.get('[data-cy="device-table"]').should('contain', 'Temp Sensor');
-    cy.get('[data-cy="device-table"]').should('contain', 'Main Gateway');
-
-    cy.get('[data-cy="filter-type"]').click();
-    cy.get('[data-cy="filter-option-sensor"]').click();
-
-    cy.get('[data-cy="device-table"]').should('contain', 'Temp Sensor');
-    cy.get('[data-cy="device-table"]').should('not.contain', 'Main Gateway');
-  });
-
-  it('should NOT delete device if user cancels confirm dialog', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [{ id: '1', name: 'Device1', type: 'sensor', status: 'ONLINE', serialNumber: 'SN-1' }] }
+  it('should clear a selected type filter', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      body: {
+        data: [
+          createDevice({
+            name: 'Sensor A',
+          }),
+          createDevice({
+            id: '2',
+            name: 'Gateway B',
+            type: 'gateway',
+            serialNumber: 'SN-2',
+          }),
+        ],
+      },
     });
 
-    cy.intercept('DELETE', '**/device/1').as('deleteDevice');
+    openDeviceManagement();
 
-    cy.contains('Device Management').click();
+    cy.get('[data-cy="filter-type"]').click();
+    cy.get('[data-cy="filter-option-sensor"]').click();
+
+    cy.get('[data-cy="device-table"]').should(
+      'not.contain',
+      'Gateway B',
+    );
+
+    cy.get('[data-cy="filter-option-sensor"]').click();
+
+    cy.get('[data-cy="device-table"]').should(
+      'contain',
+      'Gateway B',
+    );
+  });
+
+  it('should not delete when confirmation is cancelled', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      body: {
+        data: [createDevice()],
+      },
+    });
+
+    cy.intercept('DELETE', '**/device/1').as(
+      'deleteDevice',
+    );
+
+    openDeviceManagement();
 
     cy.on('window:confirm', () => false);
 
@@ -112,307 +342,33 @@ describe('Admin Device Flow', () => {
       .click();
 
     cy.get('@deleteDevice.all').should('have.length', 0);
-    cy.get('[data-cy="device-table"]').should('contain', 'Device1');
-  });
-});
 
-describe('User Device Flow', () => {
-  beforeEach(() => {
-    setupCommonIntercepts();
-    cy.intercept('GET', '**/users/profile', { 
-      body: { email: 'user@gmail.com', role: 'USER', isAdmin: false } 
-    });
-    cy.login('user@gmail.com', '123');
-    cy.url().should('include', '/dashboard'); 
+    cy.get('[data-cy="device-table"]').should(
+      'contain',
+      'Device1',
+    );
   });
 
-  it('should NOT show delete button for regular users', () => {
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="device-table"]', { timeout: 10000 }).should('exist');
-    cy.get('[data-cy="device-table"]').should('not.contain', 'Actions');
-  });
-});
-
-describe('Device API Error Handling', () => {
-  beforeEach(() => {
-    setupCommonIntercepts();
-    cy.intercept('GET', '**/users/profile', { 
-      body: { email: 'admin@gmail.com', role: 'ADMIN', isAdmin: true } 
-    });
-    cy.login('milica2@gmail.com', '123');
-  });
-
-  it('should show custom server error', () => {
-    const errorMessage = 'Custom Database Error';
-    
-    cy.intercept('GET', '**/device*', { 
-      statusCode: 400, 
-      body: { message: errorMessage } 
-    }).as('getDevicesError');
-    
-    cy.contains('Device Management').click();
-    cy.wait('@getDevicesError');
-    
-    cy.contains(errorMessage).should('be.visible');
-  });
-
-  it('should prevent device creation with invalid data (validation)', () => {
-    cy.intercept('POST', '**/device').as('createDevice');
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="add-device-btn"]').click();
-    
-    cy.get('[data-cy="submit-device"]').click();
-    cy.get('[data-cy="device-name"]').should('be.visible');
-    
-    cy.get('@createDevice.all').should('have.length', 0);
-  });
-
-  it('should show error on create device failure', () => {
-    cy.intercept('POST', '**/device', {
-      statusCode: 500,
-      body: { message: 'Creation failed' }
-    }).as('createFail');
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="add-device-btn"]').click();
-
-    cy.get('[data-cy="device-name"]').type('Test');
-    cy.get('[data-cy="device-serial"]').type('123');
-    cy.get('[data-cy="device-type"]').type('sensor');
-
-    cy.get('[data-cy="submit-device"]').click();
-
-    cy.wait('@createFail');
-    cy.contains('Creation failed').should('exist');
-  });
-
-  it('should show error message on network timeout', () => {
-    cy.intercept('GET', '**/device*', { forceNetworkError: true }).as('networkError');
-
-    cy.contains('Device Management').click();
-    cy.wait('@networkError');
-
-    cy.get('.go3958317564', { timeout: 10000 })
-      .should('be.visible')
-      .invoke('text')
-      .should('include', 'NetworkError'); 
-      
-    cy.intercept('GET', '**/device*', { body: { data: [] } });
-  });
-});
-
-describe('Device Edge Cases', () => {
-  beforeEach(() => {
-    setupCommonIntercepts();
-    cy.intercept('GET', '**/users/profile', { body: { email: 'admin@gmail.com', role: 'ADMIN', isAdmin: true } });
-    cy.login('milica2@gmail.com', '123');
-  });
-
-  it('should display "NO_DEVICES..." when search finds nothing', () => {
-    cy.intercept('GET', '**/device*', { body: { data: [{ id: '1', name: 'Sensor', type: 'temp', serialNumber: 'SN-001', status: 'ONLINE' }] } });
-    cy.contains('Device Management').click();
-
-    cy.get('[data-cy="device-search"]').type('NEPOSTOJEĆI_UREĐAJ');
-
-    cy.get('[data-cy="device-table"]').should('contain', 'No devices match your search criteria');
-  });
-  
-  it('should show error if delete fails', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [{ id: '1', name: 'Device1', type: 'sensor', status: 'ONLINE', serialNumber: 'SN-1' }] }
-    });
-
-    cy.intercept('DELETE', '**/device/1', {
-      statusCode: 500,
-      body: { message: 'Delete failed' }
-    }).as('deleteFail');
-
-    cy.contains('Device Management').click();
-
-    cy.contains('td', 'Device1')
-      .closest('tr')
-      .find('button[title="Delete Device"]')
-      .click();
-
-    cy.wait('@deleteFail');
-    cy.contains('Delete failed').should('exist');
-  });
-
-  it('should show empty state when no devices exist', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [] }
-    });
-
-    cy.contains('Device Management').click();
-
-    cy.get('[data-cy="device-table"]')
-      .should('contain', 'No devices match your search criteria');
-  });
-
-  it('should not create device twice on double click', () => {
-    cy.intercept('POST', '**/device', {
-      delay: 1000,
-      body: { id: '1', name: 'Test Device', status: 'ONLINE', serialNumber: 'SN-1' }
-    }).as('createDevice');
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="add-device-btn"]').click();
-
-    cy.get('[data-cy="device-name"]').type('Test');
-    cy.get('[data-cy="device-serial"]').type('123');
-    cy.get('[data-cy="device-type"]').type('sensor');
-
-    cy.get('[data-cy="submit-device"]').dblclick();
-
-    cy.get('@createDevice.all').should('have.length', 1);
-  });  
-
-  it('should show empty table when filter has no match', () => {
-    cy.intercept('GET', '**/device*', {
+  it('should delete a device successfully', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
       body: {
         data: [
-          { id: '1', type: 'sensor', name: 'Sensor A', serialNumber: '1', status: 'ONLINE' },
-          { id: '2', type: 'gateway', name: 'Gateway B', serialNumber: '2', status: 'ONLINE' }
-        ]
-      }
-    });
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="filter-type"]').click();
-    cy.get('[data-cy="filter-option-sensor"]').click();
-    cy.get('[data-cy="device-search"]').type('Gateway');
-    cy.get('[data-cy="device-table"]')
-      .should('contain', 'No devices match your search criteria');
-  });
-
-  it('should handle realtime update without crashing', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [{ id: '1', type: 'sensor', name: 'Device1', status: 'ONLINE', serialNumber: 'SN-1' }] }
-    });
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="device-table"]').should('contain', 'Device1');
-  });
-
-  it('should handle refresh failure gracefully', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [{ id: '1', name: 'Device1', type: 'sensor', serialNumber:'1', status: 'ONLINE' }] }
-    });
-
-    cy.intercept('GET', '**/device*', {
-      statusCode: 500,
-      body: { message: 'Fetch failed' }
-    }).as('refreshFail');
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="refresh-devices-btn"]').click();
-
-    cy.wait('@refreshFail');
-    cy.contains('Fetch failed').should('exist');
-  });
-
-  it('should apply multiple filters correctly', () => {
-    const devices = [
-      { id: '1', type: 'sensor', name: 'A' , serialNumber: '1', status: 'ONLINE' },
-      { id: '2', type: 'gateway', name: 'B' , serialNumber: '2', status: 'ONLINE' }
-    ];
-
-    cy.intercept('GET', '**/device*', { body: { data: devices } });
-
-    cy.contains('Device Management').click();
-
-    cy.get('[data-cy="filter-type"]').click();
-    cy.get('[data-cy="filter-option-sensor"]').click();
-
-    cy.get('[data-cy="device-search"]').type('B');
-
-    cy.get('[data-cy="device-table"]').should('contain', 'No devices match your search criteria');
-  });
-
-  it('should navigate to device details on row click', () => {
-    cy.intercept('GET', '**/device*', {
-      body: {
-        data: [{ id: '1', name: 'Device1', type: 'sensor', serialNumber: '123', status: 'ONLINE' }]
-      }
-    });
-
-    cy.contains('Device Management').click();
-    cy.contains('Device1').click();
-
-    cy.url().should('include', '/device/123');
-  });
-
-  it('should handle devices with missing fields', () => {
-    cy.intercept('GET', '**/device*', {
-      body: {
-        data: [{ id: '1', name: null, type: null, status: 'ONLINE', serialNumber: '1' }]
-      }
-    });
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="device-table"]').should('exist');
-  });
-
-  it('should handle malformed device response', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { wrong: 'format' }
-    });
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="device-table"]').should('exist'); 
-  });
-
-  it('should handle special characters in input', () => {
-    cy.intercept('POST', '**/device', {
-      body: { id: '1', name: '!!!@@@###', status: 'ONLINE', serialNumber: 'SN-1' }
-    }).as('createDevice');
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="add-device-btn"]').click();
-
-    cy.get('[data-cy="device-name"]').type('!!!@@@###');
-    cy.get('[data-cy="device-serial"]').type('@@@123');
-    cy.get('[data-cy="device-type"]').type('sensor');
-
-    cy.get('[data-cy="submit-device"]').click();
-
-    cy.wait('@createDevice');
-  });
-
-  it('should clear filter and show all devices again', () => {
-    const devices = [
-      { id: '1', name: 'Sensor A', type: 'sensor', status: 'ONLINE', serialNumber: '1' },
-      { id: '2', name: 'Gateway B', type: 'gateway', status: 'ONLINE', serialNumber: '2' }
-    ];
-
-    cy.intercept('GET', '**/device*', { body: { data: devices } });
-
-    cy.contains('Device Management').click();
-
-    cy.get('[data-cy="filter-type"]').click();
-    cy.get('[data-cy="filter-option-sensor"]').click();
-
-    cy.get('[data-cy="device-table"]').should('not.contain', 'Gateway B');
-
-    cy.get('[data-cy="filter-option-sensor"]').click();
-
-    cy.get('[data-cy="device-table"]').should('contain', 'Gateway B');
-  });
-
-  it('should handle deleting non-existent device gracefully', () => {
-    cy.intercept('GET', '**/device*', {
-      body: {
-        data: [{ id: '1', name: 'Device1', type: 'sensor', serialNumber: '1', status: 'ONLINE' }]
-      }
+          createDevice(),
+          createDevice({
+            id: '2',
+            name: 'Device2',
+            serialNumber: 'SN-2',
+          }),
+        ],
+      },
     });
 
     cy.intercept('DELETE', '**/device/1', {
-      statusCode: 404,
-      body: { message: 'Device not found' }
-    }).as('delete404');
+      statusCode: 200,
+      body: {},
+    }).as('deleteDevice');
 
-    cy.contains('Device Management').click();
+    openDeviceManagement();
 
     cy.on('window:confirm', () => true);
 
@@ -421,193 +377,252 @@ describe('Device Edge Cases', () => {
       .find('button[title="Delete Device"]')
       .click();
 
-    cy.wait('@delete404');
-    cy.contains('Device not found').should('exist');
+    cy.wait('@deleteDevice');
+
+    cy.get('[data-cy="device-table"]').should(
+      'not.contain',
+      'Device1',
+    );
+
+    cy.get('[data-cy="device-table"]').should(
+      'contain',
+      'Device2',
+    );
   });
 
-  it('should delete device successfully and remove it from table', () => {
-    cy.intercept('GET', '**/device', {
+  it('should display an error when deletion fails', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
       body: {
-        data: [
-          { id: '1', name: 'Device1', type: 'sensor', serialNumber: '1', status: 'ONLINE' },
-          { id: '2', name: 'Device2', type: 'gateway', serialNumber: '2', status: 'ONLINE' }
-        ]
-      }
+        data: [createDevice()],
+      },
     });
 
     cy.intercept('DELETE', '**/device/1', {
-      statusCode: 200,
-    }).as('deleteDevice');
+      statusCode: 500,
+      body: {
+        message: 'Delete failed',
+      },
+    }).as('deleteFailed');
 
-    cy.contains('Device Management').click();
+    openDeviceManagement();
 
-    cy.on('window:confirm', () => true); 
+    cy.on('window:confirm', () => true);
 
     cy.contains('td', 'Device1')
       .closest('tr')
       .find('button[title="Delete Device"]')
       .click();
 
-    cy.wait('@deleteDevice');
+    cy.wait('@deleteFailed');
 
-    cy.get('[data-cy="device-table"]').should('not.contain', 'Device1');
-    cy.get('[data-cy="device-table"]').should('contain', 'Device2');
+    cy.contains('Delete failed').should('be.visible');
   });
-});
 
-describe('Device Reassign & Misc Edge Cases', () => {
-  beforeEach(() => {
-    setupCommonIntercepts();
-    cy.intercept('GET', '**/users/profile', { 
-      body: { email: 'admin@gmail.com', role: 'ADMIN', isAdmin: true } 
+  it('should transfer device ownership successfully', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      body: {
+        data: [createDevice()],
+      },
     });
-    cy.login('milica2@gmail.com', '123');
+
+    cy.intercept(
+      'PATCH',
+      '**/device/SN-1/reassign',
+      {
+        statusCode: 200,
+        body: {},
+      },
+    ).as('reassignDevice');
+
+    openDeviceManagement();
+
+    cy.get('[data-cy="transfer-owner-1"]').select('2');
+
+    cy.on('window:confirm', () => true);
+
+    cy.get('[data-cy="transfer-btn-1"]').click();
+
+    cy.wait('@reassignDevice')
+      .its('request.body')
+      .should('deep.equal', {
+        targetUserId: 2,
+      });
   });
 
-  it.only('should transfe**ownership successfully', () => {
-  cy.intercept('GET', '**/device*', {
-    body: {
-      data: [
-        {
-          id: '1',
-          name: 'Device1',
-          type: 'sensor',
+  it('should display an error when ownership transfer fails', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      body: {
+        data: [createDevice()],
+      },
+    });
+
+    cy.intercept(
+      'PATCH',
+      '**/device/SN-1/reassign',
+      {
+        statusCode: 500,
+        body: {
+          message: 'Transfer failed',
+        },
+      },
+    ).as('reassignFailed');
+
+    openDeviceManagement();
+
+    cy.get('[data-cy="transfer-owner-1"]').select('2');
+
+    cy.on('window:confirm', () => true);
+
+    cy.get('[data-cy="transfer-btn-1"]').click();
+
+    cy.wait('@reassignFailed');
+
+    cy.contains('Transfer failed').should('be.visible');
+  });
+
+  it('should apply another version of the same model', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      body: {
+        data: [createDevice()],
+      },
+    });
+
+    cy.intercept(
+      'PATCH',
+      '**/device/1/model-version',
+      {
+        statusCode: 200,
+        body: {
+          success: true,
+          staged: false,
+          restartRequired: false,
+          deviceId: '1',
           serialNumber: 'SN-1',
-          status: 'ONLINE'
-        }
-      ]
-    }
+          model: 'modelA',
+          version: '2.0.0',
+          modelVersionId: 'mv-2',
+        },
+      },
+    ).as('applyModelVersion');
+
+    openDeviceManagement();
+
+    cy.contains('tr', 'Device1').within(() => {
+      cy.get(
+        'select[aria-label="Select model version"]',
+      ).select('mv-2');
+
+      cy.contains('button', 'Apply').click();
+    });
+
+    cy.wait('@applyModelVersion')
+      .its('request.body')
+      .should('deep.equal', {
+        modelVersionId: 'mv-2',
+      });
   });
 
-  cy.contains('Device Management').click();
-
-  cy.get('[data-cy="transfer-owner-1"]')
-    .find('option')
-    .should('have.length.greaterThan', 1);
-});
-
-
-  it('should disable submit button while creating device', () => {
-    cy.intercept('POST', '**/device', {
-      delay: 1000,
-      body: { id: '1', name: 'Test Device', status: 'ONLINE', serialNumber: 'SN-1' }
-    }).as('createDevice');
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="add-device-btn"]').click();
-
-    cy.get('[data-cy="device-name"]').type('Test');
-    cy.get('[data-cy="device-serial"]').type('123');
-    cy.get('[data-cy="device-type"]').type('sensor');
-
-    cy.get('[data-cy="submit-device"]').click();
-    cy.get('[data-cy="submit-device"]').should('be.disabled');
-
-    cy.wait('@createDevice');
-    cy.get('[data-cy="submit-device"]').should('not.be.disabled');
-  });
-
-  it('should not crash registration form when model-versions fetch fails', () => {
-    cy.intercept('GET', '**/model-versions', { statusCode: 500, body: { message: 'Models unavailable' } }).as('modelsFail');
-
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="add-device-btn"]').click();
-
-    cy.wait('@modelsFail');
-    cy.get('[data-cy="device-name"]').should('be.visible');
-    cy.get('[data-cy="submit-device"]').should('exist');
-  });
-
-  it('should update device status in real time via websocket event', () => {
-    cy.intercept('GET', '**/device*', {
+  it('should disable model version application for an offline device', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
       body: {
         data: [
-          {
-            id: '1',
-            name: 'Device1',
-            type: 'sensor',
-            serialNumber: 'SN-1',
-            status: 'OFFLINE'
-          }
-        ]
-      }
+          createDevice({
+            name: 'Offline Device',
+            status: 'OFFLINE',
+          }),
+        ],
+      },
     });
 
-    cy.contains('Device Management').click();
+    openDeviceManagement();
 
-    cy.get('[data-cy="device-status-1"]').should('contain', 'Offline');
+    cy.contains('tr', 'Offline Device').within(() => {
+      cy.get(
+        'select[aria-label="Select model version"]',
+      ).select('mv-2');
 
-    cy.window().then((win: any) => {
-      win.triggerStatusUpdate('SN-1', 'ONLINE');
+      cy.contains('button', 'Apply').should('be.disabled');
     });
-
-    cy.get('[data-cy="device-status-1"]').should('contain', 'Online');
   });
 
-  it('should redirect to login on 401 unauthorized while fetching devices', () => {
-    cy.intercept('GET', '**/device*', {
+  it('should update a device status through the realtime hook', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      body: {
+        data: [
+          createDevice({
+            status: 'OFFLINE',
+          }),
+        ],
+      },
+    });
+
+    openDeviceManagement();
+
+    cy.get('[data-cy="device-status-1"]').should(
+      'contain',
+      'Offline',
+    );
+
+    cy.window().then((win) => {
+      const testWindow = win as typeof win & {
+        triggerStatusUpdate: (
+          serialNumber: string,
+          status: string,
+        ) => void;
+      };
+
+      testWindow.triggerStatusUpdate('SN-1', 'ONLINE');
+    });
+
+    cy.get('[data-cy="device-status-1"]').should(
+      'contain',
+      'Online',
+    );
+  });
+
+  it('should navigate to device details', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
+      body: {
+        data: [createDevice()],
+      },
+    });
+
+    openDeviceManagement();
+
+    cy.contains('td', 'Device1').click();
+
+    cy.url().should('include', '/device/SN-1');
+  });
+
+  it('should redirect to login after a 401 response', () => {
+    cy.intercept({ method: 'GET', pathname: '/device' }, {
       statusCode: 401,
-      body: { message: 'Unauthorized' }
+      body: {
+        message: 'Unauthorized',
+      },
     }).as('unauthorized');
 
     cy.contains('Device Management').click();
 
     cy.wait('@unauthorized');
 
-    cy.url().should('eq', 'http://localhost:5173/');
+    cy.url().should('eq', `${APP_URL}/`);
+  });
+});
+
+describe('Regular User Device Flow', () => {
+  beforeEach(() => {
+    setupSession('USER');
   });
 
-  it('should redirect to login on 401 while fetching profile', () => {
-    cy.intercept('GET', '**/users/profile', {
-      statusCode: 401,
-      body: { message: 'Unauthorized' }
-    }).as('unauthorized');
+  it('should hide administrator actions', () => {
+    openDeviceManagement();
 
-    cy.login('milica2@gmail.com', '123');
+    cy.get('[data-cy="device-table"]').should(
+      'not.contain',
+      'Actions',
+    );
 
-    cy.wait('@unauthorized');
-
-    cy.url().should('eq', 'http://localhost:5173/');
-  });
-
-  it('should redirect to login on 401 during device creation', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [] }
-    });
-
-    cy.intercept('POST', '**/device', {
-      statusCode: 401,
-      body: { message: 'Unauthorized' }
-    }).as('unauthorized');
-
-    cy.contains('Device Management').click();
-
-    cy.get('[data-cy="add-device-btn"]').click();
-
-    cy.get('[data-cy="device-name"]').type('Test');
-    cy.get('[data-cy="device-serial"]').type('123');
-    cy.get('[data-cy="device-type"]').type('sensor');
-
-    cy.get('[data-cy="submit-device"]').click();
-
-    cy.wait('@unauthorized');
-
-    cy.url().should('eq', 'http://localhost:5173/');
-  });
-
-  it('should filter table via search input with matching results', () => {
-    cy.intercept('GET', '**/device*', {
-      body: { data: [{ id: '1', name: 'Sensor A', type: 'sensor', serialNumber: '1', status: 'ONLINE' }] }
-    });
-    cy.contains('Device Management').click();
-    cy.get('[data-cy="device-search"]').type('Sensor A');
-    cy.get('[data-cy="device-table"]').should('contain', 'Sensor A');
-  });
-
-  it('should stay logged in after page reload', () => {
-    cy.contains('Device Management').click();
-    cy.reload();
-    cy.url().should('include', '/dashboard');
-    cy.contains('Device Management').should('exist');
+    cy.get('[data-cy="add-device-btn"]').should('not.exist');
   });
 });

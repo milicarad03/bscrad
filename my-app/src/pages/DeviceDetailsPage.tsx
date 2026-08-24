@@ -6,10 +6,11 @@ import { useDevice } from '../hooks/useDevice';
 import { toast } from 'react-hot-toast';
 import '../styles/layouts/deviceDetailsPage.css';
 import { transformTelemetryForCharts } from '../utils/telemetryTransformer';
-import { DynamicDeviceDashboard, type DashboardConfig } from 'device-dashboard-ui-plugin';
+import { DynamicDeviceDashboard } from 'device-dashboard-ui-plugin';
 import { useDevicesStatuses } from '../hooks/useDeviceStatus';
 import { registerDashboardRenderer } from 'device-dashboard-ui-plugin/registry';
 import { OilGaugeRenderer } from '../components/CustomRenderers/OilGaugeRenderer';
+import { ArrowLeft, Wifi, WifiOff } from 'lucide-react';
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -95,8 +96,35 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
 
       <main className="dashboard-content">
         <header className="dd-header">
-          <button className="dd-back" onClick={() => navigate('/dashboard?tab=devices')}>RETURN_TO_SYSTEM_REGISTRY</button>
-          <h1 className="dd-title">SYSTEM_NODE: <span className="highlight">{id}</span></h1>
+          <button className="dd-back" onClick={() => navigate('/dashboard?tab=devices')}>
+            <ArrowLeft size={15} aria-hidden="true" />
+            All devices
+          </button>
+
+          <div className="dd-heading-row">
+            <div className="dd-heading-copy">
+              <span className="dd-eyebrow">Device details</span>
+              <h1 className="dd-title">
+                <span className="highlight">{currentDevice.name || id}</span>
+              </h1>
+              <div className="dd-device-meta">
+                <span>{currentDevice.serialNumber}</span>
+                <span className="dd-device-meta-separator" aria-hidden="true">/</span>
+                <span>{currentDevice.modelVersion?.modelId || currentDevice.type}</span>
+                {currentDevice.modelVersion?.version && (
+                  <>
+                    <span className="dd-device-meta-separator" aria-hidden="true">/</span>
+                    <span>v{currentDevice.modelVersion.version}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <span className={`dd-connection ${isDeviceConnected ? 'dd-connection--online' : 'dd-connection--offline'}`}>
+              {isDeviceConnected ? <Wifi size={14} aria-hidden="true" /> : <WifiOff size={14} aria-hidden="true" />}
+              {isDeviceConnected ? 'Online' : 'Offline'}
+            </span>
+          </div>
         </header>
         {dashboardConfig && (
           <DynamicDeviceDashboard
@@ -107,6 +135,10 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             onCommand={dashboardCommandHandler}
             disabled={!isDeviceConnected}
             schema={currentDevice?.modelVersion?.schema}
+            availableBindings={Object.keys(
+              currentDevice?.modelVersion?.mapping?.fields ?? {},
+            )}
+            stylePreset="dark"
           />
         )}
       </main>
