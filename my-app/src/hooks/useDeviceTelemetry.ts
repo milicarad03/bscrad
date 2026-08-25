@@ -69,6 +69,9 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
     logger.debug(`[WS] Initializing real-time stream pipeline container towards: ${WS_BASE_URL}`);
 
     const socket: Socket = io(WS_BASE_URL, {
+      auth: {
+        token: token, // <--- OVO JE NEDOSTAJALO! Prosleđujemo token iz parametara hook-a
+      },
       withCredentials: true,
 
       reconnection: true,

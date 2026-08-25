@@ -20,28 +20,45 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const isDeviceConnected = currentDevice?.status === 'ONLINE';
   const historicalData = latestTelemetry?.data ? transformTelemetryForCharts(latestTelemetry.data) : [];
   const dashboardConfig = currentDevice?.modelVersion?.mapping?.dashboard;
+  
   registerDashboardRenderer('oil-gauge', new OilGaugeRenderer());
 
 
-  const pluginTelemetry = Object.entries(latestTelemetry?.data ?? {}).reduce<Record<string, unknown>>(
-    (result, [field, values]) => {
-      if (!Array.isArray(values) || values.length === 0) {
+const pluginTelemetry = {
+    // 1. Povuci sve atribute direktno iz baze (ako postoje tu)
+    ...(currentDevice?.attributes ?? {}),
+    
+    // 2. Osiguraj ključne fallback vrednosti
+    serialNumber: currentDevice?.serialNumber || currentDevice?.attributes?.serialNumber,
+    firmware: currentDevice?.modelVersion?.version || currentDevice?.attributes?.firmware,
+
+    // 3. Raspakuj telemetriju iz merenja i statusa preko mapera
+    ...Object.entries(latestTelemetry?.data ?? {}).reduce<Record<string, unknown>>(
+      (result, [field, values]) => {
+        if (!Array.isArray(values) || values.length === 0) {
+          if (values !== undefined && values !== null) {
+            result[field] = values;
+          }
+          return result;
+        }
+
+        const last = values[values.length - 1];
+
+        if (Array.isArray(last) && last.length >= 2) {
+          const [elem0, elem1] = last;
+          const isElem0Timestamp = typeof elem0 === 'number' && elem0 > 1000000000;
+          result[field] = isElem0Timestamp ? elem1 : elem0;
+        } else if (last && typeof last === 'object' && 'value' in last) {
+          result[field] = (last as any).value;
+        } else {
+          result[field] = last;
+        }
+
         return result;
-      }
-
-      const last = values[values.length - 1];
-
-      if (!Array.isArray(last)) {
-        return result;
-      }
-
-      result[field] = last[0];
-
-      return result;
-    },
-    {},
-  );
-
+      },
+      {},
+    ),
+  };
   const dashboardCommandHandler = async (
     command: string,
     payload: Record<string, unknown>,

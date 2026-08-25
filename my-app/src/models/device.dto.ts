@@ -16,6 +16,12 @@ export interface DeviceDTO {
 
   lastseen: string; 
   status: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED';
+  attributes?: {
+    serialNumber?: string;
+    firmware?: string;
+    hardwareModel?: string;
+    [key: string]: any; // Za sve buduće dinamičke atribute
+  } | null;
   
   modelVersion?: {
     id: string;

@@ -33,6 +33,9 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
     console.count('STATUS_SOCKET_CREATED');
 
     const socket: Socket = io(WS_BASE_URL, {
+      auth: {
+        token: sessionStorage.getItem('token'), // <--- OVO FALI (proveri da li se u localStorage-u ključ zove 'token' ili drugačije)
+      },
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
