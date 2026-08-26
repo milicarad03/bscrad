@@ -20,18 +20,11 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const isDeviceConnected = currentDevice?.status === 'ONLINE';
   const historicalData = latestTelemetry?.data ? transformTelemetryForCharts(latestTelemetry.data) : [];
   const dashboardConfig = currentDevice?.modelVersion?.mapping?.dashboard;
-  
+
   registerDashboardRenderer('oil-gauge', new OilGaugeRenderer());
 
 
-const pluginTelemetry = {
-    // 1. Povuci sve atribute direktno iz baze (ako postoje tu)
-    ...(currentDevice?.attributes ?? {}),
-    
-    // 2. Osiguraj ključne fallback vrednosti
-    serialNumber: currentDevice?.serialNumber || currentDevice?.attributes?.serialNumber,
-    firmware: currentDevice?.modelVersion?.version || currentDevice?.attributes?.firmware,
-
+  const pluginTelemetry = {
     // 3. Raspakuj telemetriju iz merenja i statusa preko mapera
     ...Object.entries(latestTelemetry?.data ?? {}).reduce<Record<string, unknown>>(
       (result, [field, values]) => {
@@ -58,6 +51,14 @@ const pluginTelemetry = {
       },
       {},
     ),
+    // Device attributes are the latest authoritative metadata snapshot.
+    ...(currentDevice?.attributes ?? {}),
+    serialNumber:
+      currentDevice?.attributes?.serialNumber ??
+      currentDevice?.serialNumber,
+    firmware:
+      currentDevice?.attributes?.firmware ??
+      currentDevice?.modelVersion?.version,
   };
   const dashboardCommandHandler = async (
     command: string,

@@ -3,80 +3,91 @@ const TIMESTAMP = '2026-08-22T14:47:43.511Z';
 
 const dashboardMapping = {
   fields: {
-    uptime: { path: 'system.status.uptime_seconds' },
-    opMode: { path: 'system.status.mode' },
-    airflow: { path: 'performance.output.flow' },
-    powerDraw: { path: 'performance.electrical.kw' },
-    oilLevel: { path: 'diagnostics.health.oil_level' },
+    serialNumber: {
+      path: 'attributes.serialNumber',
+    },
+    firmware: {
+      path: 'attributes.firmware',
+    },
+    hardwareModel: {
+      path: 'attributes.hardwareModel',
+    },
+    flowRate: {
+      path: 'metrics.flowRate',
+    },
+    motorTemperature: {
+      path: 'metrics.motorTemperature',
+    },
+    pumpEnabled: {
+      path: 'system.status.pumpEnabled',
+    },
   },
   dashboard: {
     sections: [
       {
-        id: 'overview',
-        title: 'COMPRESSOR OVERVIEW',
-        columns: 4,
+        id: 'identity',
+        title: 'Device Identity',
+        columns: 3,
         items: [
           {
-            id: 'uptime',
+            id: 'serial-number',
             component: 'value-card',
-            bind: 'uptime',
-            title: 'Uptime',
+            bind: 'serialNumber',
+            title: 'Serial Number',
           },
           {
-            id: 'mode',
+            id: 'firmware',
             component: 'value-card',
-            bind: 'opMode',
-            title: 'Operating Mode',
+            bind: 'firmware',
+            title: 'Firmware',
           },
           {
-            id: 'airflow',
+            id: 'hardware-model',
             component: 'value-card',
-            bind: 'airflow',
-            title: 'Airflow',
-          },
-          {
-            id: 'power',
-            component: 'value-card',
-            bind: 'powerDraw',
-            title: 'Power Draw',
-            unit: 'kW',
-          },
-          {
-            id: 'oil-level',
-            component: 'oil-gauge',
-            bind: 'oilLevel',
-            title: 'Oil Level',
-            unit: '%',
+            bind: 'hardwareModel',
+            title: 'Hardware Model',
           },
         ],
       },
       {
-        id: 'controls',
-        title: 'COMPRESSOR CONTROLS',
-        columns: 4,
-        items: [
-          {
-            id: 'target-pressure',
-            component: 'numeric-input',
-            title: 'Target Pressure',
-            command: 'SET_TARGET_PRESSURE',
-            commandField: 'value',
-            min: 2,
-            max: 16,
-            step: 1,
-          },
-        ],
-      },
-      {
-        id: 'complex-controls',
-        title: 'OPERATING PROFILE',
+        id: 'metrics',
+        title: 'Live Metrics',
         columns: 2,
         items: [
           {
-            id: 'operating-profile',
+            id: 'flow-rate',
+            component: 'value-card',
+            bind: 'flowRate',
+            title: 'Flow Rate',
+            unit: 'L/min',
+          },
+          {
+            id: 'temperature',
+            component: 'value-card',
+            bind: 'motorTemperature',
+            title: 'Motor Temperature',
+            unit: 'C',
+          },
+          {
+            id: 'pump',
+            component: 'switch',
+            bind: 'pumpEnabled',
+            title: 'Pump Enabled',
+            command: 'SET_PUMP',
+            commandField: 'enabled',
+          },
+        ],
+      },
+      {
+        id: 'commands',
+        title: 'Device Controls',
+        columns: 1,
+        items: [
+          {
+            id: 'set-mode',
             component: 'command-form',
-            title: 'Operating Profile',
-            command: 'SET_OPERATING_PROFILE',
+            command: 'SET_MODE',
+            title: 'Set Operating Mode',
           },
         ],
       },
@@ -86,76 +97,53 @@ const dashboardMapping = {
 
 const deviceSchema = {
   type: 'object',
-  title: 'IndustrialAirCompressorTelemetry',
-  commands: {
-    SET_STATE: {
-      payload: {
-        type: 'object',
-        required: ['state'],
-        properties: {
-          state: { enum: ['ACTIVE', 'IDLE'], type: 'string' },
-        },
-      },
+  properties: {
+    flowRate: {
+      type: 'number',
     },
-    SET_TARGET_PRESSURE: {
-      payload: {
-        type: 'object',
-        required: ['value'],
-        properties: {
-          value: { type: 'number', minimum: 2, maximum: 16 },
-        },
-      },
+    motorTemperature: {
+      type: 'number',
     },
-    SET_OPERATING_PROFILE: {
-      payload: {
-        type: 'object',
-        required: ['mode', 'pressure', 'safety', 'schedule'],
-        properties: {
-          mode: { enum: ['ECONOMY', 'NORMAL', 'BOOST'], type: 'string' },
-        },
+    pumpEnabled: {
+      type: 'boolean',
+    },
+    attributes: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'serialNumber',
+        'firmware',
+        'hardwareModel',
+      ],
+      properties: {
+        serialNumber: { type: 'string' },
+        firmware: { type: 'string' },
+        hardwareModel: { type: 'string' },
       },
     },
   },
-  properties: {
-    schemaId: { type: 'string', const: 'modelB' },
-    system: {
-      type: 'object',
-      properties: {
-        status: {
-          type: 'object',
-          properties: {
-            mode: { type: 'string' },
-            uptime_seconds: { type: 'integer' },
+  commands: {
+    SET_MODE: {
+      payload: {
+        type: 'object',
+        properties: {
+          mode: {
+            type: 'string',
+            enum: ['AUTO', 'MANUAL'],
           },
         },
+        required: ['mode'],
       },
     },
-    diagnostics: {
-      type: 'object',
-      properties: {
-        health: {
-          type: 'object',
-          properties: {
-            oil_level: { type: 'number' },
+    SET_PUMP: {
+      payload: {
+        type: 'object',
+        properties: {
+          enabled: {
+            type: 'boolean',
           },
         },
-      },
-    },
-    performance: {
-      type: 'object',
-      properties: {
-        output: {
-          type: 'object',
-          properties: {
-            flow: { type: 'number' },
-          },
-        },
-        electrical: {
-          type: 'object',
-          properties: {
-            kw: { type: 'number' },
-          },
-        },
+        required: ['enabled'],
       },
     },
   },
@@ -164,16 +152,21 @@ const deviceSchema = {
 const createDevice = (
   status: 'ONLINE' | 'OFFLINE' = 'ONLINE',
 ) => ({
-  id: 'device-2',
-  name: 'Industrial Compressor',
-  type: 'compressor',
-  serialNumber: 'CP-12345-X',
+  id: '1',
+  name: 'Smart Pump',
+  type: 'pump',
+  serialNumber: 'SN-1',
   status,
-  modelVersionId: 'mv-b-2',
+  attributes: {
+    serialNumber: 'SN-1',
+    firmware: '1.1.4',
+    hardwareModel: 'modelC',
+  },
+  modelVersionId: 'mv-1',
   modelVersion: {
-    id: 'mv-b-2',
-    modelId: 'modelB',
-    version: '5.0.2',
+    id: 'mv-1',
+    modelId: 'modelC',
+    version: '1.1.4',
     schema: deviceSchema,
     mapping: dashboardMapping,
   },
@@ -182,7 +175,7 @@ const createDevice = (
 const setupDeviceDashboard = (
   options: {
     status?: 'ONLINE' | 'OFFLINE';
-    failCommand?: boolean;
+    failManualCommand?: boolean;
   } = {},
 ) => {
   const status = options.status ?? 'ONLINE';
@@ -213,19 +206,18 @@ const setupDeviceDashboard = (
 
   cy.intercept(
     'GET',
-    '**/device/device-2/telemetry/latest',
+    '**/device/SN-1/telemetry/latest',
     {
       statusCode: 200,
       body: {
-        id: 'telemetry-2',
-        deviceId: 'device-2',
+        id: 'telemetry-1',
+        deviceId: 'SN-1',
         timestamp: TIMESTAMP,
         data: {
-          uptime: [[3600, TIMESTAMP]],
-          opMode: [['LOADED', TIMESTAMP]],
-          airflow: [[42.5, TIMESTAMP]],
-          powerDraw: [[120.4, TIMESTAMP]],
-          oilLevel: [[85.0, TIMESTAMP]],
+          firmware: [['1.1.3', TIMESTAMP]],
+          flowRate: [[180.6, TIMESTAMP]],
+          motorTemperature: [[59.9, TIMESTAMP]],
+          pumpEnabled: [[false, TIMESTAMP]],
         },
       },
     },
@@ -233,92 +225,146 @@ const setupDeviceDashboard = (
 
   cy.intercept(
     'GET',
-    '**/device/device-2/telemetry',
+    '**/device/SN-1/telemetry',
     {
       statusCode: 200,
-      body: [],
+      body: [
+        {
+          id: 'telemetry-1',
+          deviceId: 'SN-1',
+          timestamp: TIMESTAMP,
+          data: {
+            flowRate: [[180.6, TIMESTAMP]],
+            motorTemperature: [[59.9, TIMESTAMP]],
+            pumpEnabled: [[false, TIMESTAMP]],
+          },
+        },
+      ],
     },
   ).as('telemetryHistory');
 
   cy.intercept(
     'POST',
-    '**/device/device-2/command',
+    '**/device/SN-1/command',
     (request) => {
       const command = request.body?.command;
       const state = request.body?.payload?.state;
 
-      if (command === 'SET_STATE' && state === 'ACTIVE') {
+      if (
+        command === 'SET_STATE' &&
+        state === 'ACTIVE'
+      ) {
         request.alias = 'activateTelemetry';
       }
 
-      if (command === 'SET_OPERATING_PROFILE') {
-        request.alias = 'setProfile';
+      if (command === 'SET_MODE') {
+        request.alias = 'setMode';
 
-        if (options.failCommand) {
+        if (options.failManualCommand) {
           request.reply({
             statusCode: 500,
-            body: { message: 'Command failed' },
+            body: {
+              message: 'Command failed',
+            },
           });
+
           return;
         }
       }
 
-      if (command === 'SET_TARGET_PRESSURE') {
-        request.alias = 'setTargetPressure';
+      if (command === 'SET_PUMP') {
+        request.alias = 'setPump';
       }
 
       request.reply({
         statusCode: 200,
-        body: { success: true },
+        body: {
+          success: true,
+        },
       });
     },
   ).as('deviceCommand');
 
-  cy.intercept('GET', '**/post/feed', { statusCode: 200, body: [] });
-  cy.intercept('GET', '**/post/drafts', { statusCode: 200, body: [] });
-  cy.intercept('GET', '**/users/allusers', { statusCode: 200, body: [] });
+  cy.intercept('GET', '**/post/feed', {
+    statusCode: 200,
+    body: [],
+  });
 
-  cy.visit(`${APP_URL}/device/device-2`, {
+  cy.intercept('GET', '**/post/drafts', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.intercept('GET', '**/users/allusers', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.visit(`${APP_URL}/device/SN-1`, {
     onBeforeLoad(win) {
-      win.sessionStorage.setItem('token', 'fake-token');
-      win.sessionStorage.setItem('userEmail', 'milica2@gmail.com');
+      win.sessionStorage.setItem(
+        'token',
+        'fake-token',
+      );
+
+      win.sessionStorage.setItem(
+        'userEmail',
+        'milica2@gmail.com',
+      );
     },
   });
 
   cy.wait('@getProfile');
-  cy.url().should('include', '/device/device-2');
-  cy.contains('Industrial Compressor', { timeout: 10000 }).should('be.visible');
+
+  cy.url().should('include', '/device/SN-1');
+
+  cy.contains('Smart Pump', {
+    timeout: 10000,
+  }).should('be.visible');
 };
 
-describe('Industrial Compressor Dashboard (Model B v5.0.2)', () => {
+describe('Dynamic Device Dashboard', () => {
   it('should render device and latest telemetry', () => {
     setupDeviceDashboard();
+
     cy.wait('@latestTelemetry');
 
-    cy.contains('Industrial Compressor').should('be.visible');
-    cy.contains('CP-12345-X').should('be.visible');
-    cy.contains('modelB').should('be.visible');
-    cy.contains('5.0.2').should('be.visible');
+    cy.contains('Smart Pump').should('be.visible');
+    cy.contains('SN-1').should('be.visible');
+    cy.contains('modelC').should('be.visible');
+    cy.contains('1.1.4').should('be.visible');
 
-    cy.contains('COMPRESSOR OVERVIEW').should('be.visible');
-    cy.contains('Uptime').should('be.visible');
-    cy.contains('3600').should('be.visible');
-    cy.contains('Operating Mode').should('be.visible');
-    cy.contains('LOADED').should('be.visible');
-    cy.contains('Airflow').should('be.visible');
-    cy.contains('42.5').should('be.visible');
-    cy.contains('Power Draw').should('be.visible');
-    cy.contains('120.4').should('be.visible');
+    cy.contains('.dashboard-card', 'Firmware').should(
+      'contain',
+      '1.1.4',
+    );
+    cy.contains('.dashboard-card', 'Hardware Model').should(
+      'contain',
+      'modelC',
+    );
+
+    cy.contains('Live Metrics').should('be.visible');
+    cy.contains('Flow Rate').should('be.visible');
+    cy.contains('180.6').should('be.visible');
+
+    cy.contains('Motor Temperature').should(
+      'be.visible',
+    );
+
+    cy.contains('59.9').should('be.visible');
     cy.contains('Live').should('be.visible');
   });
 
   it('should activate telemetry for an online device', () => {
     setupDeviceDashboard();
+
     cy.wait('@activateTelemetry')
       .its('request.body')
       .should('deep.equal', {
         command: 'SET_STATE',
-        payload: { state: 'ACTIVE' },
+        payload: {
+          state: 'ACTIVE',
+        },
       });
   });
 
@@ -328,13 +374,6 @@ describe('Industrial Compressor Dashboard (Model B v5.0.2)', () => {
     const themes = [
       { label: 'Dark', mode: 'dark' },
       { label: 'Light', mode: 'light' },
-      { label: 'Enterprise', mode: 'enterprise' },
-      { label: 'Nord', mode: 'nord' },
-      { label: 'Emerald', mode: 'emerald' },
-      { label: 'Amber', mode: 'amber' },
-      { label: 'Glass', mode: 'glass' },
-      { label: 'Cyberpunk', mode: 'cyberpunk' },
-      { label: 'Minimalist', mode: 'minimalist' },
     ];
 
     themes.forEach(({ label, mode }) => {
@@ -354,61 +393,81 @@ describe('Industrial Compressor Dashboard (Model B v5.0.2)', () => {
     setupDeviceDashboard();
 
     cy.contains(
-      '.dashboard-grid-item',
-      'Operating Profile',
+      '.dashboard-card--command',
+      'Set Operating Mode',
     ).within(() => {
-      // Ako forma ima input/select za mode, prilagodi selektor po potrebi, npr:
-      cy.get('select, input').first().type('ECONOMY');
-      cy.contains('button', /apply|submit|send/i).click();
+      cy.get('select').select('MANUAL');
+      cy.contains('button', 'Apply Command').click();
     });
 
-    cy.wait('@setProfile');
+    cy.wait('@setMode')
+      .its('request.body')
+      .should('deep.equal', {
+        command: 'SET_MODE',
+        payload: {
+          mode: 'MANUAL',
+        },
+      });
   });
 
-  it('should send a command using the numeric input renderer', () => {
+  it('should send a command using the switch renderer', () => {
     setupDeviceDashboard();
 
-    cy.contains('.dashboard-grid-item', 'Target Pressure').within(
+    cy.contains('.dashboard-card', 'Pump Enabled').within(
       () => {
-        cy.get('input').clear().type('10');
-        cy.contains('button', /apply|set|send/i).click();
+        cy.get('button').click();
       },
     );
 
-    cy.wait('@setTargetPressure')
+    cy.wait('@setPump')
       .its('request.body')
       .should('deep.equal', {
-        command: 'SET_TARGET_PRESSURE',
-        payload: { value: 10 },
+        command: 'SET_PUMP',
+        payload: {
+          enabled: true,
+        },
       });
   });
 
   it('should display an error when a command fails', () => {
-    setupDeviceDashboard({ failCommand: true });
-
-    cy.contains(
-      '.dashboard-grid-item',
-      'Operating Profile',
-    ).within(() => {
-      cy.get('select, input').first().type('BOOST');
-      cy.contains('button', /apply|submit|save/i).click();
+    setupDeviceDashboard({
+      failManualCommand: true,
     });
 
-    cy.wait('@setProfile');
+    cy.contains(
+      '.dashboard-card--command',
+      'Set Operating Mode',
+    ).within(() => {
+      cy.get('select').select('MANUAL');
+      cy.contains('button', 'Apply Command').click();
+    });
 
-    cy.contains(/command failed|SET_OPERATING_PROFILE failed/i).should(
+    cy.wait('@setMode');
+
+    cy.contains(/command failed|SET_MODE failed/i).should(
       'be.visible',
     );
   });
 
   it('should disable controls when the device is offline', () => {
-    setupDeviceDashboard({ status: 'OFFLINE' });
+    setupDeviceDashboard({
+      status: 'OFFLINE',
+    });
 
     cy.contains('Offline').should('be.visible');
 
-    cy.contains('.dashboard-grid-item', 'Target Pressure').within(
+    cy.contains(
+      '.dashboard-card--command',
+      'Set Operating Mode',
+    ).within(() => {
+      cy.contains('button', 'Apply Command').should(
+        'be.disabled',
+      );
+    });
+
+    cy.contains('.dashboard-card', 'Pump Enabled').within(
       () => {
-        cy.get('input').should('be.disabled');
+        cy.get('button').should('be.disabled');
       },
     );
 
