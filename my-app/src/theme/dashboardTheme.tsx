@@ -20,7 +20,7 @@ export interface ThemeStyles {
 }
 
 export const themes: Record<ThemeMode, ThemeStyles> = {
-  // Tema 1: Modern Dark Glassmorphism
+
   dark: {
     isDark: true,
     background: '#0f172a',
@@ -40,7 +40,7 @@ export const themes: Record<ThemeMode, ThemeStyles> = {
     tableHeaderBg: 'rgba(15, 23, 42, 0.6)',
   },
 
-  // Tema 2: Minimalist Light
+
   light: {
     isDark: false,
     background: '#f8fafc',
@@ -60,7 +60,7 @@ export const themes: Record<ThemeMode, ThemeStyles> = {
     tableHeaderBg: '#f1f5f9',
   },
 
-  // Tema 3 (Opciono): Cyberpunk / Neon Dark
+
   cyberpunk: {
     isDark: true,
     background: '#0d0221',

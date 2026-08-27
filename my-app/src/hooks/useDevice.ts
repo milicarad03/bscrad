@@ -30,6 +30,16 @@ type ApplyModelVersionResponse = {
   modelVersionId: string;
 };
 
+type DeviceCommandResponse = {
+  success: boolean;
+  correlationId: string;
+  performance?: {
+    clientStartedAt: number;
+    serverReceivedAt: number;
+    uiToServerMs: number;
+  };
+};
+
 
 export const useDevice = (token: string | null) => { 
 
@@ -181,7 +191,7 @@ const handleCreateDevice = (e: React.SyntheticEvent) => {
         isSubmittingRef.current = false;
       });
 };
-  
+
 const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => {
   if (loading || hasError) return;
   setLoading(true);
@@ -231,6 +241,7 @@ const fetchDevices = useCallback(async (filters?: any, signal?: AbortSignal) => 
     });
 };
 const sendDeviceCommand = async (deviceId: string, command: string, payload?: any, silent = false) => {
+  const clientStartedAt = Date.now();
   logger.info(`[COMMAND] Sending ${command} to device ${deviceId}`);
 
 
@@ -240,8 +251,28 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
     command,
     payload
   );
-  return apiClient(ENDPOINTS.DEVICE.COMMAND(deviceId), 'POST', { command, payload }, token)
-    .then(() => { if (!silent) toast.success("Command sent!");})
+  return apiClient<DeviceCommandResponse>(
+    ENDPOINTS.DEVICE.COMMAND(deviceId),
+    'POST',
+    { command, payload },
+    token,
+    undefined,
+    undefined,
+    {
+      'X-UI-Command-Started-At': String(clientStartedAt),
+    },
+  )
+    .then((response) => {
+      if (response.performance) {
+        logger.info(
+          `[PERFORMANCE] UI to server for ${command}: ` +
+            `${response.performance.uiToServerMs} ms`,
+        );
+      }
+
+      if (!silent) toast.success("Command sent!");
+      return response;
+    })
     .catch((err) => {
       console.log("COMMAND ERROR:", err);
       console.log("COMMAND ERROR MESSAGE:", err.message);
@@ -478,4 +509,3 @@ return {
 ,message, applyModelVersion, fetchModels, uploadModelVersion, setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus, getCommandMetadata};
 
 };
-  

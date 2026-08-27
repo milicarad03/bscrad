@@ -18,7 +18,6 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarProps) => {
-
   const menuItems = [
     { id: 'profile', label: 'My Account', icon: <User size={18} /> },
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
@@ -26,31 +25,20 @@ export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarP
     { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
   ];
 
- if (
-  profile?.role ===
-  'ADMIN'
-) {
-  menuItems.push({
-    id: 'users',
+  if (profile?.role === 'ADMIN') {
+    menuItems.push({
+      id: 'users',
+      label: 'Users',
+      icon: <Users size={18} />,
+    });
 
-    label: 'Users',
+    menuItems.push({
+      id: 'model-versions',
+      label: 'Model Versions',
+      icon: <PackagePlus size={18} />,
+    });
+  }
 
-    icon:
-      <Users size={18} />,
-  });
-
-  menuItems.push({
-    id: 'model-versions',
-
-    label:
-      'Model Versions',
-
-    icon:
-      <PackagePlus
-        size={18}
-      />,
-  });
-}
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -81,7 +69,7 @@ export const Sidebar = ({ profile, activeTab, setActiveTab, onLogout }: SidebarP
         ))}
       </nav>
 
-      <Button  data-cy="logoutbtn" variant="danger" onClick={onLogout} className="logout-btn">
+      <Button data-cy="logoutbtn" variant="danger" onClick={onLogout} className="logout-btn">
         <LogOut size={18} style={{ marginRight: '8px' }} />
         Logout
       </Button>

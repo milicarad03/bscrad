@@ -14,7 +14,7 @@ export class OilGaugeRenderer extends BaseDashboardRenderer {
   render({ item, telemetry }: DashboardRendererProps): React.ReactNode {
     const value = Number(telemetry[item.bind ?? ''] ?? 0);
 
-    const color =
+    const statusColor =
       value < 30
         ? '#ef4444'
         : value < 60
@@ -24,21 +24,28 @@ export class OilGaugeRenderer extends BaseDashboardRenderer {
     return (
       <div
         style={{
-          border: '1px solid #333',
-          padding: '16px',
-          borderRadius: '8px',
-          background: '#18181b',
+          border: 'var(--theme-card-border)',
+          padding: 'var(--theme-space-md)',
+          borderRadius: 'var(--theme-radius)',
+          background: 'var(--theme-card-bg)',
+          color: 'var(--theme-text-primary)',
+          boxShadow: 'var(--theme-card-shadow)',
+          backdropFilter: 'var(--theme-backdrop)',
+          fontFamily: 'var(--theme-font)',
         }}
       >
         <div>
-          <strong>{item.title ?? item.id}</strong>
+          <strong style={{ color: 'var(--theme-text-primary)' }}>
+            {item.title ?? item.id}
+          </strong>
         </div>
 
         <div
           style={{
             marginTop: '12px',
             height: '20px',
-            background: '#27272a',
+            background: 'var(--theme-input-bg)',
+            border: 'var(--theme-input-border)',
             borderRadius: '10px',
             overflow: 'hidden',
           }}
@@ -47,13 +54,13 @@ export class OilGaugeRenderer extends BaseDashboardRenderer {
             style={{
               width: `${Math.min(Math.max(value, 0), 100)}%`,
               height: '100%',
-              background: color,
+              background: statusColor,
               transition: 'width 0.3s ease',
             }}
           />
         </div>
 
-        <div style={{ marginTop: '8px', fontWeight: 'bold' }}>
+        <div style={{ marginTop: '8px', fontWeight: 'bold', color: 'var(--theme-text-secondary)' }}>
           {value} %
         </div>
       </div>

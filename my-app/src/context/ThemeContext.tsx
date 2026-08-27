@@ -10,7 +10,6 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Učitava zapamćenu temu iz localStorage-a ili stavlja 'dark' kao podrazumevanu
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('dashboard_theme');
     return (saved as ThemeMode) || 'dark';

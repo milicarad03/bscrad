@@ -24,11 +24,10 @@
   --dd-gap: 16px;
 }
 
-/* ---------- layout shell ---------- */
 
 .dd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* 400px je idealno za tvoj layout */
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
   gap: 20px;
   margin-top: var(--dd-gap);
   align-items: start;
@@ -36,7 +35,7 @@
 .dd-grid pre,
 .dd-telemetry-scroll pre {
   white-space: pre-wrap;
-  word-wrap: break-word;      /* Seče dugačke nizove */
+  word-wrap: break-word;     
   background: var(--dd-void);
   padding: 10px;
   border-radius: 4px;
@@ -607,23 +606,21 @@
   background: var(--dd-text-faint);
 }
 .dd-telemetry-scroll {
-  max-height: 300px; /* Možeš podesiti visinu po želji */
+  max-height: 300px; 
   overflow-y: auto;
-  overflow-x: hidden; /* Sprečava horizontalni skrol */
+  overflow-x: hidden; 
   
-  /* Stilizacija scrollbara */
   padding-right: 8px;
 }
 
-/* Opcionalno: prilagodi pre tag unutar scroller-a */
 .dd-telemetry-scroll pre {
   margin: 0;
   font-size: 0.85rem;
   color: var(--dd-text);
-  white-space: pre-wrap; /* Omogućava prelamanje dugačkih redova */
+  white-space: pre-wrap; 
 }
 
-/* Scrollbar za ovu sekciju */
+
 .dd-telemetry-scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -637,14 +634,13 @@
   background: var(--dd-border-strong);
   border-radius: 4px;
 }
-/* Container za sve komande */
+
 .dd-commands-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Wrapper za svaku pojedinačnu komandu */
 .dd-command-wrapper {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--dd-border);

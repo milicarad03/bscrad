@@ -4,14 +4,14 @@ export const setUnauthorizedHandler = (handler: () => void) => {
   onUnauthorized = handler;
 };
 
-
 export const apiClient = async <T>(
   endpoint: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
   body?: any,
   token?: string | null,
   params?: Record<string, any>,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  requestHeaders: Record<string, string> = {},
   
 ): Promise<T> => {
 
@@ -40,7 +40,9 @@ export const apiClient = async <T>(
     typeof FormData !== 'undefined' &&
     body instanceof FormData;
 
-  const headers: HeadersInit = {};
+  const headers: Record<string, string> = {
+    ...requestHeaders,
+  };
 
   if (!isFormData) {
     headers['Content-Type'] = 'application/json';
@@ -66,23 +68,13 @@ export const apiClient = async <T>(
       signal,
     });
   } catch (err: any) {
-    // ISPRAVKA: AbortError se ne tretira kao mrezna greska - to je
-    // namerno otkazivanje (npr. unmount), pa ga samo prosledjujemo dalje
-    // bez toast poruke; pozivalac (useCallback cleanup) ce ga ignorisati.
+
     if (err?.name === 'AbortError') {
       throw err;
     }
     throw new Error('NetworkError');
   }
 
-
-  /*if (response.status === 401) {
-   
-    if (onUnauthorized) {
-      onUnauthorized();
-    }
-    return Promise.reject(new Error('Unauthorized'));
-  }*/
   if (response.status === 401) {
   const errorData = await response.json().catch(() => ({}));
 
@@ -127,5 +119,5 @@ export const apiClient = async <T>(
   } catch {
     return null as T;
   }
- // return response.json();
+
 };

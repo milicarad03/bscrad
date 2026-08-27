@@ -11,9 +11,18 @@ import { useDevicesStatuses } from '../hooks/useDeviceStatus';
 import { registerDashboardRenderer } from 'device-dashboard-ui-plugin/registry';
 import { OilGaugeRenderer } from '../components/CustomRenderers/OilGaugeRenderer';
 import { ArrowLeft, Wifi, WifiOff } from 'lucide-react';
+import { DriveModeSelectorRenderer } from '../components/CustomRenderers/DriveModeSelectorRenderer';
+import { SignalStrengthRenderer } from '../components/CustomRenderers/SignalStrengthRenderer';
+import { BatteryIndicatorRenderer } from '../components/CustomRenderers/BatteryIndicatorRenderer';
+import { TemperatureThermometerRenderer } from '../components/CustomRenderers/TemperatureThermometerRenderer';
+import { StatusBadgeRenderer } from '../components/CustomRenderers/StatusBadgeRenderer';
+
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  const previousTab = localStorage.getItem('previousTab') || 'devices';
+  
   const { latestTelemetry } = useDeviceTelemetry({ deviceId: id, token: auth?.token });
   const { fetchDevices, sendDeviceCommand, devices, loading: devicesLoading, updateDeviceStatus } = useDevice(auth?.token);
   const currentDevice = devices.find((d) => String(d.id) === String(id) || String(d.serialNumber) === String(id));
@@ -22,10 +31,13 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const dashboardConfig = currentDevice?.modelVersion?.mapping?.dashboard;
 
   registerDashboardRenderer('oil-gauge', new OilGaugeRenderer());
-
+  registerDashboardRenderer('drive-mode-selector', new DriveModeSelectorRenderer());
+  registerDashboardRenderer('signal-strength', new SignalStrengthRenderer());
+  registerDashboardRenderer('battery-indicator', new BatteryIndicatorRenderer());
+  registerDashboardRenderer('temperature-thermometer', new TemperatureThermometerRenderer());
+  registerDashboardRenderer('status-badge', new StatusBadgeRenderer());
 
   const pluginTelemetry = {
-    // 3. Raspakuj telemetriju iz merenja i statusa preko mapera
     ...Object.entries(latestTelemetry?.data ?? {}).reduce<Record<string, unknown>>(
       (result, [field, values]) => {
         if (!Array.isArray(values) || values.length === 0) {
@@ -34,7 +46,6 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
           }
           return result;
         }
-
         const last = values[values.length - 1];
 
         if (Array.isArray(last) && last.length >= 2) {
@@ -51,7 +62,6 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
       },
       {},
     ),
-    // Device attributes are the latest authoritative metadata snapshot.
     ...(currentDevice?.attributes ?? {}),
     serialNumber:
       currentDevice?.attributes?.serialNumber ??
@@ -60,6 +70,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
       currentDevice?.attributes?.firmware ??
       currentDevice?.modelVersion?.version,
   };
+
   const dashboardCommandHandler = async (
     command: string,
     payload: Record<string, unknown>,
@@ -75,6 +86,10 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     } catch {
       toast.error(`${command} failed`);
     }
+  };
+
+  const handleGoBack = () => {
+    navigate(`/dashboard?tab=${previousTab}`);
   };
 
   useDevicesStatuses({
@@ -110,11 +125,11 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
 
   return (
     <div className="dashboard-layout">
-      <Sidebar profile={auth.profile} activeTab="devices" setActiveTab={() => navigate('/dashboard')} onLogout={auth.handleLogout} />
+      <Sidebar profile={auth.profile} activeTab="devices" setActiveTab={() => handleGoBack()} onLogout={auth.handleLogout} />
 
       <main className="dashboard-content">
         <header className="dd-header">
-          <button className="dd-back" onClick={() => navigate('/dashboard?tab=devices')}>
+          <button className="dd-back" onClick={handleGoBack}>
             <ArrowLeft size={15} aria-hidden="true" />
             All devices
           </button>

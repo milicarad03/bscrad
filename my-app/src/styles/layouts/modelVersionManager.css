@@ -1,5 +1,3 @@
-/* ModelVersionManager.css */
-
 .manager-container {
   display: grid;
   gap: 32px;
@@ -19,7 +17,7 @@
 .manager-card-title {
   font-size: 15px;
   font-weight: 700;
-  color: var(--accent-neon, #9ca3af); /* Umesto neon boje, diskretna siva */
+  color: var(--accent-neon, #9ca3af); 
   margin-top: 0;
   margin-bottom: 24px;
   letter-spacing: 0;
@@ -66,7 +64,7 @@
 }
 
 .form-input:focus {
-  border-color: #60a5fa; /* Prijatna, umirujuća plava umesto neona */
+  border-color: #60a5fa; 
   background-color: rgba(96, 165, 250, 0.04);
   outline: none;
   box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
@@ -121,7 +119,7 @@
 
 .file-upload-success {
   font-size: 13px;
-  color: #93c5fd; /* Blaga plava za uspeh fajla */
+  color: #93c5fd;
   margin-top: 8px;
   font-weight: 600;
   display: flex;
@@ -154,7 +152,7 @@
 
 .btn-primary {
   flex: 1;
-  background-color: #e5e7eb; /* Neutralna svetla boja umesto jarkog upečatljivog hana */
+  background-color: #e5e7eb; 
   color: #111827;
 }
 
@@ -247,7 +245,7 @@
 }
 
 .cell-model {
-  color: #93c5fd; /* Mekša plava boja za nazive modela u tabeli */
+  color: #93c5fd;
   font-weight: 600;
 }
 

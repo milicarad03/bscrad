@@ -1,10 +1,6 @@
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Button } from '../UI/Button';
-
-
-
-
 interface Field{
     label : string;
     type?: string;

@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-08-27T09:10:26.902Z",
+  "deviceId": "sp-100",
+  "command": "SET_PUMP_STATE",
+  "initialDashboardAvailabilityMs": 2301.1,
+  "uiCommandToBackendController": {
+    "samples": 20,
+    "minimumMs": 21,
+    "maximumMs": 397,
+    "averageMs": 84.8,
+    "medianMs": 57,
+    "p95Ms": 329
+  }
+}

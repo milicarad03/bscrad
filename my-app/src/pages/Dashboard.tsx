@@ -1,78 +1,63 @@
 import { Card } from '../components/UI/Card';
-import {usePosts} from '../hooks/usePosts'
-import {useAuth} from '../hooks/useAuth'
-import {useDevice} from '../hooks/useDevice'
-import {UsersList} from '../components/Dashboard/UserList'
-import {DeviceForm} from '../components/Dashboard/DeviceForm'
-import {DeviceList} from '../components/Dashboard/DeviceList'
-import { useState,useEffect} from 'react';
+import { usePosts } from '../hooks/usePosts';
+import { useAuth } from '../hooks/useAuth';
+import { useDevice } from '../hooks/useDevice';
+import { UsersList } from '../components/Dashboard/UserList';
+import { DeviceForm } from '../components/Dashboard/DeviceForm';
+import { DeviceList } from '../components/Dashboard/DeviceList';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '../components/Dashboard/Sidebar';
-import { DeviceDetailsModal} from '../components/Dashboard/DeviceDetailsModal';
-import {useNavigate} from 'react-router-dom';
+import { DeviceDetailsModal } from '../components/Dashboard/DeviceDetailsModal';
+import { useNavigate } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
-import { ModelVersionManager} from '../components/Dashboard/ModelVersionManager';
+import { ModelVersionManager } from '../components/Dashboard/ModelVersionManager';
 
 interface DashboardProps {
-
-  post:ReturnType<typeof usePosts>
-  auth:ReturnType<typeof useAuth>
-  device:ReturnType<typeof useDevice>
+  post: ReturnType<typeof usePosts>;
+  auth: ReturnType<typeof useAuth>;
+  device: ReturnType<typeof useDevice>;
 }
 
-
-
 export const Dashboard = ({ auth, device }: DashboardProps) => {
-  
-  
-  const [selectedDevice] = useState<any>(null); 
-  const [showModal, setShowModal] = useState(false); 
+  const [selectedDevice] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false);
 
+  const navigate = useNavigate();
 
-  const navigate=useNavigate();
- 
-
-  const [searchParams, setSearchParams]=useSearchParams();
-  const activeTab=searchParams.get('tab') || 'profile' ;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || localStorage.getItem('lastTab') || 'profile';
 
   const setActiveTab = (tabName: string) => {
+    const currentTab = localStorage.getItem('lastTab') || 'profile';
+    if (currentTab !== tabName) {
+      localStorage.setItem('previousTab', currentTab);
+    }
+    
+    localStorage.setItem('lastTab', tabName);
     setSearchParams({ tab: tabName });
   };
-  //added device.devices.length===0
- /* useEffect(() => {
-    if (activeTab === 'devices' && auth.profile && device.devices.length === 0 && !device.hasError) {
-      
-      device.fetchDevices(); 
+
+  useEffect(() => {
+    localStorage.setItem('lastTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'devices' && auth.profile && !device.hasError) {
+      device.fetchDevices();
     }
-  }, [activeTab, auth.profile, device.hasError]);*/
+  }, [activeTab, auth.profile, device.hasError]);
 
-useEffect(() => {
-  if (activeTab === 'devices' && auth.profile &&  !device.hasError) {
-     device.fetchDevices();
-  }
-}, [activeTab, auth.profile, device.hasError]);
+  useEffect(() => {
+    if (activeTab === 'users' && auth.profile?.role === 'ADMIN') {
+      auth.fetchUsers();
+    }
+  }, [activeTab]);
 
-useEffect(() => {
-  if (activeTab === 'users' && auth.profile?.role === 'ADMIN') {
-    auth.fetchUsers();
-  }
-}, [activeTab]);
-
-
-useEffect(() => {
-  if (
-    activeTab ===
-      'model-versions' &&
-    auth.profile?.role ===
-      'ADMIN'
-  ) {
-    device.fetchModels();
-  }
-}, [
-  activeTab,
-  auth.profile?.role,
-]);
-  
-
+  useEffect(() => {
+    if (activeTab === 'model-versions' && auth.profile?.role === 'ADMIN') {
+      device.fetchModels();
+    }
+  }, [activeTab, auth.profile?.role]);
 
   return (
     <div className="dashboard-layout">
@@ -84,9 +69,7 @@ useEffect(() => {
       />
 
       <main className="dashboard-content">
-        {/* DINAMIČKI PRIKAZ SEKCIJA */}
-        
-        {activeTab === 'profile' &&  auth.profile  &&(
+        {activeTab === 'profile' && auth.profile && (
           <div className="view-section">
             <h2>User Profile</h2>
             <Card>
@@ -104,57 +87,51 @@ useEffect(() => {
           </div>
         )}
 
-      
-
-       {activeTab === 'devices' && (
-        <div className="view-section">
-          {device.hasError && (
-            <div data-cy="error-message" style={{ color: '#ff4d4d', marginBottom: '10px', fontSize: '0.9rem' }}>
-              NetworkError: Failed to fetch devices.
+        {activeTab === 'devices' && (
+          <div className="view-section">
+            {device.hasError && (
+              <div data-cy="error-message" style={{ color: '#ff4d4d', marginBottom: '10px', fontSize: '0.9rem' }}>
+                NetworkError: Failed to fetch devices.
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h2>Device Management</h2>
             </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h2>Device Management</h2>
+
+            <DeviceList 
+              device={Array.isArray(device.devices) ? device.devices : []}
+              users={auth.users || []}
+              onDelete={device.handleDeleteDevice} 
+              onDevice={(e) => {
+                e.preventDefault();
+                device.resetError(); 
+                device.fetchDevices();
+              }}
+              isAdmin={auth.profile?.role === 'ADMIN'}
+              onDeviceClick={(dev) => {
+                localStorage.setItem('previousTab', activeTab);
+                navigate(`/device/${dev.serialNumber}`);
+              }}
+              currentUserId={auth.profile?.id}
+              onRegister={() => setActiveTab('register-device')}
+              onFilterChange={(ids, types) => {
+                device.resetError();
+                device.fetchDevices({ userId: ids, type: types });
+                device.setSelectedTargetUsers(ids || []);
+                device.setSelectedTypes(types || []);
+              }}
+              targetUserIds={device.selectedTargetUsers || []}
+              selectedTypes={device.selectedTypes || []}
+              modelVersions={device.models || []}
+              onApplyModelVersion={device.applyModelVersion}
+              onTransferOwnership={async (deviceId, userId) => {
+                await device.handleReassignDevice(
+                  deviceId,
+                  Number(userId),
+                );
+              }}
+            />
           </div>
-
-          <DeviceList 
-            device={Array.isArray(device.devices) ? device.devices : []}
-            users={auth.users || []}
-            onDelete={device.handleDeleteDevice} 
-            onDevice={(e) => {
-              e.preventDefault();
-              device.resetError(); 
-              device.fetchDevices();
-            }}
-            //onDevice={device.fetchDevices}
-            isAdmin={auth.profile?.role === "ADMIN"}
-            onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
-            currentUserId={auth.profile?.id}
-            onRegister={()=> setActiveTab('register-device')}
-            onFilterChange={(ids,types) => {
-              device.resetError();
-              device.fetchDevices({userId: ids, type:types})
-              device.setSelectedTargetUsers(ids || []);
-              device.setSelectedTypes(types || []);
-            }}
-            targetUserIds={device.selectedTargetUsers || []}
-            selectedTypes={device.selectedTypes || []}
-            modelVersions={
-              device.models || []
-            }
-
-            onApplyModelVersion={
-              device.applyModelVersion
-            }
-           onTransferOwnership={async (deviceId, userId) => {
-            await device.handleReassignDevice(
-            deviceId,
-            Number(userId),
-            );
-            }}
-            
-          />
-        </div>
         )}
 
         {activeTab === 'register-device' && (
@@ -170,34 +147,27 @@ useEffect(() => {
             </button>
             
             <DeviceForm 
-                onSubmit={device.handleCreateDevice}
-                onCancel={() => {
-                  device.resetForm(); 
-                  setActiveTab('devices');
-                }}
-                loading={device.loading}
-                message={device.message}
-                
-               
-                serialNumber={device.newSerialNumber}
-                setSerialNumber={device.setNewSerialNumber}
-                name={device.newDeviceName}
-                setName={device.setNewDeviceName}
-                type={device.newDeviceType}
-                setType={device.setNewDeviceType}
-                
-               
-                isAdmin={auth.profile?.role === "ADMIN"}
-                users={auth.users} 
-                selectedTargetUser={device.selectedTargetUsers[0] || ''}
-                setSelectedTargetUser={(id) => device.setSelectedTargetUsers([Number(id)])}
-
-                selectedModelVersion={device.selectedDeviceModel[0] || ''}
-                setSelectedModelVersion={(id) => device.setSelectedDeviceModel([id])}
-              
-                modelVersions={device.models || []}
+              onSubmit={device.handleCreateDevice}
+              onCancel={() => {
+                device.resetForm(); 
+                setActiveTab('devices');
+              }}
+              loading={device.loading}
+              message={device.message}
+              serialNumber={device.newSerialNumber}
+              setSerialNumber={device.setNewSerialNumber}
+              name={device.newDeviceName}
+              setName={device.setNewDeviceName}
+              type={device.newDeviceType}
+              setType={device.setNewDeviceType}
+              isAdmin={auth.profile?.role === 'ADMIN'}
+              users={auth.users} 
+              selectedTargetUser={device.selectedTargetUsers[0] || ''}
+              setSelectedTargetUser={(id) => device.setSelectedTargetUsers([Number(id)])}
+              selectedModelVersion={device.selectedDeviceModel[0] || ''}
+              setSelectedModelVersion={(id) => device.setSelectedDeviceModel([id])}
+              modelVersions={device.models || []}
             />
-            
           </div>
         )}
 
@@ -210,7 +180,6 @@ useEffect(() => {
 
         {activeTab === 'users' && auth.profile?.role === 'ADMIN' && (
           <div className="view-section">
-            <h2>User management</h2>
             <UsersList 
               users={auth.users} 
               onDelete={auth.handleDeleteUser} 
@@ -219,37 +188,24 @@ useEffect(() => {
             />
           </div>
         )}
-        {activeTab ===
-          'model-versions' &&
-        auth.profile?.role ===
-          'ADMIN' && (
+
+        {activeTab === 'model-versions' && auth.profile?.role === 'ADMIN' && (
           <div className="view-section">
-            <h2>
-              Model Version Registry
-            </h2>
-
+            <h2>Model Version Registry</h2>
             <ModelVersionManager
-              modelVersions={
-                device.models || []
-              }
-
-              onUpload={
-                device.uploadModelVersion
-              }
-
-              onRefresh={() =>
-                device.fetchModels()
-              }
+              modelVersions={device.models || []}
+              onUpload={device.uploadModelVersion}
+              onRefresh={() => device.fetchModels()}
             />
           </div>
         )}
       </main>
-        <DeviceDetailsModal 
+
+      <DeviceDetailsModal 
         device={selectedDevice} 
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
       />
-     
     </div>
   );
 };

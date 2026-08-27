@@ -18,30 +18,33 @@ export const CommandCard = ({
   onExecute,
 }: Props) => {
   const [payload, setPayload] = useState<Record<string, any>>({});
-  const [isExecuting, setIsExecuting] = useState(false); 
+  const [isExecuting, setIsExecuting] = useState(false);
+
   const handleExecute = async () => {
-    setIsExecuting(true); 
+    setIsExecuting(true);
     try {
       const finalPayload = buildPayloadFromCommandFields(payload, allowedPaths);
       await onExecute(command.command, finalPayload);
-      setPayload({}); 
+      setPayload({});
     } finally {
-      setIsExecuting(false); 
+      setIsExecuting(false);
     }
   };
+
   const updateField = (path: string, value: any) => {
-  console.log("FIELD CHANGED", path, value);
+    console.log("FIELD CHANGED", path, value);
 
-  setPayload(prev => {
-    const next = {
-      ...prev,
-      [path]: value 
-    };
+    setPayload(prev => {
+      const next = {
+        ...prev,
+        [path]: value,
+      };
 
-    console.log("PAYLOAD", next);
-    return next;
-  });
-};
+      console.log("PAYLOAD", next);
+      return next;
+    });
+  };
+
   const allowedPaths = new Set(command.fields.map(f => f.path));
 
   const isInvalid = command.fields.some(field => {
@@ -100,7 +103,7 @@ export const CommandCard = ({
   })();
 
   return (
-    <div className="dd-command-inner"> {}
+    <div className="dd-command-inner">
       <div className="dd-command-header">
         <span className="dd-command-title">{command.command}</span>
       </div>
