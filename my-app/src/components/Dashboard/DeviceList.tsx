@@ -85,6 +85,7 @@ export const DeviceList = ({
     };
   }, []);
 
+  // Search filtering
   const filteredDevices = localDevices.filter(dev => {
     const term = searchTerm.toLowerCase();
 

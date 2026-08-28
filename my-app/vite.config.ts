@@ -9,6 +9,10 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  
+  resolve: {
+  dedupe: ['react', 'react-dom'],
+  },
 
  test: {
     environment: 'jsdom',

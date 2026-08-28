@@ -27,10 +27,12 @@ export const ModelVersionManager = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  
   const modelNames = useMemo(
     () => Array.from(new Set(modelVersions.map((item) => item.modelId))).sort(),
     [modelVersions]
   );
+
   const sortedVersions = useMemo(
     () =>
       [...modelVersions].sort((a, b) => {
@@ -44,6 +46,7 @@ export const ModelVersionManager = ({
     [modelVersions]
   );
 
+  
   const handleSchemaFile = async (file: File | null) => {
     setSchemaFile(file);
     setError(null);
@@ -59,10 +62,11 @@ export const ModelVersionManager = ({
         setModelName(detectedModel.trim());
       }
     } catch {
+
     }
   };
 
- const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formElement = e.currentTarget; 
     setError(null);
@@ -219,7 +223,7 @@ export const ModelVersionManager = ({
         </form>
       </div>
 
-  
+      {/* MODEL VERZIJE TABELA */}
       <div className="manager-card">
         <h2 className="manager-card-title">Registered Model Versions</h2>
 

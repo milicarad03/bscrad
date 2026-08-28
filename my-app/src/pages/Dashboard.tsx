@@ -8,8 +8,7 @@ import { DeviceList } from '../components/Dashboard/DeviceList';
 import { useState, useEffect } from 'react';
 import { Sidebar } from '../components/Dashboard/Sidebar';
 import { DeviceDetailsModal } from '../components/Dashboard/DeviceDetailsModal';
-import { useNavigate } from 'react-router-dom';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ModelVersionManager } from '../components/Dashboard/ModelVersionManager';
 
 interface DashboardProps {
@@ -21,25 +20,14 @@ interface DashboardProps {
 export const Dashboard = ({ auth, device }: DashboardProps) => {
   const [selectedDevice] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || localStorage.getItem('lastTab') || 'profile';
+  const activeTab = searchParams.get('tab') || 'profile';
 
   const setActiveTab = (tabName: string) => {
-    const currentTab = localStorage.getItem('lastTab') || 'profile';
-    if (currentTab !== tabName) {
-      localStorage.setItem('previousTab', currentTab);
-    }
-    
-    localStorage.setItem('lastTab', tabName);
-    setSearchParams({ tab: tabName });
+    navigate(`/dashboard?tab=${encodeURIComponent(tabName)}`);
   };
-
-  useEffect(() => {
-    localStorage.setItem('lastTab', activeTab);
-  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'devices' && auth.profile && !device.hasError) {
@@ -61,10 +49,10 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
 
   return (
     <div className="dashboard-layout">
-      <Sidebar 
-        profile={auth.profile} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+      <Sidebar
+        profile={auth.profile}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         onLogout={auth.handleLogout}
       />
 
@@ -72,9 +60,12 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
         {activeTab === 'profile' && auth.profile && (
           <div className="view-section">
             <h2>User Profile</h2>
+
             <Card>
               <p>Email: {auth.profile?.email}</p>
+
               <p>Role: {auth.profile?.role}</p>
+
               <p>ID: {auth.profile?.id}</p>
             </Card>
           </div>
@@ -90,33 +81,47 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
         {activeTab === 'devices' && (
           <div className="view-section">
             {device.hasError && (
-              <div data-cy="error-message" style={{ color: '#ff4d4d', marginBottom: '10px', fontSize: '0.9rem' }}>
+              <div
+                data-cy="error-message"
+                style={{
+                  color: '#ff4d4d',
+                  marginBottom: '10px',
+                  fontSize: '0.9rem',
+                }}
+              >
                 NetworkError: Failed to fetch devices.
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '20px',
+              }}
+            >
               <h2>Device Management</h2>
             </div>
 
-            <DeviceList 
+            <DeviceList
               device={Array.isArray(device.devices) ? device.devices : []}
               users={auth.users || []}
-              onDelete={device.handleDeleteDevice} 
+              onDelete={device.handleDeleteDevice}
               onDevice={(e) => {
                 e.preventDefault();
-                device.resetError(); 
+                device.resetError();
                 device.fetchDevices();
               }}
               isAdmin={auth.profile?.role === 'ADMIN'}
-              onDeviceClick={(dev) => {
-                localStorage.setItem('previousTab', activeTab);
-                navigate(`/device/${dev.serialNumber}`);
-              }}
+              onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
               currentUserId={auth.profile?.id}
               onRegister={() => setActiveTab('register-device')}
               onFilterChange={(ids, types) => {
                 device.resetError();
-                device.fetchDevices({ userId: ids, type: types });
+                device.fetchDevices({
+                  userId: ids,
+                  type: types,
+                });
                 device.setSelectedTargetUsers(ids || []);
                 device.setSelectedTypes(types || []);
               }}
@@ -125,10 +130,7 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
               modelVersions={device.models || []}
               onApplyModelVersion={device.applyModelVersion}
               onTransferOwnership={async (deviceId, userId) => {
-                await device.handleReassignDevice(
-                  deviceId,
-                  Number(userId),
-                );
+                await device.handleReassignDevice(deviceId, Number(userId));
               }}
             />
           </div>
@@ -136,8 +138,8 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
 
         {activeTab === 'register-device' && (
           <div className="view-section">
-            <button 
-              className="btn-back-link" 
+            <button
+              className="btn-back-link"
               onClick={() => {
                 device.resetForm();
                 setActiveTab('devices');
@@ -145,11 +147,11 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
             >
               RETURN_TO_DATABASE
             </button>
-            
-            <DeviceForm 
+
+            <DeviceForm
               onSubmit={device.handleCreateDevice}
               onCancel={() => {
-                device.resetForm(); 
+                device.resetForm();
                 setActiveTab('devices');
               }}
               loading={device.loading}
@@ -161,9 +163,11 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
               type={device.newDeviceType}
               setType={device.setNewDeviceType}
               isAdmin={auth.profile?.role === 'ADMIN'}
-              users={auth.users} 
+              users={auth.users}
               selectedTargetUser={device.selectedTargetUsers[0] || ''}
-              setSelectedTargetUser={(id) => device.setSelectedTargetUsers([Number(id)])}
+              setSelectedTargetUser={(id) =>
+                device.setSelectedTargetUsers([Number(id)])
+              }
               selectedModelVersion={device.selectedDeviceModel[0] || ''}
               setSelectedModelVersion={(id) => device.setSelectedDeviceModel([id])}
               modelVersions={device.models || []}
@@ -174,15 +178,16 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
         {activeTab === 'notifications' && (
           <div className="view-section">
             <h2>Notifications</h2>
+
             <p>No notifications at the moment</p>
           </div>
         )}
 
         {activeTab === 'users' && auth.profile?.role === 'ADMIN' && (
           <div className="view-section">
-            <UsersList 
-              users={auth.users} 
-              onDelete={auth.handleDeleteUser} 
+            <UsersList
+              users={auth.users}
+              onDelete={auth.handleDeleteUser}
               onApprove={auth.handleApproveUser}
               onUsers={auth.fetchUsers}
             />
@@ -192,6 +197,7 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
         {activeTab === 'model-versions' && auth.profile?.role === 'ADMIN' && (
           <div className="view-section">
             <h2>Model Version Registry</h2>
+
             <ModelVersionManager
               modelVersions={device.models || []}
               onUpload={device.uploadModelVersion}
@@ -201,10 +207,10 @@ export const Dashboard = ({ auth, device }: DashboardProps) => {
         )}
       </main>
 
-      <DeviceDetailsModal 
-        device={selectedDevice} 
-        isOpen={showModal} 
-        onClose={() => setShowModal(false)} 
+      <DeviceDetailsModal
+        device={selectedDevice}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
       />
     </div>
   );

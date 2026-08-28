@@ -17,17 +17,29 @@ import { BatteryIndicatorRenderer } from '../components/CustomRenderers/BatteryI
 import { TemperatureThermometerRenderer } from '../components/CustomRenderers/TemperatureThermometerRenderer';
 import { StatusBadgeRenderer } from '../components/CustomRenderers/StatusBadgeRenderer';
 
+
 export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
-  const previousTab = localStorage.getItem('previousTab') || 'devices';
-  
-  const { latestTelemetry } = useDeviceTelemetry({ deviceId: id, token: auth?.token });
-  const { fetchDevices, sendDeviceCommand, devices, loading: devicesLoading, updateDeviceStatus } = useDevice(auth?.token);
-  const currentDevice = devices.find((d) => String(d.id) === String(id) || String(d.serialNumber) === String(id));
+
+  const { latestTelemetry } = useDeviceTelemetry({
+    deviceId: id,
+    token: auth?.token,
+  });
+
+  const { fetchDevices, sendDeviceCommand, devices, loading: devicesLoading, updateDeviceStatus } =
+    useDevice(auth?.token);
+
+  const currentDevice = devices.find(
+    (device) => String(device.id) === String(id) || String(device.serialNumber) === String(id),
+  );
+
   const isDeviceConnected = currentDevice?.status === 'ONLINE';
-  const historicalData = latestTelemetry?.data ? transformTelemetryForCharts(latestTelemetry.data) : [];
+
+  const historicalData = latestTelemetry?.data
+    ? transformTelemetryForCharts(latestTelemetry.data)
+    : [];
+
   const dashboardConfig = currentDevice?.modelVersion?.mapping?.dashboard;
 
   registerDashboardRenderer('oil-gauge', new OilGaugeRenderer());
@@ -36,6 +48,11 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   registerDashboardRenderer('battery-indicator', new BatteryIndicatorRenderer());
   registerDashboardRenderer('temperature-thermometer', new TemperatureThermometerRenderer());
   registerDashboardRenderer('status-badge', new StatusBadgeRenderer());
+
+
+  const handleSidebarTabChange = (tabName: string) => {
+    navigate(`/dashboard?tab=${encodeURIComponent(tabName)}`);
+  };
 
   const pluginTelemetry = {
     ...Object.entries(latestTelemetry?.data ?? {}).reduce<Record<string, unknown>>(
@@ -46,6 +63,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
           }
           return result;
         }
+
         const last = values[values.length - 1];
 
         if (Array.isArray(last) && last.length >= 2) {
@@ -64,11 +82,9 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     ),
     ...(currentDevice?.attributes ?? {}),
     serialNumber:
-      currentDevice?.attributes?.serialNumber ??
-      currentDevice?.serialNumber,
+      currentDevice?.attributes?.serialNumber ?? currentDevice?.serialNumber,
     firmware:
-      currentDevice?.attributes?.firmware ??
-      currentDevice?.modelVersion?.version,
+      currentDevice?.attributes?.firmware ?? currentDevice?.modelVersion?.version,
   };
 
   const dashboardCommandHandler = async (
@@ -76,20 +92,16 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     payload: Record<string, unknown>,
   ) => {
     try {
-      await sendDeviceCommand(
-        id!,
-        command,
-        payload,
-      );
+      const result = await sendDeviceCommand(id!, command, payload, true);
 
-      toast.success(`${command} executed`);
+      if (result.status === 'NOOP') {
+        toast.success(`${command} was already applied`);
+      } else {
+        toast.success(`${command} confirmed by device`);
+      }
     } catch {
       toast.error(`${command} failed`);
     }
-  };
-
-  const handleGoBack = () => {
-    navigate(`/dashboard?tab=${previousTab}`);
   };
 
   useDevicesStatuses({
@@ -99,9 +111,11 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   });
 
   useEffect(() => {
-    if (!id || !isDeviceConnected) return;
+    if (!id || !isDeviceConnected) {
+      return;
+    }
 
-    sendDeviceCommand(id, 'SET_STATE', { state: 'ACTIVE' })
+    sendDeviceCommand(id, 'SET_STATE', { state: 'ACTIVE' }, true)
       .then(() => {
         toast.success('Telemetry stream initiated');
       })
@@ -118,18 +132,32 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
     };
   }, [id, isDeviceConnected]);
 
-  useEffect(() => { if (auth?.token) fetchDevices(); }, [auth?.token]);
+  useEffect(() => {
+    if (auth?.token) {
+      fetchDevices();
+    }
+  }, [auth?.token]);
 
-  if (devicesLoading) return <div className="dashboard-layout">Loading system data...</div>;
-  if (!currentDevice) return <div className="dashboard-layout">Device not found</div>;
+  if (devicesLoading) {
+    return <div className="dashboard-layout">Loading system data...</div>;
+  }
+
+  if (!currentDevice) {
+    return <div className="dashboard-layout">Device not found</div>;
+  }
 
   return (
     <div className="dashboard-layout">
-      <Sidebar profile={auth.profile} activeTab="devices" setActiveTab={() => handleGoBack()} onLogout={auth.handleLogout} />
+      <Sidebar
+        profile={auth.profile}
+        activeTab="devices"
+        setActiveTab={handleSidebarTabChange}
+        onLogout={auth.handleLogout}
+      />
 
       <main className="dashboard-content">
         <header className="dd-header">
-          <button className="dd-back" onClick={handleGoBack}>
+          <button className="dd-back" onClick={() => navigate('/dashboard?tab=devices')}>
             <ArrowLeft size={15} aria-hidden="true" />
             All devices
           </button>
@@ -137,28 +165,48 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
           <div className="dd-heading-row">
             <div className="dd-heading-copy">
               <span className="dd-eyebrow">Device details</span>
+
               <h1 className="dd-title">
                 <span className="highlight">{currentDevice.name || id}</span>
               </h1>
+
               <div className="dd-device-meta">
                 <span>{currentDevice.serialNumber}</span>
-                <span className="dd-device-meta-separator" aria-hidden="true">/</span>
+
+                <span className="dd-device-meta-separator" aria-hidden="true">
+                  /
+                </span>
+
                 <span>{currentDevice.modelVersion?.modelId || currentDevice.type}</span>
+
                 {currentDevice.modelVersion?.version && (
                   <>
-                    <span className="dd-device-meta-separator" aria-hidden="true">/</span>
+                    <span className="dd-device-meta-separator" aria-hidden="true">
+                      /
+                    </span>
+
                     <span>v{currentDevice.modelVersion.version}</span>
                   </>
                 )}
               </div>
             </div>
 
-            <span className={`dd-connection ${isDeviceConnected ? 'dd-connection--online' : 'dd-connection--offline'}`}>
-              {isDeviceConnected ? <Wifi size={14} aria-hidden="true" /> : <WifiOff size={14} aria-hidden="true" />}
+            <span
+              className={`dd-connection ${
+                isDeviceConnected ? 'dd-connection--online' : 'dd-connection--offline'
+              }`}
+            >
+              {isDeviceConnected ? (
+                <Wifi size={14} aria-hidden="true" />
+              ) : (
+                <WifiOff size={14} aria-hidden="true" />
+              )}
+
               {isDeviceConnected ? 'Online' : 'Offline'}
             </span>
           </div>
         </header>
+
         {dashboardConfig && (
           <DynamicDeviceDashboard
             deviceId={id ?? 'unknown-device'}
@@ -168,9 +216,7 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
             onCommand={dashboardCommandHandler}
             disabled={!isDeviceConnected}
             schema={currentDevice?.modelVersion?.schema}
-            availableBindings={Object.keys(
-              currentDevice?.modelVersion?.mapping?.fields ?? {},
-            )}
+            availableBindings={Object.keys(currentDevice?.modelVersion?.mapping?.fields ?? {})}
             stylePreset="dark"
           />
         )}

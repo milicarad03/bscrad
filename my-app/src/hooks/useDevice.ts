@@ -33,6 +33,9 @@ type ApplyModelVersionResponse = {
 type DeviceCommandResponse = {
   success: boolean;
   correlationId: string;
+  status: 'DISPATCHED' | 'NOOP';
+  reason?: 'ALREADY_APPLIED';
+  observedAt?: string;
   performance?: {
     clientStartedAt: number;
     serverReceivedAt: number;
@@ -270,7 +273,13 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
         );
       }
 
-      if (!silent) toast.success("Command sent!");
+      if (!silent) {
+        toast.success(
+          response.status === 'NOOP'
+            ? 'Requested state is already applied.'
+            : 'Command confirmed by device.',
+        );
+      }
       return response;
     })
     .catch((err) => {
