@@ -74,7 +74,7 @@
 }
 
 .search-input-cyber::placeholder {
-  color: #66717e;
+  color: var(--text-muted);
 }
 
 .filter-dropdown-label {
@@ -110,6 +110,22 @@
   font-weight: 650;
 }
 
+.btn-import-devices {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  color: var(--text-main);
+  background: var(--input-bg);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.btn-import-devices:hover {
+  border-color: var(--accent-neon);
+  background: var(--table-hover-bg);
+}
+
 .btn-register-cyber:hover {
   border-color: #4f8cff;
   background: #3d7ce0;
@@ -131,6 +147,10 @@
   }
 
   .btn-register-cyber {
+    flex: 1;
+  }
+
+  .btn-import-devices {
     flex: 1;
   }
 }

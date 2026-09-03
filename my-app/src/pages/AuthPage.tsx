@@ -25,7 +25,7 @@ export const AuthPage = ({ auth }: AuthPageProps) => {
 
 
   return (
-    <section id="center">
+    <section id="center" className="auth-page">
       <div className="hero">
         <img src={heroImg} className="base" width="120" height="129" alt="Hero" />
         <h1>{isLogin ? "Welcome back" : "Create account"}</h1>

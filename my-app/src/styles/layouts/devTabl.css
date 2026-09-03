@@ -58,7 +58,7 @@
 }
 
 .cell-device-name {
-  color: #f0f5fa;
+  color: var(--text-main);
   font-weight: 650;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .cell-serial {
-  color: #9eabb8;
+  color: var(--text-dim);
   font-family: var(--font-mono);
   font-size: 0.72rem;
 }
@@ -91,8 +91,8 @@
 }
 
 .badge-owner.assigned {
-  color: #a9c7ff;
-  background: rgba(79, 140, 255, 0.1);
+  color: var(--accent-neon);
+  background: color-mix(in srgb, var(--accent-neon) 10%, transparent);
 }
 
 .badge-owner.unassigned {
@@ -187,7 +187,7 @@
   padding: 4px 8px;
   border: 1px solid var(--btn-border);
   border-radius: 4px;
-  color: #c4ced8;
+  color: var(--text-main);
   background: transparent;
   font-size: 0.67rem;
   font-weight: 600;
@@ -196,9 +196,9 @@
 }
 
 .btn-action:hover:not(:disabled) {
-  border-color: #4f8cff;
-  color: #a9c7ff;
-  background: rgba(79, 140, 255, 0.08);
+  border-color: var(--accent-neon);
+  color: var(--accent-neon);
+  background: color-mix(in srgb, var(--accent-neon) 8%, transparent);
 }
 
 .btn-action:disabled {

@@ -82,8 +82,7 @@ const setupSession = (
 };
 
 const openUserManagement = () => {
-  // Direktno otvaramo dashboard sa aktivnim tabom za korisnike pošto je uklonjeno staro dugme iz hedera
-  cy.visit(`${APP_URL}/dashboard?tab=users`);
+  cy.contains('button', 'Users').click();
 
   cy.contains('User Management', {
     timeout: 10000,
@@ -189,7 +188,7 @@ describe('Admin User Management', () => {
     cy.on('window:confirm', () => true);
 
     getUserRow('approved@example.com')
-      .find('button[title="Delete"]')
+      .find('button[title="Obriši"]')
       .click();
 
     cy.wait('@deleteUser');
@@ -207,7 +206,7 @@ describe('Admin User Management', () => {
     cy.on('window:confirm', () => false);
 
     getUserRow('approved@example.com')
-      .find('button[title="Delete"]')
+      .find('button[title="Obriši"]')
       .click();
 
     cy.get('@deleteUser.all').should('have.length', 0);
@@ -251,7 +250,7 @@ describe('Admin User Management', () => {
       ],
     }).as('refreshUsers');
 
-    cy.get('button[title="Refresh list"]').click();
+    cy.get('button[title="Osveži listu"]').click();
 
     cy.wait('@refreshUsers');
 

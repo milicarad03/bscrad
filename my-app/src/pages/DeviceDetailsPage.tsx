@@ -1,4 +1,7 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import {
+  useParams,
+  useNavigate,
+} from 'react-router-dom';
 import { useEffect } from 'react';
 import { Sidebar } from '../components/Dashboard/Sidebar';
 import { useDeviceTelemetry } from '../hooks/useDeviceTelemetry';
@@ -10,127 +13,282 @@ import { DynamicDeviceDashboard } from 'device-dashboard-ui-plugin';
 import { useDevicesStatuses } from '../hooks/useDeviceStatus';
 import { registerDashboardRenderer } from 'device-dashboard-ui-plugin/registry';
 import { OilGaugeRenderer } from '../components/CustomRenderers/OilGaugeRenderer';
-import { ArrowLeft, Wifi, WifiOff } from 'lucide-react';
-import { DriveModeSelectorRenderer } from '../components/CustomRenderers/DriveModeSelectorRenderer';
-import { SignalStrengthRenderer } from '../components/CustomRenderers/SignalStrengthRenderer';
-import { BatteryIndicatorRenderer } from '../components/CustomRenderers/BatteryIndicatorRenderer';
-import { TemperatureThermometerRenderer } from '../components/CustomRenderers/TemperatureThermometerRenderer';
-import { StatusBadgeRenderer } from '../components/CustomRenderers/StatusBadgeRenderer';
+import {
+  ArrowLeft,
+  Wifi,
+  WifiOff,
+} from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-
-export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
+export const DeviceDetailsPage = ({
+  auth,
+}: {
+  auth: any;
+}) => {
   const { id } = useParams();
+
   const navigate = useNavigate();
+  const { themeMode } = useTheme();
 
-  const { latestTelemetry } = useDeviceTelemetry({
-    deviceId: id,
-    token: auth?.token,
-  });
+  const { latestTelemetry } =
+    useDeviceTelemetry({
+      deviceId: id,
+      token: auth?.token,
+    });
 
-  const { fetchDevices, sendDeviceCommand, devices, loading: devicesLoading, updateDeviceStatus } =
-    useDevice(auth?.token);
+  const {
+    fetchDevices,
+    sendDeviceCommand,
+    devices,
+    loading: devicesLoading,
+    updateDeviceStatus,
+  } = useDevice(auth?.token);
 
-  const currentDevice = devices.find(
-    (device) => String(device.id) === String(id) || String(device.serialNumber) === String(id),
+  const currentDevice =
+    devices.find(
+      (device) =>
+        String(device.id) ===
+          String(id) ||
+        String(
+          device.serialNumber,
+        ) === String(id),
+    );
+
+  const isDeviceConnected =
+    currentDevice?.status ===
+    'ONLINE';
+
+  const historicalData =
+    latestTelemetry?.data
+      ? transformTelemetryForCharts(
+          latestTelemetry.data,
+        )
+      : [];
+
+  const dashboardConfig =
+    currentDevice
+      ?.modelVersion
+      ?.mapping
+      ?.dashboard;
+
+  registerDashboardRenderer(
+    'oil-gauge',
+    new OilGaugeRenderer(),
   );
 
-  const isDeviceConnected = currentDevice?.status === 'ONLINE';
-
-  const historicalData = latestTelemetry?.data
-    ? transformTelemetryForCharts(latestTelemetry.data)
-    : [];
-
-  const dashboardConfig = currentDevice?.modelVersion?.mapping?.dashboard;
-
-  registerDashboardRenderer('oil-gauge', new OilGaugeRenderer());
-  registerDashboardRenderer('drive-mode-selector', new DriveModeSelectorRenderer());
-  registerDashboardRenderer('signal-strength', new SignalStrengthRenderer());
-  registerDashboardRenderer('battery-indicator', new BatteryIndicatorRenderer());
-  registerDashboardRenderer('temperature-thermometer', new TemperatureThermometerRenderer());
-  registerDashboardRenderer('status-badge', new StatusBadgeRenderer());
-
-
-  const handleSidebarTabChange = (tabName: string) => {
-    navigate(`/dashboard?tab=${encodeURIComponent(tabName)}`);
+  /*
+   * Sidebar na DeviceDetailsPage mora da zna
+   * koji je konkretan tab korisnik kliknuo.
+   *
+   * Ranije je callback ignorisao tabName i
+   * uvek radio navigate('/dashboard'), pa se
+   * Dashboard otvarao na default "profile" tabu.
+   */
+  const handleSidebarTabChange = (
+    tabName: string,
+  ) => {
+    navigate(
+      `/dashboard?tab=${encodeURIComponent(
+        tabName,
+      )}`,
+    );
   };
 
   const pluginTelemetry = {
-    ...Object.entries(latestTelemetry?.data ?? {}).reduce<Record<string, unknown>>(
-      (result, [field, values]) => {
-        if (!Array.isArray(values) || values.length === 0) {
-          if (values !== undefined && values !== null) {
-            result[field] = values;
+    ...Object.entries(
+      latestTelemetry?.data ??
+        {},
+    ).reduce<
+      Record<string, unknown>
+    >(
+      (
+        result,
+        [field, values],
+      ) => {
+        if (
+          !Array.isArray(
+            values,
+          ) ||
+          values.length === 0
+        ) {
+          if (
+            values !==
+              undefined &&
+            values !== null
+          ) {
+            result[field] =
+              values;
           }
+
           return result;
         }
 
-        const last = values[values.length - 1];
+        const last =
+          values[
+            values.length - 1
+          ];
 
-        if (Array.isArray(last) && last.length >= 2) {
-          const [elem0, elem1] = last;
-          const isElem0Timestamp = typeof elem0 === 'number' && elem0 > 1000000000;
-          result[field] = isElem0Timestamp ? elem1 : elem0;
-        } else if (last && typeof last === 'object' && 'value' in last) {
-          result[field] = (last as any).value;
+        if (
+          Array.isArray(
+            last,
+          ) &&
+          last.length >= 2
+        ) {
+          const [
+            elem0,
+            elem1,
+          ] = last;
+
+          const isElem0Timestamp =
+            typeof elem0 ===
+              'number' &&
+            elem0 >
+              1000000000;
+
+          result[field] =
+            isElem0Timestamp
+              ? elem1
+              : elem0;
+        } else if (
+          last &&
+          typeof last ===
+            'object' &&
+          'value' in last
+        ) {
+          result[field] = (
+            last as any
+          ).value;
         } else {
-          result[field] = last;
+          result[field] =
+            last;
         }
 
         return result;
       },
       {},
     ),
-    ...(currentDevice?.attributes ?? {}),
+
+    /*
+     * Device attributes predstavljaju
+     * poslednji autoritativni metadata snapshot.
+     */
+    ...(currentDevice?.attributes ??
+      {}),
+
     serialNumber:
-      currentDevice?.attributes?.serialNumber ?? currentDevice?.serialNumber,
+      currentDevice
+        ?.attributes
+        ?.serialNumber ??
+      currentDevice
+        ?.serialNumber,
+
     firmware:
-      currentDevice?.attributes?.firmware ?? currentDevice?.modelVersion?.version,
+      currentDevice
+        ?.attributes
+        ?.firmware ??
+      currentDevice
+        ?.modelVersion
+        ?.version,
   };
 
-  const dashboardCommandHandler = async (
-    command: string,
-    payload: Record<string, unknown>,
-  ) => {
-    try {
-      const result = await sendDeviceCommand(id!, command, payload, true);
+  const dashboardCommandHandler =
+    async (
+      command: string,
+      payload: Record<
+        string,
+        unknown
+      >,
+    ) => {
+      try {
+        const result =
+          await sendDeviceCommand(
+            id!,
+            command,
+            payload,
+            true,
+          );
 
-      if (result.status === 'NOOP') {
-        toast.success(`${command} was already applied`);
-      } else {
-        toast.success(`${command} confirmed by device`);
+        if (
+          result.status ===
+          'NOOP'
+        ) {
+          toast.success(
+            `${command} was already applied`,
+          );
+        } else {
+          toast.success(
+            `${command} confirmed by device`,
+          );
+        }
+      } catch {
+        toast.error(
+          `${command} failed`,
+        );
       }
-    } catch {
-      toast.error(`${command} failed`);
-    }
-  };
+    };
 
   useDevicesStatuses({
-    onStatusUpdate: (deviceId, newStatus) => {
-      updateDeviceStatus(deviceId, newStatus);
+    onStatusUpdate: (
+      deviceId,
+      newStatus,
+    ) => {
+      updateDeviceStatus(
+        deviceId,
+        newStatus,
+      );
     },
   });
 
   useEffect(() => {
-    if (!id || !isDeviceConnected) {
+    if (
+      !id ||
+      !isDeviceConnected
+    ) {
       return;
     }
 
-    sendDeviceCommand(id, 'SET_STATE', { state: 'ACTIVE' }, true)
+    sendDeviceCommand(
+      id,
+      'SET_STATE',
+      {
+        state: 'ACTIVE',
+      },
+      true,
+    )
       .then(() => {
-        toast.success('Telemetry stream initiated');
+        toast.success(
+          'Telemetry stream initiated',
+        );
       })
       .catch((err) => {
-        if (err.message !== 'DEVICE_OFFLINE') {
-          toast.error('Failed to auto-start stream');
+        if (
+          err.message !==
+          'DEVICE_OFFLINE'
+        ) {
+          toast.error(
+            'Failed to auto-start stream',
+          );
         }
       });
 
     return () => {
-      if (isDeviceConnected) {
-        sendDeviceCommand(id, 'SET_STATE', { state: 'IDLE' }, true).catch(() => {});
+      if (
+        isDeviceConnected
+      ) {
+        sendDeviceCommand(
+          id,
+          'SET_STATE',
+          {
+            state: 'IDLE',
+          },
+          true,
+        ).catch(() => {});
       }
     };
-  }, [id, isDeviceConnected]);
+  }, [
+    id,
+    isDeviceConnected,
+  ]);
 
   useEffect(() => {
     if (auth?.token) {
@@ -139,53 +297,107 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
   }, [auth?.token]);
 
   if (devicesLoading) {
-    return <div className="dashboard-layout">Loading system data...</div>;
+    return (
+      <div className="dashboard-layout">
+        Loading system
+        data...
+      </div>
+    );
   }
 
   if (!currentDevice) {
-    return <div className="dashboard-layout">Device not found</div>;
+    return (
+      <div className="dashboard-layout">
+        Device not found
+      </div>
+    );
   }
 
   return (
     <div className="dashboard-layout">
       <Sidebar
-        profile={auth.profile}
+        profile={
+          auth.profile
+        }
         activeTab="devices"
-        setActiveTab={handleSidebarTabChange}
-        onLogout={auth.handleLogout}
+        setActiveTab={
+          handleSidebarTabChange
+        }
+        onLogout={
+          auth.handleLogout
+        }
       />
 
       <main className="dashboard-content">
         <header className="dd-header">
-          <button className="dd-back" onClick={() => navigate('/dashboard?tab=devices')}>
-            <ArrowLeft size={15} aria-hidden="true" />
+          <button
+            className="dd-back"
+            onClick={() =>
+              navigate(
+                '/dashboard?tab=devices',
+              )
+            }
+          >
+            <ArrowLeft
+              size={15}
+              aria-hidden="true"
+            />
             All devices
           </button>
 
           <div className="dd-heading-row">
             <div className="dd-heading-copy">
-              <span className="dd-eyebrow">Device details</span>
+              <span className="dd-eyebrow">
+                Device details
+              </span>
 
               <h1 className="dd-title">
-                <span className="highlight">{currentDevice.name || id}</span>
+                <span className="highlight">
+                  {currentDevice.name ||
+                    id}
+                </span>
               </h1>
 
               <div className="dd-device-meta">
-                <span>{currentDevice.serialNumber}</span>
+                <span>
+                  {
+                    currentDevice.serialNumber
+                  }
+                </span>
 
-                <span className="dd-device-meta-separator" aria-hidden="true">
+                <span
+                  className="dd-device-meta-separator"
+                  aria-hidden="true"
+                >
                   /
                 </span>
 
-                <span>{currentDevice.modelVersion?.modelId || currentDevice.type}</span>
+                <span>
+                  {currentDevice
+                    .modelVersion
+                    ?.modelId ||
+                    currentDevice.type}
+                </span>
 
-                {currentDevice.modelVersion?.version && (
+                {currentDevice
+                  .modelVersion
+                  ?.version && (
                   <>
-                    <span className="dd-device-meta-separator" aria-hidden="true">
+                    <span
+                      className="dd-device-meta-separator"
+                      aria-hidden="true"
+                    >
                       /
                     </span>
 
-                    <span>v{currentDevice.modelVersion.version}</span>
+                    <span>
+                      v
+                      {
+                        currentDevice
+                          .modelVersion
+                          .version
+                      }
+                    </span>
                   </>
                 )}
               </div>
@@ -193,31 +405,64 @@ export const DeviceDetailsPage = ({ auth }: { auth: any }) => {
 
             <span
               className={`dd-connection ${
-                isDeviceConnected ? 'dd-connection--online' : 'dd-connection--offline'
+                isDeviceConnected
+                  ? 'dd-connection--online'
+                  : 'dd-connection--offline'
               }`}
             >
               {isDeviceConnected ? (
-                <Wifi size={14} aria-hidden="true" />
+                <Wifi
+                  size={14}
+                  aria-hidden="true"
+                />
               ) : (
-                <WifiOff size={14} aria-hidden="true" />
+                <WifiOff
+                  size={14}
+                  aria-hidden="true"
+                />
               )}
 
-              {isDeviceConnected ? 'Online' : 'Offline'}
+              {isDeviceConnected
+                ? 'Online'
+                : 'Offline'}
             </span>
           </div>
         </header>
 
         {dashboardConfig && (
           <DynamicDeviceDashboard
-            deviceId={id ?? 'unknown-device'}
-            config={dashboardConfig}
-            telemetry={pluginTelemetry}
-            history={historicalData}
-            onCommand={dashboardCommandHandler}
-            disabled={!isDeviceConnected}
-            schema={currentDevice?.modelVersion?.schema}
-            availableBindings={Object.keys(currentDevice?.modelVersion?.mapping?.fields ?? {})}
-            stylePreset="dark"
+            deviceId={
+              id ??
+              'unknown-device'
+            }
+            config={
+              dashboardConfig
+            }
+            telemetry={
+              pluginTelemetry
+            }
+            history={
+              historicalData
+            }
+            onCommand={
+              dashboardCommandHandler
+            }
+            disabled={
+              !isDeviceConnected
+            }
+            schema={
+              currentDevice
+                ?.modelVersion
+                ?.schema
+            }
+            availableBindings={Object.keys(
+              currentDevice
+                ?.modelVersion
+                ?.mapping
+                ?.fields ?? {},
+            )}
+            stylePreset={themeMode}
+            showThemeSwitcher={false}
           />
         )}
       </main>

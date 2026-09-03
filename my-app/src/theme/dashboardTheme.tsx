@@ -1,4 +1,4 @@
-export type ThemeMode = 'dark' | 'light' | 'cyberpunk';
+export type ThemeMode = 'dark' | 'light';
 
 export interface ThemeStyles {
   isDark: boolean;
@@ -20,7 +20,7 @@ export interface ThemeStyles {
 }
 
 export const themes: Record<ThemeMode, ThemeStyles> = {
-
+  // Tema 1: Modern Dark Glassmorphism
   dark: {
     isDark: true,
     background: '#0f172a',
@@ -40,7 +40,7 @@ export const themes: Record<ThemeMode, ThemeStyles> = {
     tableHeaderBg: 'rgba(15, 23, 42, 0.6)',
   },
 
-
+  // Tema 2: Minimalist Light
   light: {
     isDark: false,
     background: '#f8fafc',
@@ -58,26 +58,6 @@ export const themes: Record<ThemeMode, ThemeStyles> = {
     primaryColor: '#2563eb',
     successColor: '#16a34a',
     tableHeaderBg: '#f1f5f9',
-  },
-
-
-  cyberpunk: {
-    isDark: true,
-    background: '#0d0221',
-    cardBackground: 'rgba(26, 14, 53, 0.85)',
-    cardBorder: '1px solid #00f0ff',
-    cardShadow: '0 0 15px rgba(0, 240, 255, 0.2)',
-    backdropFilter: 'blur(8px)',
-    borderRadius: '4px',
-    textPrimary: '#00f0ff',
-    textSecondary: '#ff007f',
-    textMuted: '#7b2cbf',
-    inputBg: '#05010e',
-    inputBorder: '1px solid #ff007f',
-    inputColor: '#00f0ff',
-    primaryColor: '#ff007f',
-    successColor: '#00ff66',
-    tableHeaderBg: 'rgba(255, 0, 127, 0.15)',
   },
 };
 

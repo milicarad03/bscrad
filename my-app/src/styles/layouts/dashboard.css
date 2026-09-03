@@ -31,10 +31,10 @@
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  border: 1px solid rgba(79, 140, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--accent-neon) 38%, transparent);
   border-radius: 6px;
-  color: #8bb2ff;
-  background: rgba(79, 140, 255, 0.1);
+  color: var(--accent-neon);
+  background: color-mix(in srgb, var(--accent-neon) 11%, transparent);
 }
 
 .sidebar-brand-copy {
@@ -79,10 +79,10 @@
 
 .role-badge {
   padding: 2px 6px;
-  border: 1px solid #334760;
+  border: 1px solid color-mix(in srgb, var(--accent-neon) 32%, var(--border-color));
   border-radius: 4px;
-  color: #94b9f4;
-  background: #182434;
+  color: var(--accent-neon);
+  background: color-mix(in srgb, var(--accent-neon) 10%, var(--bg-card));
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0;
@@ -94,6 +94,41 @@
   flex: 1;
   flex-direction: column;
   gap: 3px;
+}
+
+.sidebar-footer {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.theme-control {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 5px 8px;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.theme-control select {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  color: var(--text-main);
+  background: var(--input-bg);
+  cursor: pointer;
+}
+
+.theme-control select:focus-visible {
+  border-color: var(--accent-neon);
+  outline: 2px solid color-mix(in srgb, var(--accent-neon) 25%, transparent);
+  outline-offset: 1px;
 }
 
 .nav-item {
@@ -119,9 +154,9 @@
 }
 
 .nav-item.active {
-  border-color: rgba(79, 140, 255, 0.18);
-  color: #b9d0ff;
-  background: rgba(79, 140, 255, 0.11);
+  border-color: color-mix(in srgb, var(--accent-neon) 24%, transparent);
+  color: var(--accent-neon);
+  background: color-mix(in srgb, var(--accent-neon) 10%, transparent);
 }
 
 .nav-icon {
@@ -191,7 +226,7 @@
 
 .search-input:focus {
   border-color: var(--accent-neon);
-  outline: 2px solid rgba(79, 140, 255, 0.15);
+  outline: 2px solid color-mix(in srgb, var(--accent-neon) 20%, transparent);
   outline-offset: 0;
 }
 
@@ -247,6 +282,35 @@
     width: auto;
     min-height: 32px;
     padding: 5px 8px;
+  }
+
+  .sidebar-footer {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+  }
+
+  .theme-control {
+    display: block;
+  }
+
+  .theme-control > svg,
+  .theme-control > span {
+    display: none;
+  }
+
+  .theme-control select {
+    width: 112px;
+    min-height: 32px;
+  }
+
+  .sidebar-footer .logout-btn {
+    position: static;
   }
 
   .dashboard-content {

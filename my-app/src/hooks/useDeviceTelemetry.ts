@@ -1,3 +1,4 @@
+// src/hooks/useDeviceTelemetry.ts
 
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
@@ -36,6 +37,9 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
           logger.info(`[TELEMETRY] Successfully populated hardware analytics. History stack size: ${history.length}`);
             setLatestTelemetry(latest);
             setTelemetryHistory(history);
+         /*   const initialChartData = latest?.data?.historicalTelemetry ?? [];
+
+            setChartData(initialChartData);*/
             const historical =latest?.data?.historicalTelemetry ?? [];
 
             const latestPoint = latest? [{
@@ -66,7 +70,7 @@ export const useDeviceTelemetry = ({ deviceId, token }: UseDeviceTelemetryParams
 
     const socket: Socket = io(WS_BASE_URL, {
       auth: {
-        token: token, 
+        token: token, // <--- OVO JE NEDOSTAJALO! Prosleđujemo token iz parametara hook-a
       },
       withCredentials: true,
 

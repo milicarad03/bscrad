@@ -8,7 +8,10 @@ import { DeviceList } from '../components/Dashboard/DeviceList';
 import { useState, useEffect } from 'react';
 import { Sidebar } from '../components/Dashboard/Sidebar';
 import { DeviceDetailsModal } from '../components/Dashboard/DeviceDetailsModal';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import { ModelVersionManager } from '../components/Dashboard/ModelVersionManager';
 
 interface DashboardProps {
@@ -17,200 +20,427 @@ interface DashboardProps {
   device: ReturnType<typeof useDevice>;
 }
 
-export const Dashboard = ({ auth, device }: DashboardProps) => {
-  const [selectedDevice] = useState<any>(null);
-  const [showModal, setShowModal] = useState(false);
+export const Dashboard = ({
+  auth,
+  device,
+}: DashboardProps) => {
+  const [selectedDevice] =
+    useState<any>(null);
+
+  const [showModal, setShowModal] =
+    useState(false);
+
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
-  const activeTab = searchParams.get('tab') || 'profile';
+  const [searchParams] =
+    useSearchParams();
 
-  const setActiveTab = (tabName: string) => {
-    navigate(`/dashboard?tab=${encodeURIComponent(tabName)}`);
+  const requestedTab =
+    searchParams.get('tab') ||
+    'profile';
+  const activeTab = [
+    'profile',
+    'devices',
+    'register-device',
+    'users',
+    'model-versions',
+  ].includes(requestedTab)
+    ? requestedTab
+    : 'profile';
+
+  /*
+   * Sidebar navigacija se čuva u URL-u.
+   *
+   * Na primer:
+   * /dashboard?tab=devices
+   * /dashboard?tab=users
+   * /dashboard?tab=model-versions
+   */
+  const setActiveTab = (
+    tabName: string,
+  ) => {
+    navigate(
+      `/dashboard?tab=${encodeURIComponent(
+        tabName,
+      )}`,
+    );
   };
 
   useEffect(() => {
-    if (activeTab === 'devices' && auth.profile && !device.hasError) {
+    if (
+      activeTab === 'devices' &&
+      auth.profile &&
+      !device.hasError
+    ) {
       device.fetchDevices();
     }
-  }, [activeTab, auth.profile, device.hasError]);
+  }, [
+    activeTab,
+    auth.profile,
+    device.hasError,
+  ]);
 
   useEffect(() => {
-    if (activeTab === 'users' && auth.profile?.role === 'ADMIN') {
+    if (
+      activeTab === 'users' &&
+      auth.profile?.role ===
+        'ADMIN'
+    ) {
       auth.fetchUsers();
     }
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'model-versions' && auth.profile?.role === 'ADMIN') {
+    if (
+      activeTab ===
+        'model-versions' &&
+      auth.profile?.role ===
+        'ADMIN'
+    ) {
       device.fetchModels();
     }
-  }, [activeTab, auth.profile?.role]);
+  }, [
+    activeTab,
+    auth.profile?.role,
+  ]);
 
   return (
     <div className="dashboard-layout">
       <Sidebar
         profile={auth.profile}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onLogout={auth.handleLogout}
+        setActiveTab={
+          setActiveTab
+        }
+        onLogout={
+          auth.handleLogout
+        }
       />
 
       <main className="dashboard-content">
-        {activeTab === 'profile' && auth.profile && (
-          <div className="view-section">
-            <h2>User Profile</h2>
+        {/* PROFILE */}
+        {activeTab ===
+          'profile' &&
+          auth.profile && (
+            <div className="view-section">
+              <h2>
+                User Profile
+              </h2>
 
-            <Card>
-              <p>Email: {auth.profile?.email}</p>
+              <Card>
+                <p>
+                  Email:{' '}
+                  {
+                    auth.profile
+                      ?.email
+                  }
+                </p>
 
-              <p>Role: {auth.profile?.role}</p>
+                <p>
+                  Role:{' '}
+                  {
+                    auth.profile
+                      ?.role
+                  }
+                </p>
 
-              <p>ID: {auth.profile?.id}</p>
-            </Card>
-          </div>
-        )}
+                <p>
+                  ID:{' '}
+                  {
+                    auth.profile
+                      ?.id
+                  }
+                </p>
+              </Card>
+            </div>
+          )}
 
-        {activeTab === 'overview' && (
-          <div className="view-section">
-            <h2>Overview</h2>
-            <p>Statistics...</p>
-          </div>
-        )}
-
-        {activeTab === 'devices' && (
+        {/* DEVICES */}
+        {activeTab ===
+          'devices' && (
           <div className="view-section">
             {device.hasError && (
               <div
                 data-cy="error-message"
                 style={{
-                  color: '#ff4d4d',
-                  marginBottom: '10px',
-                  fontSize: '0.9rem',
+                  color:
+                    '#ff4d4d',
+                  marginBottom:
+                    '10px',
+                  fontSize:
+                    '0.9rem',
                 }}
               >
-                NetworkError: Failed to fetch devices.
+                NetworkError:
+                Failed to fetch
+                devices.
               </div>
             )}
 
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '20px',
+                justifyContent:
+                  'space-between',
+                marginBottom:
+                  '20px',
               }}
             >
-              <h2>Device Management</h2>
+              <h2>
+                Device
+                Management
+              </h2>
             </div>
 
             <DeviceList
-              device={Array.isArray(device.devices) ? device.devices : []}
-              users={auth.users || []}
-              onDelete={device.handleDeleteDevice}
+              device={
+                Array.isArray(
+                  device.devices,
+                )
+                  ? device.devices
+                  : []
+              }
+              users={
+                auth.users || []
+              }
+              onDelete={
+                device.handleDeleteDevice
+              }
               onDevice={(e) => {
                 e.preventDefault();
+
                 device.resetError();
                 device.fetchDevices();
               }}
-              isAdmin={auth.profile?.role === 'ADMIN'}
-              onDeviceClick={(dev) => navigate(`/device/${dev.serialNumber}`)}
-              currentUserId={auth.profile?.id}
-              onRegister={() => setActiveTab('register-device')}
-              onFilterChange={(ids, types) => {
+              isAdmin={
+                auth.profile
+                  ?.role ===
+                'ADMIN'
+              }
+              onDeviceClick={(
+                dev,
+              ) =>
+                navigate(
+                  `/device/${dev.serialNumber}`,
+                )
+              }
+              currentUserId={
+                auth.profile?.id
+              }
+              onRegister={() =>
+                setActiveTab(
+                  'register-device',
+                )
+              }
+              onBulkImport={
+                device.bulkImportDevices
+              }
+              onFilterChange={(
+                ids,
+                types,
+              ) => {
                 device.resetError();
-                device.fetchDevices({
-                  userId: ids,
-                  type: types,
-                });
-                device.setSelectedTargetUsers(ids || []);
-                device.setSelectedTypes(types || []);
+
+                device.fetchDevices(
+                  {
+                    userId: ids,
+                    type: types,
+                  },
+                );
+
+                device.setSelectedTargetUsers(
+                  ids || [],
+                );
+
+                device.setSelectedTypes(
+                  types || [],
+                );
               }}
-              targetUserIds={device.selectedTargetUsers || []}
-              selectedTypes={device.selectedTypes || []}
-              modelVersions={device.models || []}
-              onApplyModelVersion={device.applyModelVersion}
-              onTransferOwnership={async (deviceId, userId) => {
-                await device.handleReassignDevice(deviceId, Number(userId));
+              targetUserIds={
+                device.selectedTargetUsers ||
+                []
+              }
+              selectedTypes={
+                device.selectedTypes ||
+                []
+              }
+              modelVersions={
+                device.models || []
+              }
+              onApplyModelVersion={
+                device.applyModelVersion
+              }
+              onTransferOwnership={async (
+                deviceId,
+                userId,
+              ) => {
+                await device.handleReassignDevice(
+                  deviceId,
+                  Number(userId),
+                );
               }}
             />
           </div>
         )}
 
-        {activeTab === 'register-device' && (
+        {/* REGISTER DEVICE */}
+        {activeTab ===
+          'register-device' && (
           <div className="view-section">
             <button
               className="btn-back-link"
               onClick={() => {
                 device.resetForm();
-                setActiveTab('devices');
+
+                setActiveTab(
+                  'devices',
+                );
               }}
             >
               RETURN_TO_DATABASE
             </button>
 
             <DeviceForm
-              onSubmit={device.handleCreateDevice}
+              onSubmit={
+                device.handleCreateDevice
+              }
               onCancel={() => {
                 device.resetForm();
-                setActiveTab('devices');
+
+                setActiveTab(
+                  'devices',
+                );
               }}
-              loading={device.loading}
-              message={device.message}
-              serialNumber={device.newSerialNumber}
-              setSerialNumber={device.setNewSerialNumber}
-              name={device.newDeviceName}
-              setName={device.setNewDeviceName}
-              type={device.newDeviceType}
-              setType={device.setNewDeviceType}
-              isAdmin={auth.profile?.role === 'ADMIN'}
-              users={auth.users}
-              selectedTargetUser={device.selectedTargetUsers[0] || ''}
-              setSelectedTargetUser={(id) =>
-                device.setSelectedTargetUsers([Number(id)])
+              loading={
+                device.loading
               }
-              selectedModelVersion={device.selectedDeviceModel[0] || ''}
-              setSelectedModelVersion={(id) => device.setSelectedDeviceModel([id])}
-              modelVersions={device.models || []}
+              message={
+                device.message
+              }
+              serialNumber={
+                device.newSerialNumber
+              }
+              setSerialNumber={
+                device.setNewSerialNumber
+              }
+              name={
+                device.newDeviceName
+              }
+              setName={
+                device.setNewDeviceName
+              }
+              type={
+                device.newDeviceType
+              }
+              setType={
+                device.setNewDeviceType
+              }
+              isAdmin={
+                auth.profile
+                  ?.role ===
+                'ADMIN'
+              }
+              users={
+                auth.users
+              }
+              selectedTargetUser={
+                device
+                  .selectedTargetUsers[
+                  0
+                ] || ''
+              }
+              setSelectedTargetUser={(
+                id,
+              ) =>
+                device.setSelectedTargetUsers(
+                  [
+                    Number(
+                      id,
+                    ),
+                  ],
+                )
+              }
+              selectedModelVersion={
+                device
+                  .selectedDeviceModel[
+                  0
+                ] || ''
+              }
+              setSelectedModelVersion={(
+                id,
+              ) =>
+                device.setSelectedDeviceModel(
+                  [id],
+                )
+              }
+              modelVersions={
+                device.models ||
+                []
+              }
             />
           </div>
         )}
 
-        {activeTab === 'notifications' && (
-          <div className="view-section">
-            <h2>Notifications</h2>
+        {/* USERS */}
+        {activeTab ===
+          'users' &&
+          auth.profile?.role ===
+            'ADMIN' && (
+            <div className="view-section">
+              <h2>
+                User management
+              </h2>
 
-            <p>No notifications at the moment</p>
-          </div>
-        )}
+              <UsersList
+                users={
+                  auth.users
+                }
+                onDelete={
+                  auth.handleDeleteUser
+                }
+                onApprove={
+                  auth.handleApproveUser
+                }
+                onUsers={
+                  auth.fetchUsers
+                }
+              />
+            </div>
+          )}
 
-        {activeTab === 'users' && auth.profile?.role === 'ADMIN' && (
-          <div className="view-section">
-            <UsersList
-              users={auth.users}
-              onDelete={auth.handleDeleteUser}
-              onApprove={auth.handleApproveUser}
-              onUsers={auth.fetchUsers}
-            />
-          </div>
-        )}
+        {/* MODEL VERSIONS */}
+        {activeTab ===
+          'model-versions' &&
+          auth.profile?.role ===
+            'ADMIN' && (
+            <div className="view-section">
+              <h2>
+                Model Version
+                Registry
+              </h2>
 
-        {activeTab === 'model-versions' && auth.profile?.role === 'ADMIN' && (
-          <div className="view-section">
-            <h2>Model Version Registry</h2>
-
-            <ModelVersionManager
-              modelVersions={device.models || []}
-              onUpload={device.uploadModelVersion}
-              onRefresh={() => device.fetchModels()}
-            />
-          </div>
-        )}
+              <ModelVersionManager
+                modelVersions={
+                  device.models ||
+                  []
+                }
+                onUpload={
+                  device.uploadModelVersion
+                }
+                onRefresh={() =>
+                  device.fetchModels()
+                }
+              />
+            </div>
+          )}
       </main>
 
       <DeviceDetailsModal
         device={selectedDevice}
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() =>
+          setShowModal(false)
+        }
       />
     </div>
   );

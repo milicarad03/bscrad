@@ -594,6 +594,64 @@ describe('Admin Device Flow', () => {
     cy.url().should('include', '/device/SN-1');
   });
 
+  it('should preview and import devices from a JSON manifest', () => {
+    cy.intercept('POST', '**/device/bulk-import', {
+      statusCode: 201,
+      body: {
+        total: 2,
+        created: 2,
+        skipped: 0,
+        failed: 0,
+        targetUser: {
+          id: 2,
+          email: 'new-owner@example.com',
+        },
+        skippedSerialNumbers: [],
+        concurrentSkips: 0,
+      },
+    }).as('bulkImportDevices');
+
+    openDeviceManagement();
+    cy.get('[data-cy="bulk-import-btn"]').click();
+    cy.get('[data-cy="bulk-import-file"]').selectFile(
+      'cypress/fixtures/device-bulk-import.json',
+      { force: true },
+    );
+
+    cy.get('[data-cy="bulk-import-preview"]')
+      .should('contain', 'new-owner@example.com')
+      .and('contain', 'modelA')
+      .and('contain', 'modelB');
+
+    cy.get('[data-cy="bulk-import-submit"]').click();
+    cy.wait('@bulkImportDevices')
+      .its('request.body')
+      .should('deep.equal', {
+        targetUserEmail: 'new-owner@example.com',
+        devices: [
+          {
+            serialNumber: 'fleet-a-001',
+            name: 'Fleet Sensor A001',
+            type: 'sensor',
+            model: 'modelA',
+            version: '10.0.0',
+          },
+          {
+            serialNumber: 'fleet-b-001',
+            name: 'Fleet Compressor B001',
+            type: 'compressor',
+            model: 'modelB',
+            version: '10.0.0',
+          },
+        ],
+      });
+
+    cy.get('[data-cy="bulk-import-result"]')
+      .should('contain', 'Import completed')
+      .and('contain', 'Created')
+      .and('contain', '2');
+  });
+
   it('should redirect to login after a 401 response', () => {
     cy.intercept({ method: 'GET', pathname: '/device' }, {
       statusCode: 401,
@@ -624,5 +682,6 @@ describe('Regular User Device Flow', () => {
     );
 
     cy.get('[data-cy="add-device-btn"]').should('not.exist');
+    cy.get('[data-cy="bulk-import-btn"]').should('not.exist');
   });
 });

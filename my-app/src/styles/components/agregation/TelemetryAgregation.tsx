@@ -83,6 +83,7 @@ const MetricDisplay: React.FC<{ metric: TelemetryMetric; unit: string }> = ({
         <div
           className="bar-fill"
           style={{
+          //  width: `${((metric.current - metric.min) / (metric.max - metric.min)) * 100}%`,
             width: `${fillPercent}%`,
             background: metric.trend === 'UP' ? '#ff6b35' : metric.trend === 'DOWN' ? '#3b82f6' : '#10b981',
           }}

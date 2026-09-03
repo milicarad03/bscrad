@@ -10,6 +10,7 @@ type CommandFieldProps = {
 };
 
 export const CommandField = ({ field, value, onChange }: CommandFieldProps) => {
+  // console.log('DEBUG CommandField render:', { name: field.name, path: field.path, type: field.type, enum: field.enum, value });
   if (field.enum) {
     if (field.enum.length <= 4) {
       return (

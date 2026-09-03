@@ -1,14 +1,14 @@
 import {
-  LayoutDashboard,
   Cpu,
-  Bell,
   Users,
   User,
   LogOut,
   PackagePlus,
   Gauge,
+  Palette,
 } from 'lucide-react';
 import { Button } from '../UI/Button';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SidebarProps {
   profile: any;
@@ -28,6 +28,7 @@ export const Sidebar = ({
   setActiveTab,
   onLogout,
 }: SidebarProps) => {
+  const { themeMode, setThemeMode } = useTheme();
   const menuItems = [
     {
       id: 'profile',
@@ -37,28 +38,11 @@ export const Sidebar = ({
       ),
     },
     {
-      id: 'overview',
-      label: 'Overview',
-      icon: (
-        <LayoutDashboard
-          size={18}
-        />
-      ),
-    },
-    {
       id: 'devices',
       label:
         'Device Management',
       icon: (
         <Cpu size={18} />
-      ),
-    },
-    {
-      id: 'notifications',
-      label:
-        'Notifications',
-      icon: (
-        <Bell size={18} />
       ),
     },
   ];
@@ -155,22 +139,42 @@ export const Sidebar = ({
         )}
       </nav>
 
-      <Button
-        data-cy="logoutbtn"
-        variant="danger"
-        onClick={onLogout}
-        className="logout-btn"
-      >
-        <LogOut
-          size={18}
-          style={{
-            marginRight:
-              '8px',
-          }}
-        />
+      <div className="sidebar-footer">
+        <label className="theme-control">
+          <Palette size={16} aria-hidden="true" />
+          <span>Theme</span>
+          <select
+            aria-label="Application theme"
+            data-cy="application-theme"
+            value={themeMode}
+            onChange={(event) =>
+              setThemeMode(
+                event.target.value as 'dark' | 'light',
+              )
+            }
+          >
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
 
-        Logout
-      </Button>
+        <Button
+          data-cy="logoutbtn"
+          variant="danger"
+          onClick={onLogout}
+          className="logout-btn"
+        >
+          <LogOut
+            size={18}
+            style={{
+              marginRight:
+                '8px',
+            }}
+          />
+
+          Logout
+        </Button>
+      </div>
     </aside>
   );
 };

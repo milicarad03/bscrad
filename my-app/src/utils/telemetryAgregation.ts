@@ -1,3 +1,4 @@
+// Tipovi za agregaciju
 export interface TelemetryMetric {
   field: string;
   current: number;
@@ -22,7 +23,7 @@ export interface AggregatedTelemetry {
   };
 }
 
-
+// Agregacijske funkcije
 export class TelemetryAggregator {
   private static extractNumericValues(value: unknown): number[] {
     if (typeof value === 'number' && Number.isFinite(value)) {

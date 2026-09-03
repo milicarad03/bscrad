@@ -149,6 +149,59 @@ const deviceSchema = {
   },
 };
 
+const firstModelDashboardMapping = {
+  fields: {
+    flowRate: {
+      path: 'metrics.flowRate',
+    },
+  },
+  dashboard: {
+    sections: [
+      {
+        id: 'legacy-overview',
+        title: 'MODEL 1.1.3 OVERVIEW',
+        columns: 1,
+        items: [
+          {
+            id: 'legacy-flow-rate',
+            component: 'value-card',
+            bind: 'flowRate',
+            title: 'Legacy Flow Rate',
+            unit: 'L/min',
+          },
+        ],
+      },
+    ],
+  },
+};
+
+const secondModelDashboardMapping = {
+  fields: {
+    pumpEnabled: {
+      path: 'system.status.pumpEnabled',
+    },
+  },
+  dashboard: {
+    sections: [
+      {
+        id: 'updated-controls',
+        title: 'MODEL 1.1.4 CONTROLS',
+        columns: 1,
+        items: [
+          {
+            id: 'updated-pump-switch',
+            component: 'switch',
+            bind: 'pumpEnabled',
+            title: 'Updated Pump Switch',
+            command: 'SET_PUMP',
+            commandField: 'enabled',
+          },
+        ],
+      },
+    ],
+  },
+};
+
 const createDevice = (
   status: 'ONLINE' | 'OFFLINE' = 'ONLINE',
 ) => ({
@@ -323,6 +376,168 @@ const setupDeviceDashboard = (
   }).should('be.visible');
 };
 
+const setupModelSwitchScenario = () => {
+  const modelVersions = [
+    {
+      id: 'mv-1',
+      modelId: 'modelC',
+      version: '1.1.3',
+      schema: deviceSchema,
+      mapping: firstModelDashboardMapping,
+    },
+    {
+      id: 'mv-2',
+      modelId: 'modelC',
+      version: '1.1.4',
+      schema: deviceSchema,
+      mapping: secondModelDashboardMapping,
+    },
+  ];
+  let activeModelVersion = modelVersions[0];
+
+  const activeDevice = () => ({
+    id: '1',
+    name: 'Smart Pump',
+    type: 'pump',
+    serialNumber: 'SN-1',
+    status: 'ONLINE',
+    userId: 2,
+    user: {
+      id: 2,
+      email: 'owner@example.com',
+    },
+    attributes: {
+      serialNumber: 'SN-1',
+      firmware: activeModelVersion.version,
+      hardwareModel: 'modelC',
+    },
+    modelVersionId: activeModelVersion.id,
+    modelVersion: activeModelVersion,
+  });
+
+  cy.intercept('GET', '**/users/profile', {
+    statusCode: 200,
+    body: {
+      id: 1,
+      email: 'milica2@gmail.com',
+      role: 'ADMIN',
+      isAdmin: true,
+      status: 'APPROVED',
+    },
+  }).as('getModelSwitchProfile');
+
+  cy.intercept('GET', '**/model-versions', {
+    statusCode: 200,
+    body: modelVersions,
+  }).as('getModelSwitchVersions');
+
+  cy.intercept(
+    {
+      method: 'GET',
+      pathname: '/device',
+    },
+    (request) => {
+      request.alias =
+        activeModelVersion.id === 'mv-1'
+          ? 'getInitialModelSwitchDevice'
+          : 'getUpdatedModelSwitchDevice';
+
+      request.reply({
+        statusCode: 200,
+        body: {
+          data: [activeDevice()],
+        },
+      });
+    },
+  ).as('getModelSwitchDevices');
+
+  cy.intercept(
+    'GET',
+    '**/device/SN-1/telemetry/latest',
+    {
+      statusCode: 200,
+      body: {
+        id: 'telemetry-model-switch',
+        deviceId: 'SN-1',
+        timestamp: TIMESTAMP,
+        data: {
+          flowRate: [[180.6, TIMESTAMP]],
+          pumpEnabled: [[false, TIMESTAMP]],
+        },
+      },
+    },
+  ).as('modelSwitchLatestTelemetry');
+
+  cy.intercept(
+    'GET',
+    '**/device/SN-1/telemetry',
+    {
+      statusCode: 200,
+      body: [],
+    },
+  ).as('modelSwitchTelemetryHistory');
+
+  cy.intercept('POST', '**/device/SN-1/command', {
+    statusCode: 201,
+    body: {
+      success: true,
+      correlationId: 'model-switch-command',
+    },
+  }).as('modelSwitchCommand');
+
+  cy.intercept(
+    'PATCH',
+    '**/device/1/model-version',
+    (request) => {
+      expect(request.body).to.deep.equal({
+        modelVersionId: 'mv-2',
+      });
+
+      activeModelVersion = modelVersions[1];
+
+      request.reply({
+        statusCode: 200,
+        body: {
+          success: true,
+          staged: true,
+          restartRequired: true,
+          deviceId: '1',
+          serialNumber: 'SN-1',
+          model: 'modelC',
+          version: '1.1.4',
+          modelVersionId: 'mv-2',
+        },
+      });
+    },
+  ).as('applyModelSwitch');
+
+  cy.intercept('GET', '**/users/allusers', {
+    statusCode: 200,
+    body: [],
+  });
+  cy.intercept('GET', '**/post/feed', {
+    statusCode: 200,
+    body: [],
+  });
+  cy.intercept('GET', '**/post/drafts', {
+    statusCode: 200,
+    body: [],
+  });
+
+  cy.visit(`${APP_URL}/device/SN-1`, {
+    onBeforeLoad(win) {
+      win.sessionStorage.setItem('token', 'fake-token');
+      win.sessionStorage.setItem(
+        'userEmail',
+        'milica2@gmail.com',
+      );
+    },
+  });
+
+  cy.wait('@getModelSwitchProfile');
+  cy.wait('@getInitialModelSwitchDevice');
+};
+
 describe('Dynamic Device Dashboard', () => {
   it('should render device and latest telemetry', () => {
     setupDeviceDashboard();
@@ -372,14 +587,20 @@ describe('Dynamic Device Dashboard', () => {
     setupDeviceDashboard();
 
     const themes = [
-      { label: 'Dark', mode: 'dark' },
       { label: 'Light', mode: 'light' },
+      { label: 'Dark', mode: 'dark' },
     ];
 
     themes.forEach(({ label, mode }) => {
-      cy.contains('button', label)
-        .click()
-        .should('have.attr', 'aria-pressed', 'true');
+      cy.get('[data-cy="application-theme"]')
+        .select(label)
+        .should('have.value', mode);
+
+      cy.get('html').should(
+        'have.attr',
+        'data-app-theme',
+        mode,
+      );
 
       cy.get('.dashboard-container').should(
         'have.attr',
@@ -489,5 +710,53 @@ describe('Dynamic Device Dashboard', () => {
 
     cy.url().should('include', '/dashboard');
     cy.contains('Device Management').should('be.visible');
+  });
+
+  it('should rebuild the dashboard after applying another model version', () => {
+    setupModelSwitchScenario();
+
+    cy.get('.dd-device-meta').should('contain', 'v1.1.3');
+    cy.contains('MODEL 1.1.3 OVERVIEW').should('be.visible');
+    cy.contains('.dashboard-card', 'Legacy Flow Rate').should(
+      'contain',
+      '180.6',
+    );
+    cy.contains('MODEL 1.1.4 CONTROLS').should('not.exist');
+
+    cy.contains('button', 'All devices').click();
+    cy.url().should('include', '/dashboard?tab=devices');
+    cy.get('[data-cy="device-table"]', {
+      timeout: 10000,
+    }).should('be.visible');
+
+    cy.contains('tr', 'Smart Pump').within(() => {
+      cy.get('select[aria-label="Select model version"]').select(
+        'mv-2',
+      );
+      cy.contains('button', 'Apply').click();
+    });
+
+    cy.wait('@applyModelSwitch');
+    cy.wait('@getUpdatedModelSwitchDevice');
+
+    cy.contains('tr', 'Smart Pump')
+      .should('contain', '1.1.4')
+      .find('td')
+      .first()
+      .click();
+
+    cy.url().should('include', '/device/SN-1');
+    cy.wait('@getUpdatedModelSwitchDevice');
+
+    cy.get('.dd-device-meta').should('contain', 'v1.1.4');
+    cy.contains('MODEL 1.1.3 OVERVIEW').should('not.exist');
+    cy.contains('Legacy Flow Rate').should('not.exist');
+    cy.contains('MODEL 1.1.4 CONTROLS').should('be.visible');
+    cy.contains('.dashboard-card', 'Updated Pump Switch').within(
+      () => {
+        cy.contains('INACTIVE').should('be.visible');
+        cy.get('button').should('exist');
+      },
+    );
   });
 });

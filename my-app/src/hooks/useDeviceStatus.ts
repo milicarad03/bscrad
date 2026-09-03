@@ -20,7 +20,9 @@ interface UseDevicesStatusesParams {
 }
 
 export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams) => {
+  // 1. Čuvamo uvek svežu referencu na callback bez ponovnog pokretanja efekta
   const onStatusUpdateRef = useRef(onStatusUpdate);
+
   useEffect(() => {
     onStatusUpdateRef.current = onStatusUpdate;
   }, [onStatusUpdate]);
@@ -32,7 +34,7 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
 
     const socket: Socket = io(WS_BASE_URL, {
       auth: {
-        token: sessionStorage.getItem('token'),
+        token: sessionStorage.getItem('token'), // <--- OVO FALI (proveri da li se u localStorage-u ključ zove 'token' ili drugačije)
       },
       withCredentials: true,
       reconnection: true,
@@ -51,7 +53,8 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
     socket.on('device:status_update', (payload: StatusUpdatePayload) => {
       console.count('STATUS_EVENT');
       logger.info(`[WS-STATUS] Status delta captured for node [${payload.deviceId}] -> ${payload.status}`);
-  
+      
+      // 2. Pozivamo callback preko ref-a
       onStatusUpdateRef.current(payload.deviceId, payload.status);
     });
 
@@ -74,5 +77,5 @@ export const useDevicesStatuses = ({ onStatusUpdate }: UseDevicesStatusesParams)
       socket.removeAllListeners();
       socket.disconnect();
     };
-  }, []); 
+  }, []); // Empty deps: otvara se tačno JEDNOM pri montiranju
 };

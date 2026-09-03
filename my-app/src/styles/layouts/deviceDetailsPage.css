@@ -24,10 +24,11 @@
   --dd-gap: 16px;
 }
 
+/* ---------- layout shell ---------- */
 
 .dd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* 400px je idealno za tvoj layout */
   gap: 20px;
   margin-top: var(--dd-gap);
   align-items: start;
@@ -35,7 +36,7 @@
 .dd-grid pre,
 .dd-telemetry-scroll pre {
   white-space: pre-wrap;
-  word-wrap: break-word;     
+  word-wrap: break-word;      /* Seče dugačke nizove */
   background: var(--dd-void);
   padding: 10px;
   border-radius: 4px;
@@ -426,7 +427,7 @@
   font-family: var(--dd-font-mono);
   font-size: 0.7rem; 
   text-transform: uppercase;
-  color: #a0a8b8;
+  color: var(--dd-text-dim);
   margin-bottom: 14px;
   letter-spacing: 0;
   font-weight: 700; 
@@ -528,7 +529,7 @@
 .dd-input {
   width: 100%;
   padding: 8px 10px;
-  color: #e6e6e6;
+  color: var(--dd-text);
   border-radius: 6px;
   border: 1px solid var(--dd-border, #333);
   background: transparent;
@@ -606,21 +607,23 @@
   background: var(--dd-text-faint);
 }
 .dd-telemetry-scroll {
-  max-height: 300px; 
+  max-height: 300px; /* Možeš podesiti visinu po želji */
   overflow-y: auto;
-  overflow-x: hidden; 
+  overflow-x: hidden; /* Sprečava horizontalni skrol */
   
+  /* Stilizacija scrollbara */
   padding-right: 8px;
 }
 
+/* Opcionalno: prilagodi pre tag unutar scroller-a */
 .dd-telemetry-scroll pre {
   margin: 0;
   font-size: 0.85rem;
   color: var(--dd-text);
-  white-space: pre-wrap; 
+  white-space: pre-wrap; /* Omogućava prelamanje dugačkih redova */
 }
 
-
+/* Scrollbar za ovu sekciju */
 .dd-telemetry-scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -634,13 +637,14 @@
   background: var(--dd-border-strong);
   border-radius: 4px;
 }
-
+/* Container za sve komande */
 .dd-commands-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+/* Wrapper za svaku pojedinačnu komandu */
 .dd-command-wrapper {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--dd-border);
@@ -672,14 +676,14 @@
 .dd-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--dd-border);
 }
 
 .dd-table th {
   font-weight: 600;
-  color: #fff;
+  color: var(--dd-text);
 }
 
 .dd-table tr:hover {
-  background: rgba(255,255,255,0.05);
+  background: var(--dd-panel-raised);
 }

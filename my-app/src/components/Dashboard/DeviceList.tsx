@@ -1,12 +1,17 @@
 import { Card } from '../../components/UI/Card';
 import type { DeviceDTO, ModelVersionDTO } from '../../models/device.dto';
-import { RotateCw, Search, Plus } from 'lucide-react';
+import { RotateCw, Search, Plus, Upload } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { useState, useEffect } from 'react';
 import { DeviceTable } from './DeviceTable'; 
 import { FilterDropdown } from '../UI/FilterDropdown'; 
 import { useDevicesStatuses } from '../../hooks/useDeviceStatus';
 import '../../styles/layouts/deviceList.css'; // Updated CSS reference
+import { DeviceBulkImportDialog } from './DeviceBulkImportDialog';
+import type {
+  BulkDeviceImportManifestDTO,
+  BulkDeviceImportResultDTO,
+} from '../../models/device-bulk-import.dto';
 
 interface DeviceListProps {
   device: DeviceDTO[];
@@ -16,6 +21,9 @@ interface DeviceListProps {
   onDeviceClick: (dev: DeviceDTO) => void;
   isAdmin: boolean;
   onRegister?: () => void;
+  onBulkImport?: (
+    manifest: BulkDeviceImportManifestDTO,
+  ) => Promise<BulkDeviceImportResultDTO>;
   onFilterChange: (userIds?: number[], typeNames?: string[]) => void;
   targetUserIds: number[];
   selectedTypes: string[];
@@ -39,6 +47,7 @@ export const DeviceList = ({
   onDeviceClick,
   isAdmin,
   onRegister,
+  onBulkImport,
   onFilterChange,
   targetUserIds = [],
   selectedTypes = [],
@@ -50,6 +59,7 @@ export const DeviceList = ({
   const [openDropdown, setOpenDropdown] = useState<'user' | 'type' | null>(null);
   const [allPossibleTypes, setAllPossibleTypes] = useState<string[]>([]);
   const [localDevices, setLocalDevices] = useState<DeviceDTO[]>(device);
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   useEffect(() => {
     setLocalDevices(device);
@@ -185,6 +195,16 @@ export const DeviceList = ({
 
           {/* Action Buttons Right */}
           <div className="device-action-buttons">
+            {isAdmin && onBulkImport && (
+              <Button
+                className="btn-import-devices"
+                onClick={() => setShowBulkImport(true)}
+                data-cy="bulk-import-btn"
+              >
+                <Upload size={15} />
+                <span>Import Devices</span>
+              </Button>
+            )}
             {isAdmin && (
               <Button className="btn-register-cyber" onClick={onRegister} data-cy="add-device-btn">
                 <Plus size={15} />
@@ -208,6 +228,13 @@ export const DeviceList = ({
           users={users}
           onTransferOwnership={onTransferOwnership}
         />
+
+        {showBulkImport && onBulkImport && (
+          <DeviceBulkImportDialog
+            onClose={() => setShowBulkImport(false)}
+            onImport={onBulkImport}
+          />
+        )}
       </div>
     </Card>
   );

@@ -20,7 +20,7 @@
     "react-router-dom": "^7.14.2",
     "recharts": "^3.10.1",
     "socket.io-client": "^4.8.3",
-    "device-dashboard-ui-plugin": "file:../../uiplugin"
+    "device-dashboard-ui-plugin": "file:../../../dynamic-device-dashboard"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

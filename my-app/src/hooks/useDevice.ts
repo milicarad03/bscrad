@@ -5,6 +5,10 @@ import type {
   CommandMetadata,
   ModelVersionDTO,
 } from '../models/device.dto';
+import type {
+  BulkDeviceImportManifestDTO,
+  BulkDeviceImportResultDTO,
+} from '../models/device-bulk-import.dto';
 import {ENDPOINTS} from '../api/config.ts'
 import {apiClient} from '../api/client.ts'
 import { toast } from 'react-hot-toast';
@@ -502,6 +506,39 @@ const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 
     ],
   );
 
+  const bulkImportDevices = useCallback(
+    async (
+      manifest: BulkDeviceImportManifestDTO,
+    ): Promise<BulkDeviceImportResultDTO> => {
+      if (!token) {
+        throw new Error('Unauthorized');
+      }
+
+      try {
+        const result = await apiClient<BulkDeviceImportResultDTO>(
+          ENDPOINTS.DEVICE.BULK_IMPORT,
+          'POST',
+          manifest,
+          token,
+        );
+
+        toast.success(
+          `${result.created} devices created, ${result.skipped} skipped.`,
+        );
+        await fetchDevices();
+        return result;
+      } catch (err: any) {
+        logger.error(
+          '[DEVICE BULK IMPORT] Import failed:',
+          err.message,
+        );
+        toast.error(err.message || 'Device import failed');
+        throw err;
+      }
+    },
+    [token, fetchDevices],
+  );
+
 
  
   const resetForm = () => {
@@ -515,6 +552,6 @@ const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 
 
 return {
     handleCreateDevice, newSerialNumber, setNewSerialNumber, newDeviceName, setNewDeviceName, newDeviceType, setNewDeviceType
-,message, applyModelVersion, fetchModels, uploadModelVersion, setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus, getCommandMetadata};
+,message, applyModelVersion, bulkImportDevices, fetchModels, uploadModelVersion, setMessage, resetForm, fetchDevices, setDevices, devices,loading, myDevices, setMyDevices, selectedTargetUsers, setSelectedTargetUsers, handleDeleteDevice, setSelectedTypes, selectedTypes, selectedDeviceModel, setSelectedDeviceModel, models, setModels, handleReassignDevice, hasError, resetError, sendDeviceCommand, updateDeviceStatus, getCommandMetadata};
 
 };

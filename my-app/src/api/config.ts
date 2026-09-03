@@ -19,6 +19,7 @@ export const ENDPOINTS = {
   },
   DEVICE: {
     BASE: `${API_BASE_URL}/device`,
+    BULK_IMPORT: `${API_BASE_URL}/device/bulk-import`,
     GET_ONE: (id: string) => `${API_BASE_URL}/device/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/device/${id}`,
     TOGGLE: (id: string) => `${API_BASE_URL}/device/${id}/toggle`,

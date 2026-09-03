@@ -1,3 +1,4 @@
+// hooks/useDeviceFilters.ts
 import { useState } from 'react';
 import type { DeviceDTO } from '../models/device.dto';
 

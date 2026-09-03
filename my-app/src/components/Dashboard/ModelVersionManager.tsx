@@ -27,12 +27,13 @@ export const ModelVersionManager = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  
+  // Ekstrakcija jedinstvenih imena modela za autocomplete
   const modelNames = useMemo(
     () => Array.from(new Set(modelVersions.map((item) => item.modelId))).sort(),
     [modelVersions]
   );
 
+  // Sortiranje verzija za prikaz u tabeli
   const sortedVersions = useMemo(
     () =>
       [...modelVersions].sort((a, b) => {
@@ -46,7 +47,7 @@ export const ModelVersionManager = ({
     [modelVersions]
   );
 
-  
+  // Obrada JSON schema fajla sa automatskom detekcijom modelId-a
   const handleSchemaFile = async (file: File | null) => {
     setSchemaFile(file);
     setError(null);
@@ -62,13 +63,12 @@ export const ModelVersionManager = ({
         setModelName(detectedModel.trim());
       }
     } catch {
-
+      // Backend će izvršiti finalnu validaciju ukoliko parsiranje ne uspe
     }
   };
 
-   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formElement = e.currentTarget; 
     setError(null);
     setSuccess(false);
 
@@ -87,14 +87,12 @@ export const ModelVersionManager = ({
         mappingFile,
       });
 
-
       setModelName('');
       setVersion('');
       setSchemaFile(null);
       setMappingFile(null);
       setSuccess(true);
-      
-      formElement.reset();
+      e.currentTarget.reset();
 
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
@@ -106,7 +104,7 @@ export const ModelVersionManager = ({
 
   return (
     <div className="manager-container">
-      {/* UPLOAD FORM */}
+      {/* UPLOAD FORMA */}
       <div className="manager-card">
         <h2 className="manager-card-title">Upload Model Version</h2>
 

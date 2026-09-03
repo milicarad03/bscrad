@@ -186,7 +186,10 @@ describe('System performance measurements', () => {
         'performance-results/system-performance.json',
         report,
       );
-      cy.log(`Performance report: ${JSON.stringify(report)}`);
+      cy.task('printPerformanceReport', report);
+      cy.log(
+        'Performance report saved to performance-results/system-performance.json',
+      );
     });
   });
 });

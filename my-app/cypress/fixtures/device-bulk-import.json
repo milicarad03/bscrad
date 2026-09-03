@@ -1,0 +1,19 @@
+{
+  "targetUserEmail": "new-owner@example.com",
+  "devices": [
+    {
+      "serialNumber": "fleet-a-001",
+      "name": "Fleet Sensor A001",
+      "type": "sensor",
+      "model": "modelA",
+      "version": "10.0.0"
+    },
+    {
+      "serialNumber": "fleet-b-001",
+      "name": "Fleet Compressor B001",
+      "type": "compressor",
+      "model": "modelB",
+      "version": "10.0.0"
+    }
+  ]
+}
