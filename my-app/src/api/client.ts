@@ -69,23 +69,11 @@ export const apiClient = async <T>(
       signal,
     });
   } catch (err: any) {
-    // ISPRAVKA: AbortError se ne tretira kao mrezna greska - to je
-    // namerno otkazivanje (npr. unmount), pa ga samo prosledjujemo dalje
-    // bez toast poruke; pozivalac (useCallback cleanup) ce ga ignorisati.
     if (err?.name === 'AbortError') {
       throw err;
     }
     throw new Error('NetworkError');
   }
-
-
-  /*if (response.status === 401) {
-   
-    if (onUnauthorized) {
-      onUnauthorized();
-    }
-    return Promise.reject(new Error('Unauthorized'));
-  }*/
   if (response.status === 401) {
   const errorData = await response.json().catch(() => ({}));
 
@@ -130,5 +118,4 @@ export const apiClient = async <T>(
   } catch {
     return null as T;
   }
- // return response.json();
 };

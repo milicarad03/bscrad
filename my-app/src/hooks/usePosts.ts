@@ -5,7 +5,6 @@ import {ENDPOINTS} from '../api/config.ts'
 import {apiClient} from '../api/client.ts'
 import { toast } from 'react-hot-toast';
 export const usePosts = (token: string | null) => {
-  // 1. STANJA (State)
   const [posts, setPosts] = useState<PostDTO[]>([]);
   const [drafts, setDrafts] = useState<PostDTO[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');

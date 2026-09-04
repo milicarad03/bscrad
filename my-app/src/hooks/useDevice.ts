@@ -49,8 +49,6 @@ type DeviceCommandResponse = {
 
 
 export const useDevice = (token: string | null) => { 
-
-  //dodato useRef
   const isSubmittingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   
@@ -140,10 +138,6 @@ export const useDevice = (token: string | null) => {
     if (token) {
       fetchModels(controller.signal); 
     }
-
-  /*  if (token) {
-      fetchModels(); 
-    }*/
        return () => {
       controller.abort();
     };
@@ -301,22 +295,6 @@ const sendDeviceCommand = async (deviceId: string, command: string, payload?: an
       throw err;
     });
 };
-/*const getCommandMetadata = async ( deviceId: string) => {
-
-  logger.info(`[COMMAND METADATA] Loading metadata for device ${deviceId}`);
-
-  return apiClient<CommandMetadata[]>(ENDPOINTS.DEVICE.COMMAND_METADATA(deviceId),'GET', null, token)
-    .then((response) => {
-      logger.info(`[COMMAND METADATA] Loaded metadata for device ${deviceId}`);
-
-      return response;
-    })
-    .catch((err) => {
-
-      logger.error( `[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`, err.message );
-      throw err;
-    });ac
-};*/
 const getCommandMetadata = useCallback(async (deviceId: string) => {
   logger.info(`[COMMAND METADATA] Loading metadata for device ${deviceId}`);
 
@@ -329,7 +307,7 @@ const getCommandMetadata = useCallback(async (deviceId: string) => {
       logger.error(`[COMMAND METADATA] Failed loading metadata for device ${deviceId}:`, err.message);
       throw err;
     });
-}, [token]); // Dodaj token u zavisnosti
+}, [token]);
 
 
 const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 'OFFLINE' | 'UNINITIALIZED' ) => {
@@ -400,11 +378,6 @@ const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 
         toast.success(
           `Model version ${params.modelName}:${params.version} uploaded`,
         );
-
-        /*
-         * Posle uspešnog uploada
-         * ponovo učitaj listu verzija.
-         */
         await fetchModels();
 
         return created;
@@ -476,12 +449,6 @@ const updateDeviceStatus = useCallback((deviceId: string, newStatus: 'ONLINE' | 
             `Model ${result.model}:${result.version} applied.`,
           );
         }
-
-        /*
-         * DB je sada promenjen na
-         * novu ModelVersion, pa
-         * osvežavamo listu uređaja.
-         */
         await fetchDevices();
 
         return result;

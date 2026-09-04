@@ -27,13 +27,11 @@ export const ModelVersionManager = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Ekstrakcija jedinstvenih imena modela za autocomplete
   const modelNames = useMemo(
     () => Array.from(new Set(modelVersions.map((item) => item.modelId))).sort(),
     [modelVersions]
   );
 
-  // Sortiranje verzija za prikaz u tabeli
   const sortedVersions = useMemo(
     () =>
       [...modelVersions].sort((a, b) => {
@@ -47,7 +45,6 @@ export const ModelVersionManager = ({
     [modelVersions]
   );
 
-  // Obrada JSON schema fajla sa automatskom detekcijom modelId-a
   const handleSchemaFile = async (file: File | null) => {
     setSchemaFile(file);
     setError(null);
@@ -63,12 +60,12 @@ export const ModelVersionManager = ({
         setModelName(detectedModel.trim());
       }
     } catch {
-      // Backend će izvršiti finalnu validaciju ukoliko parsiranje ne uspe
     }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     setError(null);
     setSuccess(false);
 
@@ -92,7 +89,7 @@ export const ModelVersionManager = ({
       setSchemaFile(null);
       setMappingFile(null);
       setSuccess(true);
-      e.currentTarget.reset();
+      form.reset();
 
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
@@ -104,7 +101,7 @@ export const ModelVersionManager = ({
 
   return (
     <div className="manager-container">
-      {/* UPLOAD FORMA */}
+
       <div className="manager-card">
         <h2 className="manager-card-title">Upload Model Version</h2>
 
@@ -152,7 +149,6 @@ export const ModelVersionManager = ({
               />
             </div>
 
-            {/* Schema File Upload */}
             <div className="form-group form-full-width">
               <label className="form-label">JSON Schema File</label>
               <div className="file-upload-wrapper">
@@ -173,8 +169,6 @@ export const ModelVersionManager = ({
                 )}
               </div>
             </div>
-
-            {/* Mapping File Upload */}
             <div className="form-group form-full-width">
               <label className="form-label">Mapper File</label>
               <div className="file-upload-wrapper">
@@ -221,7 +215,6 @@ export const ModelVersionManager = ({
         </form>
       </div>
 
-      {/* MODEL VERZIJE TABELA */}
       <div className="manager-card">
         <h2 className="manager-card-title">Registered Model Versions</h2>
 

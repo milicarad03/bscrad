@@ -1,4 +1,3 @@
-// src/components/Dashboard/PostList.tsx
 import { Card } from '../UI/Card';
 import type { PostDTO } from '../../models/post.dto';
 

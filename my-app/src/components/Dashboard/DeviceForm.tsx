@@ -1,4 +1,3 @@
-// src/components/Dashboard/PostForm.tsx
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Button } from '../UI/Button';

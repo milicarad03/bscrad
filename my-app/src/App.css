@@ -1,13 +1,10 @@
-/* 1. OSNOVA (Varijable moraju biti prve!) */
 @import './styles/base/variables.css';
 @import './styles/base/reset.css';
 
-/* 2. KOMPONENTE (Elementi koji se ponavljaju) */
 @import './styles/components/buttons.css';
 @import './styles/components/forms.css';
 @import './styles/components/cards.css';
 
-/* 3. LAYOUTS (Specifični ekrani i struktura) */
 @import './styles/layouts/auth.css';
 @import './styles/layouts/dashboard.css';
 @import './styles/layouts/modal.css';

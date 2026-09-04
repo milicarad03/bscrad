@@ -176,7 +176,6 @@ export const DeviceTable = ({
                     {isAdmin && (
                       <td className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="actions-wrapper">
-                          {/* Transfer Ownership */}
                           <div className="action-group">
                             <select
                               className="select-input"
@@ -210,7 +209,6 @@ export const DeviceTable = ({
                             </button>
                           </div>
 
-                          {/* Model Version Control */}
                           {candidates.length > 0 && (
                             <div className="action-group">
                               <select
@@ -249,7 +247,6 @@ export const DeviceTable = ({
                             </div>
                           )}
 
-                          {/* Delete Action */}
                           <button
                             type="button"
                             className="btn-icon-danger"

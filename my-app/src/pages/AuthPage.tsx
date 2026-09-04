@@ -41,7 +41,6 @@ export const AuthPage = ({ auth }: AuthPageProps) => {
           fields={isLogin? loginFileds : registerFileds}
 
         />
-          {/* Switcher dugme */}
           <div className="auth-switch">
             <p>
               {isLogin ? "Sign in" : "Do you already have an account?"}

@@ -111,7 +111,6 @@
 .status-icon.offline { color: #e74c3c; }
 .status-icon.uninit { color: #7f8c8d; }
 
-/* Akcije i dugmad */
 .actions-wrapper {
   display: flex;
   justify-content: flex-end;

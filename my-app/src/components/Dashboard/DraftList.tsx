@@ -1,4 +1,3 @@
-// src/components/Dashboard/DraftList.tsx
 import { Card } from '../UI/Card';
 import { Button } from '../UI/Button';
 import type { PostDTO } from '../../models/post.dto';

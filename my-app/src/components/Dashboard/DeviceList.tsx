@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { DeviceTable } from './DeviceTable'; 
 import { FilterDropdown } from '../UI/FilterDropdown'; 
 import { useDevicesStatuses } from '../../hooks/useDeviceStatus';
-import '../../styles/layouts/deviceList.css'; // Updated CSS reference
+import '../../styles/layouts/deviceList.css'; 
 import { DeviceBulkImportDialog } from './DeviceBulkImportDialog';
 import type {
   BulkDeviceImportManifestDTO,
@@ -95,7 +95,6 @@ export const DeviceList = ({
     };
   }, []);
 
-  // Search filtering
   const filteredDevices = localDevices.filter(dev => {
     const term = searchTerm.toLowerCase();
 
@@ -123,10 +122,8 @@ export const DeviceList = ({
     <Card title={isAdmin ? "System Device Feed" : "Assigned Devices"}>
       <div className="device-list-wrapper">
         
-        {/* Top Header Actions Bar */}
         <div className="device-list-header">
           <div className="device-controls-bar">
-            {/* Search Field */}
             <div className="search-field-group">
               <label className="search-field-label">Search Devices</label>
               <div className="search-input-wrapper">
@@ -142,7 +139,6 @@ export const DeviceList = ({
               </div>
             </div>
 
-            {/* Filter by Users (Admin only) */}
             {isAdmin && (
               <FilterDropdown 
                 data-cy="filter-user"
@@ -168,7 +164,6 @@ export const DeviceList = ({
               </FilterDropdown>
             )}
 
-            {/* Filter by Type */}
             <FilterDropdown 
               data-cy="filter-type"
               label="Type Filter"
@@ -193,7 +188,6 @@ export const DeviceList = ({
             </FilterDropdown>
           </div>
 
-          {/* Action Buttons Right */}
           <div className="device-action-buttons">
             {isAdmin && onBulkImport && (
               <Button
@@ -217,7 +211,6 @@ export const DeviceList = ({
           </div>
         </div>
 
-        {/* Data Table */}
         <DeviceTable
           devices={filteredDevices}
           isAdmin={isAdmin}

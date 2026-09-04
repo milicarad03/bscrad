@@ -24,11 +24,10 @@
   --dd-gap: 16px;
 }
 
-/* ---------- layout shell ---------- */
 
 .dd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* 400px je idealno za tvoj layout */
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 20px;
   margin-top: var(--dd-gap);
   align-items: start;
@@ -36,7 +35,7 @@
 .dd-grid pre,
 .dd-telemetry-scroll pre {
   white-space: pre-wrap;
-  word-wrap: break-word;      /* Seče dugačke nizove */
+  word-wrap: break-word;
   background: var(--dd-void);
   padding: 10px;
   border-radius: 4px;
@@ -142,7 +141,6 @@
   background: var(--dd-offline-dim);
 }
 
-/* ---------- status ---------- */
 .dd-status {
   display: inline-flex;
   align-items: center;
@@ -190,7 +188,6 @@
   }
 }
 
-/* ---------- field rows (replaces raw <p><strong>) ---------- */
 .dd-field {
   display: flex;
   justify-content: space-between;
@@ -209,7 +206,6 @@
 }
 .dd-field-value { color: var(--dd-text); }
 
-/* ---------- buttons ---------- */
 .dd-btn {
   font-family: var(--dd-font-mono);
   font-size: 0.78rem;
@@ -263,12 +259,10 @@
   color: var(--dd-offline);
 }
 
-/* ---------- groups ---------- */
 .dd-row { display: flex; gap: 10px; }
 .dd-row + .dd-row { margin-top: 15px; }
 .dd-swatches { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
 
-/* ---------- transfer form ---------- */
 .dd-transfer {
   border-top: 1px solid var(--dd-border);
   padding-top: 15px;
@@ -299,7 +293,6 @@
   outline-offset: 2px;
 }
 
-/* ---------- telemetry history ---------- */
 .dd-history-item {
   border-bottom: 1px solid var(--dd-border);
   padding-bottom: 10px;
@@ -482,7 +475,7 @@
   border-radius: 999px;
   border: 1px solid var(--dd-border, #333);
   background: transparent;
-  color: var(--dd-text, #e6e6e6);   /* <-- dodato */
+  color: var(--dd-text, #e6e6e6);
   cursor: pointer;
   font-family: inherit;
   font-size: 0.85rem;
@@ -583,7 +576,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 500px; /* Ovo će ga učiniti "dužim" */
+  max-height: 500px;
   overflow-y: auto;
   padding-right: 8px;
 }
@@ -607,23 +600,20 @@
   background: var(--dd-text-faint);
 }
 .dd-telemetry-scroll {
-  max-height: 300px; /* Možeš podesiti visinu po želji */
+  max-height: 300px;
   overflow-y: auto;
-  overflow-x: hidden; /* Sprečava horizontalni skrol */
+  overflow-x: hidden;
   
-  /* Stilizacija scrollbara */
   padding-right: 8px;
 }
 
-/* Opcionalno: prilagodi pre tag unutar scroller-a */
 .dd-telemetry-scroll pre {
   margin: 0;
   font-size: 0.85rem;
   color: var(--dd-text);
-  white-space: pre-wrap; /* Omogućava prelamanje dugačkih redova */
+  white-space: pre-wrap;
 }
 
-/* Scrollbar za ovu sekciju */
 .dd-telemetry-scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -637,14 +627,12 @@
   background: var(--dd-border-strong);
   border-radius: 4px;
 }
-/* Container za sve komande */
 .dd-commands-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Wrapper za svaku pojedinačnu komandu */
 .dd-command-wrapper {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--dd-border);

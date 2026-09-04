@@ -1,4 +1,3 @@
-// src/components/DeviceCommands/CommandConsole.tsx
 import { Card } from '../UI/Card';
 import { Button } from '../UI/Button';
 import { CommandField, type FieldMeta } from './CommandField';

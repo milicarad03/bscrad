@@ -15,7 +15,7 @@
 
 .device-content-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr; /* Leva strana šira, desna uža */
+  grid-template-columns: 2fr 1fr;
   gap: 25px;
 }
 
@@ -52,28 +52,25 @@
   color: #4caf50;
   text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
 }
-/* Ovo rešava problem "jedan do drugog" */
 .dropdown-item {
-  display: flex;            /* Pretvara label u red (block-like) */
-  align-items: center;      /* Centrira checkbox i tekst vertikalno */
-  padding: 10px;            /* Daje prostor oko teksta */
-  gap: 10px;                /* Razmak između checkbox-a i imena */
-  width: 100%;              /* Uzima punu širinu dropdown-a */
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  gap: 10px;
+  width: 100%;
   cursor: pointer;
-  border-bottom: 1px solid #222; /* Linija između korisnika */
+  border-bottom: 1px solid #222;
   color: #ccc;
   transition: background 0.2s;
   font-size: 0.8rem;
 }
 
-/* Efekat kada pređeš mišem */
 .dropdown-item:hover {
   background: rgba(129, 164, 228, 0.1);
   color: #fff;
 }
 
-/* Stil za sam checkbox unutra */
 .dropdown-item input[type="checkbox"] {
-  accent-color: #81a4e4;    /* Boja kvačice */
+  accent-color: #81a4e4;
   cursor: pointer;
 }

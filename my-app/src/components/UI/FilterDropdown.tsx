@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import '../../styles/layouts/filterDropdown.css'; // Updated CSS reference
+import '../../styles/layouts/filterDropdown.css';
 
 interface FilterDropdownProps {
   label: string;

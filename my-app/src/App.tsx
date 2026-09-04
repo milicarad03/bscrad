@@ -54,14 +54,12 @@ useEffect(() => {
       }} 
     />
     <Routes>
-      {/* RUTA 1: LOGIN I REGISTRACIJA */}
       <Route 
         path="/" 
         element={
           !auth.isLoggedIn ? (<AuthPage auth={auth}/>) : (<Navigate to="/dashboard" />)
         } 
       />
-      {/* RUTA 2: DASHBOARD (LISTA KORISNIKA) */}
       <Route 
         path="/dashboard" 
         element={

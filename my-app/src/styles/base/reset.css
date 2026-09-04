@@ -15,7 +15,6 @@ body {
   width: 100%;
 }
 
-/* Centriranje Login/Register stranice */
 #center:not(:has(.dashboard-layout)) {
   justify-content: center;
   align-items: center;

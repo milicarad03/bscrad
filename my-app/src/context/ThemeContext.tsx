@@ -56,7 +56,6 @@ export const getApplicationThemeVariables = (
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Učitava zapamćenu temu iz localStorage-a ili stavlja 'dark' kao podrazumevanu
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('dashboard_theme');
     return supportedThemes.includes(saved as ThemeMode)
